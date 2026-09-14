@@ -1,543 +1,107 @@
-/* Storm Vector — app.js
-   Data sources:
-   - Current conditions + active alerts: api.weather.gov (National Weather Service, no key required)
-   - Severe-weather parameters (CAPE, freezing level, wind-by-height): api.open-meteo.com (no key required)
-   - Location search + reverse geocoding: nominatim.openstreetmap.org (no key required, rate-limited — debounced)
-   - SPC categorical/probabilistic outlook: spc.noaa.gov geojson feeds, attempted live; if the browser
-     blocks the cross-origin request (SPC does not publish CORS headers for every product) the app
-     falls back to a heuristic outlook computed from live CAPE/shear so the page is never a placeholder.
+/* StormVector next-level rebuild
+   Official weather: NWS API + NOAA MRMS + NOAA/NWS SPC map services.
+   Supplemental model context + geocoding: Open-Meteo.
 */
+const $=id=>document.getElementById(id), $$=q=>[...document.querySelectorAll(q)];
+const CONFIG={alertPollMs:30000,fullRefreshMs:300000,normalLoopGapMs:20000,severeLoopGapMs:8000,movingRefreshMiles:2,movingRefreshMs:300000,searchDebounceMs:280,listenerKey:'stormvector.listener.v3',mrmsWms:'https://opengeo.ncep.noaa.gov/geoserver/conus/conus_bref_qcd/ows',mrmsLayer:'conus_bref_qcd',spcService:'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/FeatureServer'};
+const state={place:null,locationMode:'none',locationReady:false,deviceLat:null,deviceLon:null,observation:null,forecast:[],model:null,alerts:[],previousSnapshot:null,changes:[],health:{observation:'WAITING',forecast:'WAITING',alerts:'WAITING',model:'WAITING',spc:'WAITING',gps:'OFF'}};
+const STATE_NAMES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+const SPC_CAT={2:'THUNDERSTORMS',3:'MARGINAL',4:'SLIGHT',5:'ENHANCED',6:'MODERATE',7:'HIGH'};
+let searchTimer=null,searchController=null,locationWatchId=null,alertPollTimer=null,fullRefreshTimer=null,lastMoving={lat:null,lon:null,at:0};
+let radarMap=null,radarLayer=null,radarMarker=null,radarWarningsLayer=null,radarWarningsVisible=true,radarZoomMode='local';
+let spcMap=null,spcLayer=null,spcMarker=null,spcFeatures=[],spcProduct={layer:1,type:'categorical'};
+let voices=[],broadcastRunning=false,muted=false,speechGeneration=0,speechTimer=null,currentRundown=[],currentLineIndex=0,broadcastLoopCount=0,listenerMemory={};
+const phraseMemory=new Map(),knownWarningIds=new Set();
 
-const $ = (id) => document.getElementById(id);
+function health(k,v){state.health[k]=v;setHealthUi()}
+function num(v){if(v==null)return null;const n=Number(v);return Number.isFinite(n)?n:null}
+function round(v){const n=num(v);return n==null?null:Math.round(n)}
+function cToF(c){const n=num(c);return n==null?null:Math.round(n*9/5+32)}
+function fToC(f){const n=num(f);return n==null?null:(n-32)*5/9}
+function escapeHtml(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function stateName(v){const s=String(v||'').trim();return STATE_NAMES[s.toUpperCase()]||s}
+function formatTime(v){try{return v?new Date(v).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):null}catch{return null}}
+function degToCompass(deg){const n=num(deg);if(n==null)return'VRB';const d=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];return d[Math.round(n/22.5)%16]}
+function removeEmojis(t){let s=String(t||'');try{s=s.replace(/\p{Extended_Pictographic}/gu,'')}catch{s=s.replace(/[\u2600-\u27BF]/g,'')}return s.replace(/\uFE0F/g,'').replace(/\s+/g,' ').trim()}
+function cleanForecast(t){return removeEmojis(t).replace(/\s+/g,' ').trim()}
+function haversine(a,b,c,d){const r=x=>x*Math.PI/180,R=3958.7613,dl=r(c-a),dn=r(d-b),x=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dn/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+async function safeFetch(url,opts={}){const c=new AbortController(),timer=setTimeout(()=>c.abort(),opts.timeout||10000);try{const r=await fetch(url,{...opts,signal:c.signal});if(!r.ok)throw Error(`HTTP ${r.status}`);return r}finally{clearTimeout(timer)}}
+function windMph(m){if(!m)return 0;const v=num(m.value);if(v==null)return 0;const u=String(m.unitCode||'').toLowerCase();if(u.includes('km_h'))return Math.round(v*.621371);if(u.includes('m_s'))return Math.round(v*2.23694);return Math.round(v)}
 
-// ---------- State ----------
-let place = null;
-let currentConditions = null;
-let severeParams = null;
-let activeAlerts = [];
-let outlookData = null;
-let placeCache = {};
-let searchDebounce = null;
-let alertsPollTimer = null;
-let muted = false;
-let voices = [];
-let broadcastRunning = false;
+function init(){bindViews();bindSearch();bindLocation();bindMapControls();initBroadcast();setHealthUi();useGps(false,true)}
+function bindViews(){$$('.view-tab').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.view;$$('.view-tab').forEach(x=>x.classList.toggle('active',x===b));$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));if(v==='radar'){ensureRadar();updateRadarLocation()}if(v==='outlooks'){ensureSpcMap();renderSpcProduct()}setTimeout(()=>{radarMap?.invalidateSize();spcMap?.invalidateSize()},100)}))}
+function bindSearch(){$('locationSearch').addEventListener('input',()=>{clearTimeout(searchTimer);const q=$('locationSearch').value.trim();if(q.length<2){closeSuggestions();return}searchTimer=setTimeout(()=>performSearch(q),CONFIG.searchDebounceMs)});$('clearSearch').addEventListener('click',()=>{$('locationSearch').value='';closeSuggestions();$('locationSearch').focus()});document.addEventListener('click',e=>{if(!e.target.closest('.search-shell'))closeSuggestions()})}
+async function performSearch(q){searchController?.abort();searchController=new AbortController();try{const u=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=10&language=en&format=json&countryCode=US`,r=await fetch(u,{signal:searchController.signal});if(!r.ok)throw Error();const d=await r.json(),results=(d.results||[]).map(x=>({name:[x.name,stateName(x.admin1)].filter(Boolean).join(', '),detail:[x.admin2,stateName(x.admin1)].filter(Boolean).join(', '),lat:Number(x.latitude),lon:Number(x.longitude)}));renderSuggestions(results)}catch(e){if(e.name!=='AbortError')renderSuggestions([])}}
+function renderSuggestions(results){const box=$('searchSuggestions');box.innerHTML='';if(!results.length)box.innerHTML='<div class="empty-state">No matching U.S. locations found.</div>';else results.forEach(r=>{const b=document.createElement('button');b.type='button';b.className='search-result';b.innerHTML=`<strong>${escapeHtml(r.name)}</strong><span>${escapeHtml(r.detail)}</span>`;b.onclick=()=>{$('locationSearch').value=r.name;closeSuggestions();selectLocation({name:r.name,lat:r.lat,lon:r.lon},'search')};box.appendChild(b)});box.hidden=false;$('locationSearch').setAttribute('aria-expanded','true')}
+function closeSuggestions(){$('searchSuggestions').hidden=true;$('locationSearch').setAttribute('aria-expanded','false')}
+function bindLocation(){$('useGps').onclick=()=>useGps(true);$('returnGps').onclick=()=>useGps(true)}
+function useGps(showErrors=true,initial=false){if(!navigator.geolocation){health('gps','UNAVAILABLE');if(showErrors||initial)$('locationMeta').textContent='GPS unavailable. Search a U.S. location above.';return}health('gps','LOCATING');$('locationMeta').textContent='Requesting precise device location...';navigator.geolocation.getCurrentPosition(async p=>{state.deviceLat=p.coords.latitude;state.deviceLon=p.coords.longitude;const name=await reverseLocation(state.deviceLat,state.deviceLon);await selectLocation({name,lat:state.deviceLat,lon:state.deviceLon},'device');startMovingWatch()},()=>{health('gps','DENIED');if(showErrors||initial)$('locationMeta').textContent='GPS unavailable. Search a U.S. location above.'},{enableHighAccuracy:true,timeout:15000,maximumAge:15000})}
+async function reverseLocation(lat,lon){try{const r=await safeFetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,{headers:{Accept:'application/geo+json'}}),d=await r.json(),p=d.properties?.relativeLocation?.properties;return[p?.city,stateName(p?.state)].filter(Boolean).join(', ')||'Your GPS location'}catch{return'Your GPS location'}}
+function startMovingWatch(){if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);health('gps','TRACKING');locationWatchId=navigator.geolocation.watchPosition(async p=>{if(state.locationMode!=='device')return;const lat=p.coords.latitude,lon=p.coords.longitude;state.deviceLat=lat;state.deviceLon=lon;const dist=lastMoving.lat==null?Infinity:haversine(lastMoving.lat,lastMoving.lon,lat,lon),elapsed=Date.now()-lastMoving.at;if(dist>=CONFIG.movingRefreshMiles||elapsed>=CONFIG.movingRefreshMs){lastMoving={lat,lon,at:Date.now()};const name=await reverseLocation(lat,lon);await selectLocation({name,lat,lon},'device',true)}},()=>health('gps','DEGRADED'),{enableHighAccuracy:true,timeout:15000,maximumAge:20000})}
+async function selectLocation(place,mode,silent=false){state.place=place;state.locationMode=mode;state.locationReady=true;$('locationTitle').textContent=place.name;$('locationMeta').textContent=`${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} • loading official weather data`;$('headerLocation').textContent=mode==='device'?'GPS TRACKING':'FIXED LOCATION';$('returnGps').hidden=mode==='device';await refreshAll();if(!silent)$('locationMeta').textContent=`${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} • synchronized`}
 
-// ---------- Fallback location list (used only if live geocoding fails) ----------
-const fallbackCities = [
-  ['Norman, OK', 35.2226, -97.4395], ['Oklahoma City, OK', 35.4676, -97.5164], ['Tulsa, OK', 36.154, -95.9928],
-  ['Dallas, TX', 32.7767, -96.797], ['Houston, TX', 29.7604, -95.3698], ['Austin, TX', 30.2672, -97.7431],
-  ['Kansas City, MO', 39.0997, -94.5786], ['Wichita, KS', 37.6872, -97.3301], ['Denver, CO', 39.7392, -104.9903],
-  ['Chicago, IL', 41.8781, -87.6298], ['Atlanta, GA', 33.749, -84.388], ['Miami, FL', 25.7617, -80.1918],
-  ['New York, NY', 40.7128, -74.006], ['Los Angeles, CA', 34.0522, -118.2437], ['Seattle, WA', 47.6062, -122.3321],
-  ['Phoenix, AZ', 33.4484, -112.074], ['Minneapolis, MN', 44.9778, -93.265], ['Little Rock, AR', 34.7465, -92.2896],
-  ['Birmingham, AL', 33.5186, -86.8104], ['Nashville, TN', 36.1627, -86.7816],
-];
+async function refreshAll(){if(!state.place)return;setLiveState('UPDATING');await Promise.allSettled([loadNwsContext(),loadModel(),loadAlerts()]);registerWarnings();detectChanges();renderAll();updateRadarLocation();renderRadarWarnings();updateSpcMarker();setLiveState(activeUrgentWarnings().length?'WARNING':'CURRENT');scheduleTimers()}
+async function loadNwsContext(){health('observation','LOADING');health('forecast','LOADING');try{const r=await safeFetch(`https://api.weather.gov/points/${state.place.lat.toFixed(4)},${state.place.lon.toFixed(4)}`,{headers:{Accept:'application/geo+json'}}),d=await r.json(),p=d.properties||{};const [o,f]=await Promise.all([loadObservation(p.observationStations),loadForecast(p.forecast)]);state.observation=o;state.forecast=f;health('observation',o?'CURRENT':'UNAVAILABLE');health('forecast',f.length?'CURRENT':'UNAVAILABLE')}catch{state.observation=null;state.forecast=[];health('observation','ERROR');health('forecast','ERROR')}}
+async function loadObservation(url){if(!url)return null;try{const r=await safeFetch(url,{headers:{Accept:'application/geo+json'}}),d=await r.json();for(const s of(d.features||[]).slice(0,6)){const id=s.properties?.stationIdentifier||s.id?.split('/').pop();if(!id)continue;try{const or=await safeFetch(`https://api.weather.gov/stations/${encodeURIComponent(id)}/observations/latest`,{timeout:7000,headers:{Accept:'application/geo+json'}}),od=await or.json(),p=od.properties||{},tc=num(p.temperature?.value);if(tc==null)continue;return{stationId:id,stationName:s.properties?.name||id,timestamp:p.timestamp||null,tempF:cToF(tc),dewF:cToF(p.dewpoint?.value),humidity:round(p.relativeHumidity?.value),pressureMb:p.barometricPressure?.value!=null?Math.round(Number(p.barometricPressure.value)/100):null,windSpd:windMph(p.windSpeed),windG:windMph(p.windGust),windDeg:num(p.windDirection?.value)||0,summary:removeEmojis(p.textDescription||'')}}catch{}}}catch{}return null}
+async function loadForecast(url){if(!url)return[];try{const r=await safeFetch(url,{headers:{Accept:'application/geo+json'}}),d=await r.json();return d.properties?.periods||[]}catch{return[]}}
+async function loadModel(){health('model','LOADING');try{const q=new URLSearchParams({latitude:state.place.lat,longitude:state.place.lon,current:'temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m',hourly:'cape,freezing_level_height,wind_speed_10m,wind_speed_180m,wind_direction_10m,wind_gusts_10m',temperature_unit:'fahrenheit',wind_speed_unit:'mph',forecast_days:'1',timezone:'auto'}),r=await safeFetch(`https://api.open-meteo.com/v1/forecast?${q}`),d=await r.json(),c=d.current||{},h=d.hourly||{};let i=(h.time||[]).findIndex(t=>new Date(t).getTime()>=Date.now()-1800000);if(i<0)i=0;state.model={tempF:round(c.temperature_2m),feelsF:round(c.apparent_temperature),humidity:round(c.relative_humidity_2m),dewF:round(c.dew_point_2m),weatherCode:num(c.weather_code),windSpd:round(c.wind_speed_10m)||0,windDeg:num(c.wind_direction_10m)||0,windG:round(c.wind_gusts_10m)||0,cape:round(h.cape?.[i]),freezingLevelM:round(h.freezing_level_height?.[i]),windLow:round(h.wind_speed_10m?.[i])||0,windHigh:round(h.wind_speed_180m?.[i])||0};health('model','CURRENT')}catch{state.model=null;health('model','ERROR')}}
+async function loadAlerts(){health('alerts','LOADING');try{const r=await safeFetch(`https://api.weather.gov/alerts/active?point=${state.place.lat.toFixed(4)},${state.place.lon.toFixed(4)}`,{headers:{Accept:'application/geo+json'}}),d=await r.json();state.alerts=d.features||[];health('alerts','CURRENT');return state.alerts}catch{state.alerts=[];health('alerts','ERROR');return[]}}
+function alertText(f){const p=f?.properties||{};return[p.event,p.headline,p.description,p.instruction].filter(Boolean).join(' ').toLowerCase()}
+function isCritical(f){const t=alertText(f);return t.includes('tornado emergency')||t.includes('flash flood emergency')||t.includes('particularly dangerous situation')||/\bpds\b/.test(t)}
+function isUrgentWarning(f){if(isCritical(f))return true;const e=String(f?.properties?.event||'').toLowerCase();return['tornado warning','severe thunderstorm warning','flash flood warning','snow squall warning','blizzard warning','ice storm warning'].some(x=>e.includes(x))}
+function isWatch(f){const e=String(f?.properties?.event||'').toLowerCase();return['tornado watch','severe thunderstorm watch','flash flood watch','flood watch','winter storm watch','high wind watch','excessive heat watch','fire weather watch'].some(x=>e.includes(x))}
+function alertPriority(f){const e=String(f?.properties?.event||'').toLowerCase(),o=['tornado emergency','tornado warning','flash flood emergency','severe thunderstorm warning','flash flood warning','snow squall warning','blizzard warning','ice storm warning','tornado watch','severe thunderstorm watch'];const i=o.findIndex(x=>e.includes(x));return i<0?50:i}
+function activeUrgentWarnings(){return state.alerts.filter(isUrgentWarning).sort((a,b)=>alertPriority(a)-alertPriority(b))}
+function threatLevel(){if(state.alerts.some(isCritical))return 3;if(state.alerts.some(isUrgentWarning))return 2;if(state.alerts.some(isWatch))return 1;return 0}
+function registerWarnings(){let fresh=false;state.alerts.filter(isUrgentWarning).forEach(w=>{if(!knownWarningIds.has(w.id)){knownWarningIds.add(w.id);fresh=true}});if(fresh)onNewUrgentWarning()}
+function scheduleTimers(){clearInterval(alertPollTimer);clearInterval(fullRefreshTimer);alertPollTimer=setInterval(async()=>{if(!state.place)return;await loadAlerts();registerWarnings();renderThreatState();renderAlerts();renderRadarWarnings();setHealthUi()},CONFIG.alertPollMs);fullRefreshTimer=setInterval(()=>state.place&&refreshAll(),CONFIG.fullRefreshMs)}
 
-const facts = [
-  'A supercell can persist for hours when wind shear keeps the updraft separated from rain-cooled air.',
-  'CAPE estimates buoyant energy; high CAPE alone does not guarantee severe storms without lift and shear.',
-  'A hook echo can indicate rotation, but warnings rely on multiple radar and environmental clues.',
-  'The safest tornado shelter is a basement or small interior room on the lowest floor.',
-];
+function currentTemp(){return state.observation?.tempF??state.model?.tempF??null}function currentDew(){return state.observation?.dewF??state.model?.dewF??null}function currentWind(){return state.observation?.windSpd??state.model?.windSpd??0}function currentGust(){return state.observation?.windG??state.model?.windG??0}
+function currentPeriod(){const n=new Date();return state.forecast.find(p=>new Date(p.startTime)<=n&&n<new Date(p.endTime))||state.forecast[0]||null}
+function tonightPeriod(){const n=new Date();return state.forecast.find(p=>!p.isDaytime&&new Date(p.endTime)>n)||null}
+function sky(code){const c=Number(code);if(c===0)return'clear skies';if(c===1)return'mostly clear skies';if(c===2)return'partly cloudy skies';if(c===3)return'cloudy skies';if([45,48].includes(c))return'fog';if([51,53,55].includes(c))return'drizzle';if([61,63,65,80,81,82].includes(c))return'rain showers';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'thunderstorms';return'current weather'}
+function dewLabel(d){if(d<60)return'comfortable';if(d<65)return'a little humid';if(d<70)return'muggy';if(d<75)return'oppressive';return'very humid'}
+function detectChanges(){const s={temp:currentTemp(),wind:currentWind(),gust:currentGust(),alertIds:new Set(state.alerts.map(a=>a.id))};if(!state.previousSnapshot){state.previousSnapshot=s;state.changes=[{text:'Baseline established. Vector will track changes from this point forward.',important:false}];return}const p=state.previousSnapshot,c=[];if(p.temp!=null&&s.temp!=null&&p.temp!==s.temp){const d=s.temp-p.temp;c.push({text:`Temperature ${d>0?'rose':'fell'} ${Math.abs(d)} degree${Math.abs(d)===1?'':'s'} to ${s.temp}°F.`,important:Math.abs(d)>=5})}if(Math.abs((s.wind||0)-(p.wind||0))>=5)c.push({text:`Sustained wind changed from ${p.wind||0} to ${s.wind||0} mph.`,important:(s.wind||0)>=25});if(Math.abs((s.gust||0)-(p.gust||0))>=8)c.push({text:`Wind gusts changed from ${p.gust||0} to ${s.gust||0} mph.`,important:(s.gust||0)>=40});s.alertIds.forEach(id=>{if(!p.alertIds.has(id)){const a=state.alerts.find(x=>x.id===id);c.push({text:`New alert: ${a?.properties?.event||'Weather alert'}.`,important:true})}});p.alertIds.forEach(id=>{if(!s.alertIds.has(id))c.push({text:'An alert from the previous update is no longer active for this location.',important:true})});if(!c.length)c.push({text:'No significant changes since the previous weather update.',important:false});state.previousSnapshot=s;state.changes=c}
+function renderAll(){renderConditions();renderForecast();renderAlerts();renderChanges();renderLabs();renderThreatState();setHealthUi()}
+function renderConditions(){const t=currentTemp(),f=state.model?.feelsF??state.observation?.tempF??null,d=currentDew(),h=state.observation?.humidity??state.model?.humidity??null,w=currentWind(),g=currentGust(),wd=state.observation?.windDeg??state.model?.windDeg??0;$('currentTemp').textContent=t!=null?`${t}°`:'--°';$('feelsValue').textContent=f!=null?`${f}°F`:'--';$('dewValue').textContent=d!=null?`${d}°F`:'--';$('humidityValue').textContent=h!=null?`${h}%`:'--';$('windValue').textContent=`${degToCompass(wd)} ${w} mph`;$('gustValue').textContent=g?`${g} mph`:'--';$('pressureValue').textContent=state.observation?.pressureMb!=null?`${state.observation.pressureMb} mb`:'--';$('currentSummary').textContent=state.observation?.summary||'Current model conditions loaded.';$('conditionHeadline').textContent=state.place?.name||'Waiting for location';if(state.observation?.timestamp){const m=Math.max(0,Math.round((Date.now()-new Date(state.observation.timestamp))/60000));$('observationAge').textContent=m<=1?'LATEST OBS':`${m} MIN OLD`}else $('observationAge').textContent=state.observation?'OBS AVAILABLE':'MODEL FALLBACK';$('dataFreshness').textContent=state.observation?'NWS OBSERVATION + MODEL':state.model?'MODEL FALLBACK':'DATA LIMITED'}
+function renderForecast(){const p=currentPeriod();$('forecastText').textContent=p?.detailedForecast||p?.shortForecast||'Detailed NWS forecast is unavailable.'}
+function renderAlerts(){const s=$('alertStack');if(!state.alerts.length){s.innerHTML='<div class="empty-state">No active NWS alerts for this location.</div>';return}s.innerHTML=state.alerts.slice(0,5).map(f=>{const p=f.properties||{},cls=isUrgentWarning(f)?'warning':isWatch(f)?'watch':'',ex=formatTime(p.expires),area=(p.areaDesc||state.place?.name||'').split(';')[0];return`<div class="alert-card ${cls}"><strong>${escapeHtml(p.event||'Weather Alert')}</strong><span>${escapeHtml(area)}${ex?` • until ${escapeHtml(ex)}`:''}</span><p>${escapeHtml(String(p.headline||p.description||'').replace(/\s+/g,' ').slice(0,240))}</p></div>`}).join('')}
+function renderChanges(){$('changeTime').textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});$('changeList').innerHTML=state.changes.map(c=>`<div class="change-item ${c.important?'important':''}">${escapeHtml(c.text)}</div>`).join('')}
+function renderLabs(){const m=state.model;$('capeValue').textContent=m?.cape!=null?`${m.cape.toLocaleString()} J/kg`:'--';const tc=state.observation?.tempF!=null?fToC(state.observation.tempF):null,dc=state.observation?.dewF!=null?fToC(state.observation.dewF):null,l=tc!=null&&dc!=null?Math.max(0,Math.round(125*(tc-dc))):null;$('lclValue').textContent=l!=null?`${l.toLocaleString()} m est.`:'--';const wd=m?Math.max(0,Math.round((m.windHigh||0)-(m.windLow||0))):null;$('shearValue').textContent=wd!=null?`${wd} mph`:'--';$('freezingValue').textContent=m?.freezingLevelM!=null?`${Math.round(m.freezingLevelM*3.28084).toLocaleString()} ft`:'--'}
+function renderThreatState(){const l=threatLevel(),t=$('headerThreat');document.body.classList.toggle('severe-mode',l>=2);if(l===3){t.textContent='CRITICAL';t.dataset.level='critical'}else if(l===2){t.textContent='WARNING';t.dataset.level='warning'}else if(l===1){t.textContent='WATCH';t.dataset.level='watch'}else{t.textContent='NORMAL';t.dataset.level='normal'}const w=activeUrgentWarnings()[0];$('breakingBar').hidden=!w;if(w)$('breakingText').textContent=`${w.properties?.event||'WEATHER WARNING'} — ${state.place?.name||'CURRENT LOCATION'}`}
+function setHealthUi(){$('healthObs').textContent=state.health.observation;$('healthForecast').textContent=state.health.forecast;$('healthAlerts').textContent=state.health.alerts;$('healthModel').textContent=state.health.model;$('healthSpc').textContent=state.health.spc;$('healthGps').textContent=state.health.gps}
+function setLiveState(text){const b=$('liveBadge');b.querySelector('strong').textContent=text;b.classList.toggle('on',['LIVE','CURRENT'].includes(text));b.classList.toggle('warning',text.includes('WARNING'))}
 
-const producerStyles = [
-  { name: 'calm studio read', rate: 0.95, pitch: 1.0 },
-  { name: 'urgent field update', rate: 1.15, pitch: 1.08 },
-  { name: 'plain-language explainer', rate: 0.92, pitch: 0.96 },
-  { name: 'late-night weather radio tone', rate: 0.85, pitch: 0.88 },
-];
+function bindMapControls(){$$('[data-radar-zoom]').forEach(b=>b.onclick=()=>{radarZoomMode=b.dataset.radarZoom;$$('[data-radar-zoom]').forEach(x=>x.classList.toggle('active',x===b));updateRadarLocation()});$('radarWarnings').onclick=()=>{radarWarningsVisible=!radarWarningsVisible;$('radarWarnings').classList.toggle('active',radarWarningsVisible);$('radarWarnings').textContent=radarWarningsVisible?'WARNINGS ON':'WARNINGS OFF';renderRadarWarnings()};$('radarRefresh').onclick=refreshRadar;$$('.product-tab').forEach(b=>b.onclick=()=>{$$('.product-tab').forEach(x=>x.classList.toggle('active',x===b));spcProduct={layer:Number(b.dataset.spcLayer),type:b.dataset.product};renderSpcProduct()})}
+function ensureRadar(){if(radarMap||typeof L==='undefined')return;radarMap=L.map('radarMap',{zoomControl:true,attributionControl:true}).setView([39,-98],4);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(radarMap);refreshRadar();renderRadarWarnings();updateRadarLocation()}
+function refreshRadar(){if(!radarMap)return;$('radarStatus').textContent='LOADING';if(radarLayer)radarMap.removeLayer(radarLayer);radarLayer=L.tileLayer.wms(CONFIG.mrmsWms,{layers:CONFIG.mrmsLayer,format:'image/png',transparent:true,opacity:.78,version:'1.3.0',attribution:'NOAA/NWS MRMS'}).addTo(radarMap);radarLayer.on('load',()=>{$('radarStatus').textContent='CURRENT';$('radarLoaded').textContent=`Loaded ${new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`});radarLayer.on('tileerror',()=>{$('radarStatus').textContent='RETRYING'})}
+function updateRadarLocation(){if(!radarMap||!state.place)return;const ll=[state.place.lat,state.place.lon];if(!radarMarker){const icon=L.divIcon({className:'',html:'<div class="sv-location-marker"></div>',iconSize:[18,18],iconAnchor:[9,9]});radarMarker=L.marker(ll,{icon}).addTo(radarMap)}else radarMarker.setLatLng(ll);radarMarker.bindTooltip(state.place.name,{direction:'top'});radarMap.setView(ll,radarZoomMode==='local'?9:radarZoomMode==='state'?7:5);renderRadarWarnings()}
+function renderRadarWarnings(){if(!radarMap)return;if(radarWarningsLayer)radarMap.removeLayer(radarWarningsLayer);if(!radarWarningsVisible)return;radarWarningsLayer=L.geoJSON(state.alerts.filter(a=>a.geometry&&isUrgentWarning(a)),{style:warningStyle,onEachFeature:(f,l)=>{const p=f.properties||{};l.bindPopup(`<strong>${escapeHtml(p.event||'Weather Warning')}</strong><br>${escapeHtml((p.areaDesc||'').split(';')[0])}`)}}).addTo(radarMap)}
+function warningStyle(f){const e=String(f.properties?.event||'').toLowerCase();if(e.includes('tornado'))return{color:'#ff2020',weight:4,fillColor:'#ff2020',fillOpacity:.08};if(e.includes('severe thunderstorm'))return{color:'#ffb000',weight:3,fillColor:'#ffb000',fillOpacity:.07};if(e.includes('flash flood'))return{color:'#29d65b',weight:3,fillColor:'#29d65b',fillOpacity:.06};return{color:'#ff6633',weight:2,fillOpacity:.04}}
+function ensureSpcMap(){if(spcMap||typeof L==='undefined')return;spcMap=L.map('spcMap',{zoomControl:true,attributionControl:true}).setView([38.5,-97.5],4);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd',attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(spcMap)}
+async function fetchSpcLayer(id){const u=`${CONFIG.spcService}/${id}/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson`;return(await safeFetch(u,{timeout:12000})).json()}
+async function renderSpcProduct(){ensureSpcMap();if(!spcMap)return;health('spc','LOADING');$('spcStatus').textContent='LOADING';try{const d=await fetchSpcLayer(spcProduct.layer);spcFeatures=d.features||[];if(spcLayer)spcMap.removeLayer(spcLayer);spcLayer=L.geoJSON(d,{style:f=>spcStyle(f,spcProduct.type),onEachFeature:(f,l)=>l.bindPopup(`<strong>${escapeHtml(spcLabel(f,spcProduct.type))}</strong>`)}).addTo(spcMap);updateSpcMarker();updateSpcRisk();$('spcValid').textContent=spcFeatures[0]?.properties?.valid?`Valid ${spcFeatures[0].properties.valid}`:'Official SPC product';$('spcStatus').textContent='OFFICIAL';health('spc','CURRENT');spcMap.setView([38.5,-97.5],4);setTimeout(()=>spcMap.invalidateSize(),100)}catch{$('spcStatus').textContent='UNAVAILABLE';$('spcLocalRisk').textContent='NO DATA';$('spcValid').textContent='SPC service unavailable';health('spc','ERROR')}}
+function updateSpcMarker(){if(!spcMap||!state.place)return;const ll=[state.place.lat,state.place.lon];if(!spcMarker)spcMarker=L.circleMarker(ll,{radius:7,color:'#fff',weight:2,fillColor:'#38d7ff',fillOpacity:1}).addTo(spcMap);else spcMarker.setLatLng(ll);spcMarker.bindTooltip(state.place.name,{direction:'top'})}
+function pointInGeom(pt,g){if(!g)return false;if(g.type==='Polygon')return pointInPoly(pt,g.coordinates);if(g.type==='MultiPolygon')return g.coordinates.some(p=>pointInPoly(pt,p));return false}function pointInPoly(pt,c){if(!c?.[0]||!ringContains(pt,c[0]))return false;for(let i=1;i<c.length;i++)if(ringContains(pt,c[i]))return false;return true}function ringContains([x,y],ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const[xi,yi]=ring[i],[xj,yj]=ring[j],hit=(yi>y)!==(yj>y)&&x<((xj-xi)*(y-yi))/(yj-yi)+xi;if(hit)inside=!inside}return inside}
+function updateSpcRisk(){if(!state.place||!spcFeatures.length){$('spcLocalRisk').textContent='NO POLYGON';return}const hits=spcFeatures.filter(f=>f.geometry&&pointInGeom([state.place.lon,state.place.lat],f.geometry));$('spcLocalRisk').textContent=hits.length?spcLabel(hits[hits.length-1],spcProduct.type):(spcProduct.type==='categorical'?'NO CATEGORICAL RISK':'BELOW THRESHOLD')}
+function spcLabel(f,type){const p=f.properties||{},dn=Number(p.dn);if(type==='categorical')return SPC_CAT[dn]||p.label||p.LABEL||`CATEGORY ${dn||'--'}`;const v=Number.isFinite(dn)?dn:Number(String(p.label||'').replace(/[^\d.]/g,''));return Number.isFinite(v)?`${v}%`:(p.label||p.LABEL||'OUTLOOK')}
+function spcStyle(f,type){const dn=Number(f.properties?.dn);if(type==='categorical'){const c={2:'#7abf7a',3:'#66c766',4:'#f4e65e',5:'#f6a13b',6:'#f05454',7:'#ea5fea'}[dn]||'#7aa67a';return{color:c,weight:2,fillColor:c,fillOpacity:.25}}const c={2:'#79ba7a',5:'#8f9ee6',10:'#00c5d8',15:'#f0df4b',30:'#f4893c',45:'#e84242',60:'#d84cd8'}[dn]||'#6c9b75';return{color:c,weight:2,fillColor:c,fillOpacity:.3}}
 
-// ---------- Init ----------
-function init() {
-  document.querySelectorAll('[data-page-link]').forEach((link) => link.addEventListener('click', route));
-  window.addEventListener('hashchange', route);
-  $('locationSearch').addEventListener('input', onSearchInput);
-  $('useSearch').addEventListener('click', searchLocation);
-  $('useGps').addEventListener('click', () => useGps(true));
-  $('chaserToggle').addEventListener('click', toggleChaser);
-  $('startBroadcast').addEventListener('click', broadcast);
-  $('testFact').addEventListener('click', () => logLine(random(facts)));
-  $('testSevere').addEventListener('click', () => severeInterrupt('This is a test of the Storm Vector severe weather interrupt system.'));
-  $('muteToggle').addEventListener('click', toggleMute);
-  route();
+const normalOpeners=['Still with you in {location}. Here is the next weather check.','Here is the latest update for {location}.','I am still monitoring {location}. Here is what I am seeing now.','Back with another StormVector check for {location}.','Another live check for {location}. I am still watching the weather with you.','Vector here with your next update for {location}.'];
+const severe={first:['Breaking weather now. A {event} is in effect for {area}.','StormVector is switching to warning coverage. A {event} is active for {area}.','Immediate weather alert for {area}. The National Weather Service has issued a {event}.','Attention in {area}. We have an active {event}.'],cont:['I am staying on this {event} for {area}.','Continuing urgent coverage of the {event} affecting {area}.','This warning remains our only priority. The {event} continues for {area}.','Still tracking the {event} for {area}. Here is the newest warning information.','I am not leaving this warning. The {event} remains active for {area}.','Routine weather remains on hold. We are staying with the {event} affecting {area}.','Vector remains in warning mode for {area}. Here is the latest on the {event}.','Another warning update now for {area}. The {event} remains active.'],move:['The National Weather Service reports the storm moving {direction} at {speed} miles per hour.','Current warning movement is {direction} at about {speed} miles per hour.','The warned storm is tracking {direction} at {speed} miles per hour.','Storm motion from the warning is {direction} at roughly {speed} miles per hour.','The warning text shows motion {direction} at {speed} miles per hour.'],expire:['The warning is currently in effect until {expires}.','Right now, the warning expiration time is {expires}.','Unless the National Weather Service updates it sooner, this warning runs until {expires}.','The latest expiration time on this warning is {expires}.'],keep:['I will keep refreshing this warning and tell you if the area, motion, wording, or expiration changes.','I am continuing to monitor the National Weather Service warning for any update.','If the warning is replaced, expanded, canceled, or upgraded, Vector will break in with the change.','Severe coverage continues until this warning no longer affects the selected location.','Routine weather stays on hold while this warning remains active.']};
+function initBroadcast(){try{listenerMemory=JSON.parse(localStorage.getItem(CONFIG.listenerKey)||'{}')||{}}catch{listenerMemory={}};if('speechSynthesis'in window){voices=speechSynthesis.getVoices();speechSynthesis.addEventListener('voiceschanged',()=>voices=speechSynthesis.getVoices())}$('startBroadcast').onclick=()=>{if(!state.locationReady){setCaption('Choose a location before starting Vector.');return}broadcastRunning=true;muted=false;$('muteToggle').textContent='STOP';buildRundown();startRundown()};$('replayLast').onclick=()=>{if(currentRundown.length&&!muted){cancelSpeech();speakLine(Math.min(currentLineIndex,currentRundown.length-1))}};$('muteToggle').onclick=()=>{muted=!muted;if(muted){cancelSpeech();setLiveState('MUTED');$('muteToggle').textContent='RESUME'}else{$('muteToggle').textContent='STOP';broadcastRunning=true;buildRundown();startRundown()}}}
+function onNewUrgentWarning(){if(!broadcastRunning||muted)return;cancelSpeech();buildRundown();startRundown()}
+function buildRundown(){const u=activeUrgentWarnings();if(u.length){currentRundown=severeRundown(u[0]);currentLineIndex=0;remember();return}const l=state.place?.name||'your area',lines=[];if(broadcastLoopCount===0)lines.push(listenerMemory.lastSeen?`Welcome back to StormVector. I have ${l} loaded and I am still watching the weather with you.`:`Vector here. I have ${l} loaded. Here is where things stand.`);else lines.push(fill(normalOpeners[broadcastLoopCount%normalOpeners.length],{location:l}));const r=broadcastLoopCount%4;if(r===0){const t=currentTemp(),f=state.model?.feelsF;if(t!=null)lines.push(`Right now it is ${t} degrees${f!=null&&Math.abs(f-t)>=3?`, feeling like ${f}`:''}. ${sky(state.model?.weatherCode)}.`);const p=currentPeriod();if(p)lines.push(`Looking ahead, ${cleanForecast(p.detailedForecast||p.shortForecast)}.`)}else if(r===1){const w=currentWind(),g=currentGust(),d=state.observation?.windDeg??state.model?.windDeg??0;lines.push(`Wind is ${degToCompass(d)} at ${w} miles per hour${g>w+5?`, gusting near ${g}`:''}.`);const dew=currentDew();if(dew!=null)lines.push(`The dew point is ${dew} degrees, so the air feels ${dewLabel(dew)}.`)}else if(r===2){const p=tonightPeriod()||currentPeriod();if(p)lines.push(`For the next forecast period, ${cleanForecast(p.detailedForecast||p.shortForecast)}.`)}else{const c=state.changes.filter(x=>x.important).slice(0,2);if(c.length){lines.push('Here is what changed since the last update.');c.forEach(x=>lines.push(x.text))}else lines.push(`Nothing significant has changed around ${l} since the previous update.`)}const watches=state.alerts.filter(isWatch);if(watches.length){const p=watches[0].properties||{};lines.push(`A ${p.event||'weather watch'} remains in effect for ${(p.areaDesc||l).split(';')[0]}. Stay weather-aware and be ready to act if a warning is issued.`)}lines.push(broadcastLoopCount===0?'That is your StormVector update. I am staying with you and I will keep watching for changes.':'That is the latest check. I am still monitoring the weather with you.');currentRundown=lines.filter(Boolean);currentLineIndex=0;remember()}
+function parseMovement(t){let m=String(t).match(/moving\s+([NSEW]{1,3})\s+at\s+(\d+)\s*mph/i);if(m)return{direction:m[1].toUpperCase(),speed:Number(m[2])};m=String(t).match(/moving\s+(north|south|east|west|northeast|northwest|southeast|southwest)\s+at\s+(\d+)\s*mph/i);return m?{direction:m[1],speed:Number(m[2])}:null}
+function safety(f){const e=String(f?.properties?.event||'').toLowerCase();if(e.includes('tornado'))return'If you are in the warned area, take shelter now in a basement or a small interior room on the lowest floor of a sturdy building. Stay away from windows and protect your head and neck.';if(e.includes('severe thunderstorm'))return'Move indoors now and stay away from windows. Remain inside until the warning has expired or the National Weather Service says the threat has passed.';if(e.includes('flash flood'))return'Move away from flood-prone areas. Never drive through flooded roads. Turn around, do not drown.';if(e.includes('snow squall'))return'Avoid or delay travel if possible. If you are already driving, slow down, use headlights, and leave much more stopping distance.';return removeEmojis(f?.properties?.instruction||'Follow official National Weather Service instructions for this alert.')}
+function severeRundown(a){const p=a.properties||{},event=p.event||'weather warning',area=(p.areaDesc||state.place?.name||'your area').split(';')[0],m=parseMovement(p.description||''),expires=formatTime(p.expires||p.ends),v={event,area,direction:m?.direction||'',speed:m?.speed||'',expires:expires||''},lines=[fill(pick(broadcastLoopCount===0?severe.first:severe.cont,'sev-open'),v)];if(m)lines.push(fill(pick(severe.move,'sev-move'),v));if(expires)lines.push(fill(pick(severe.expire,'sev-exp'),v));const h=removeEmojis(p.headline||'');if(h&&Math.random()>.3)lines.push(h);lines.push(safety(a));lines.push(pick(severe.keep,'sev-keep'));return lines.filter(Boolean)}
+function fill(t,v){return String(t).replace(/\{(\w+)\}/g,(_,k)=>v[k]??'').replace(/\s+/g,' ').trim()}function pick(a,k){const prev=phraseMemory.get(k),c=a.map((_,i)=>i).filter(i=>i!==prev),i=c[Math.floor(Math.random()*c.length)]??0;phraseMemory.set(k,i);return a[i]}
+function remember(){listenerMemory.lastSeen=Date.now();listenerMemory.lastLocation=state.place?.name||null;listenerMemory.rundowns=(Number(listenerMemory.rundowns)||0)+1;try{localStorage.setItem(CONFIG.listenerKey,JSON.stringify(listenerMemory))}catch{}}
+function startRundown(){if(!broadcastRunning||muted||!currentRundown.length)return;clearTimeout(speechTimer);speechGeneration++;try{speechSynthesis.cancel()}catch{}currentLineIndex=0;speakLine(0)}
+function speakLine(i){if(!broadcastRunning||muted)return;if(i>=currentRundown.length){$('vectorAvatar').classList.remove('speaking');scheduleNext();return}currentLineIndex=i;const text=currentRundown[i],sev=activeUrgentWarnings().length>0;setCaption(text);$('captionTopic').textContent=sev?'BREAKING WEATHER':topic(text);setLiveState(sev?'WARNING':'LIVE');if(!('speechSynthesis'in window)){speechTimer=setTimeout(()=>speakLine(i+1),1500);return}const gen=speechGeneration,u=new SpeechSynthesisUtterance(renderSpeech(text)),voice=voices.find(v=>/en-US/i.test(v.lang)&&/Daniel|Aaron|David|Alex|Natural/i.test(v.name))||voices.find(v=>/en-US/i.test(v.lang))||voices[0];if(voice)u.voice=voice;u.rate=sev?.94:.97;u.pitch=1;u.onstart=()=>gen===speechGeneration&&$('vectorAvatar').classList.add('speaking');u.onend=()=>{if(gen!==speechGeneration)return;$('vectorAvatar').classList.remove('speaking');speechTimer=setTimeout(()=>speakLine(i+1),sev?420:340)};u.onerror=()=>{if(gen===speechGeneration)speechTimer=setTimeout(()=>speakLine(i+1),550)};speechSynthesis.speak(u)}
+function scheduleNext(){clearTimeout(speechTimer);if(!broadcastRunning||muted)return;const sev=activeUrgentWarnings().length>0;setLiveState(sev?'WARNING MONITOR':'MONITORING');speechTimer=setTimeout(()=>{if(!broadcastRunning||muted)return;broadcastLoopCount++;buildRundown();startRundown()},sev?CONFIG.severeLoopGapMs:CONFIG.normalLoopGapMs)}
+function cancelSpeech(){speechGeneration++;clearTimeout(speechTimer);try{speechSynthesis.cancel()}catch{}$('vectorAvatar')?.classList.remove('speaking')}
+function setCaption(t){$('captionText').textContent=removeEmojis(t);$('ariaLive').textContent='';requestAnimationFrame(()=>$('ariaLive').textContent=removeEmojis(t))}function topic(t){const l=t.toLowerCase();if(/warning|watch|emergency/.test(l))return'WEATHER ALERT';if(/wind|gust/.test(l))return'WIND';if(/tonight|forecast|looking ahead/.test(l))return'FORECAST';if(/changed|previous update/.test(l))return'WHAT CHANGED';return'CURRENT CONDITIONS'}
+function renderSpeech(t){let s=removeEmojis(t).replace(/\bSPC\b/g,'S P C').replace(/\bNWS\b/g,'National Weather Service').replace(/\bmph\b/gi,'miles per hour').replace(/°F/g,' degrees');Object.entries(STATE_NAMES).forEach(([a,f])=>s=s.replace(new RegExp(`\\b${a}\\b`,'g'),f));return s}
 
-  if ('speechSynthesis' in window) {
-    loadVoices();
-    speechSynthesis.addEventListener('voiceschanged', loadVoices);
-  }
-
-  // GPS-first: try to locate the user automatically so nothing needs to be typed.
-  useGps(false, true);
-}
-
-function route() {
-  const page = (location.hash || '#conditions').slice(1);
-  document.querySelectorAll('.page').forEach((section) => section.classList.toggle('active', section.id === page));
-  document.querySelectorAll('[data-page-link]').forEach((link) => link.classList.toggle('active', link.dataset.pageLink === page));
-}
-
-// ---------- Location search (live geocoding, covers cities/towns/villages) ----------
-function onSearchInput() {
-  clearTimeout(searchDebounce);
-  const query = $('locationSearch').value.trim();
-  if (query.length < 2) return;
-  searchDebounce = setTimeout(() => searchPlaces(query), 400);
-}
-
-async function searchPlaces(query) {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&addressdetails=1&limit=8&q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error('geocoding request failed');
-    const results = await res.json();
-    placeCache = {};
-    $('citySuggestions').innerHTML = results
-      .map((r) => {
-        const label = formatPlaceLabel(r);
-        placeCache[label] = { name: label, lat: parseFloat(r.lat), lon: parseFloat(r.lon) };
-        return `<option value="${escapeHtml(label)}"></option>`;
-      })
-      .join('');
-  } catch (err) {
-    // Live search failed (offline, or the geocoder is unreachable) — fall back to the static list.
-    $('citySuggestions').innerHTML = fallbackCities
-      .filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
-      .map(([name]) => `<option value="${name}"></option>`)
-      .join('');
-  }
-}
-
-function formatPlaceLabel(result) {
-  const a = result.address || {};
-  const locality = a.city || a.town || a.village || a.hamlet || a.municipality || result.name || result.display_name.split(',')[0];
-  const state = a.state_code || a.state || '';
-  return state ? `${locality}, ${state}` : locality;
-}
-
-function searchLocation() {
-  const raw = $('locationSearch').value.trim();
-  if (!raw) return;
-  if (placeCache[raw]) {
-    updateLocation(placeCache[raw]);
-    return;
-  }
-  const fallback = fallbackCities.find(([name]) => name.toLowerCase() === raw.toLowerCase() || name.toLowerCase().startsWith(raw.toLowerCase()));
-  if (fallback) {
-    updateLocation({ name: fallback[0], lat: fallback[1], lon: fallback[2] });
-  } else {
-    logIfBroadcastPage(`Could not match "${raw}" to a location yet — keep typing or pick a suggestion.`);
-  }
-}
-
-// ---------- GPS ----------
-function useGps(showErrors, isInitialLoad = false) {
-  if (!navigator.geolocation) {
-    if (showErrors) logIfBroadcastPage('This browser does not support GPS location.');
-    if (isInitialLoad) updateLocation({ name: 'Norman, OK', lat: 35.2226, lon: -97.4395 });
-    return;
-  }
-  $('locationMeta').textContent = 'Requesting GPS location…';
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude, longitude } = pos.coords;
-      const name = await reverseGeocode(latitude, longitude);
-      updateLocation({ name, lat: latitude, lon: longitude });
-    },
-    () => {
-      if (showErrors) logIfBroadcastPage('GPS was not available or was denied — search for a city instead.');
-      if (isInitialLoad) {
-        $('locationMeta').textContent = 'GPS unavailable — showing a default city. Search above to change it.';
-        updateLocation({ name: 'Norman, OK', lat: 35.2226, lon: -97.4395 });
-      }
-    },
-    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-  );
-}
-
-async function reverseGeocode(lat, lon) {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error('reverse geocode failed');
-    const data = await res.json();
-    return formatPlaceLabel(data);
-  } catch (err) {
-    return 'Your GPS location';
-  }
-}
-
-// ---------- Orchestrator ----------
-async function updateLocation(nextPlace) {
-  place = nextPlace;
-  $('locationTitle').textContent = place.name;
-  $('locationMeta').textContent = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} • loading live data…`;
-
-  await Promise.allSettled([loadConditions(), loadSevereParams(), loadOutlook()]);
-  await loadAlerts();
-
-  $('locationMeta').textContent = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} • synchronized across all pages`;
-  renderConditions();
-  renderOutlook();
-  renderField();
-  startAlertsPolling();
-}
-
-// ---------- NWS current conditions ----------
-async function loadConditions() {
-  try {
-    const point = await fetch(`https://api.weather.gov/points/${place.lat},${place.lon}`).then((r) => r.json());
-    const stations = await fetch(point.properties.observationStations).then((r) => r.json());
-    const obs = await fetch(`${stations.features[0].id}/observations/latest`).then((r) => r.json());
-    const p = obs.properties;
-    currentConditions = {
-      tempF: cToF(p.temperature.value),
-      windMph: msToMph(p.windSpeed.value),
-      windDirDeg: p.windDirection.value,
-      humidity: p.relativeHumidity && p.relativeHumidity.value ? Math.round(p.relativeHumidity.value) : null,
-      pressureMb: p.barometricPressure && p.barometricPressure.value ? Math.round(p.barometricPressure.value / 100) : null,
-      dewpointC: p.dewpoint ? p.dewpoint.value : null,
-      tempC: p.temperature ? p.temperature.value : null,
-      summary: p.textDescription || 'Conditions reported by the nearest NWS station.',
-    };
-  } catch (err) {
-    currentConditions = null;
-  }
-}
-
-// ---------- Open-Meteo severe-weather parameters ----------
-async function loadSevereParams() {
-  try {
-    const params = new URLSearchParams({
-      latitude: place.lat,
-      longitude: place.lon,
-      hourly: 'cape,freezing_level_height,wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m,wind_direction_10m,wind_gusts_10m',
-      wind_speed_unit: 'mph',
-      temperature_unit: 'fahrenheit',
-      timezone: 'auto',
-      forecast_days: 1,
-    });
-    const data = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`).then((r) => r.json());
-    const times = data.hourly.time;
-    const now = new Date();
-    let idx = times.findIndex((t) => new Date(t) >= now);
-    if (idx < 0) idx = 0;
-    severeParams = {
-      cape: data.hourly.cape[idx],
-      freezingLevelM: data.hourly.freezing_level_height[idx],
-      windLow: data.hourly.wind_speed_10m[idx],
-      windHigh: data.hourly.wind_speed_180m[idx],
-      windDir: data.hourly.wind_direction_10m[idx],
-      windGust: data.hourly.wind_gusts_10m[idx],
-    };
-  } catch (err) {
-    severeParams = null;
-  }
-}
-
-// ---------- NWS active alerts ----------
-async function loadAlerts() {
-  try {
-    const url = `https://api.weather.gov/alerts/active?point=${place.lat},${place.lon}`;
-    const data = await fetch(url).then((r) => r.json());
-    activeAlerts = (data.features || []).map((f) => f.properties);
-    renderAlertBanner();
-    if (broadcastRunning) {
-      const warnings = activeAlerts.filter((a) => /warning/i.test(a.event));
-      warnings.forEach((w) => severeInterrupt(`${w.event} in effect: ${w.headline || w.event}.`));
-    }
-  } catch (err) {
-    activeAlerts = [];
-    renderAlertBanner();
-  }
-}
-
-function startAlertsPolling() {
-  clearInterval(alertsPollTimer);
-  alertsPollTimer = setInterval(loadAlerts, 5 * 60 * 1000);
-}
-
-function renderAlertBanner() {
-  const banner = $('alertBanner');
-  const warnings = activeAlerts.filter((a) => /warning/i.test(a.event));
-  if (warnings.length === 0) {
-    banner.classList.add('hidden');
-    banner.textContent = '';
-    return;
-  }
-  banner.classList.remove('hidden');
-  banner.textContent = `⚠ ${warnings.map((w) => w.event).join(' · ')} — ${place ? place.name : ''}`;
-}
-
-// ---------- SPC outlook (live attempt, heuristic fallback) ----------
-async function loadOutlook() {
-  const live = await fetchLiveSpcOutlook();
-  if (live) {
-    outlookData = { ...live, source: 'live' };
-    return;
-  }
-  outlookData = { ...heuristicOutlook(), source: 'heuristic' };
-}
-
-async function fetchLiveSpcOutlook() {
-  try {
-    const geo = await fetch('https://www.spc.noaa.gov/products/outlook/day1otlk_cat.geojson').then((r) => r.json());
-    const point = [place.lon, place.lat];
-    const hit = geo.features.find((f) => polygonsContain(f.geometry, point));
-    if (!hit) return null;
-    const label = hit.properties.LABEL || hit.properties.DN || 'MRGL';
-    return {
-      category: spcLabelToName(label),
-      tornado: 'See SPC tornado outlook',
-      wind: 'See SPC wind outlook',
-      hail: 'See SPC hail outlook',
-    };
-  } catch (err) {
-    // Most likely a CORS restriction from spc.noaa.gov on direct browser fetches, or a network block.
-    return null;
-  }
-}
-
-function spcLabelToName(label) {
-  const map = { TSTM: 'General Thunderstorms', MRGL: 'Marginal Risk', SLGT: 'Slight Risk', ENH: 'Enhanced Risk', MDT: 'Moderate Risk', HIGH: 'High Risk' };
-  return map[label] || 'Marginal Risk';
-}
-
-function heuristicOutlook() {
-  if (!severeParams) {
-    return { category: 'Marginal Risk', tornado: 'Low', wind: 'Low', hail: 'Low', confidence: 30 };
-  }
-  const cape = severeParams.cape || 0;
-  const shear = Math.max(0, (severeParams.windHigh || 0) - (severeParams.windLow || 0));
-  let category = 'Marginal Risk';
-  if (cape > 2500 && shear > 45) category = 'Moderate Risk';
-  else if (cape > 1500 && shear > 30) category = 'Enhanced Risk';
-  else if (cape > 500 && shear > 15) category = 'Slight Risk';
-
-  const tornado = shear > 40 && cape > 1000 ? 'Elevated' : shear > 20 ? 'Low-Moderate' : 'Low';
-  const wind = severeParams.windGust > 45 || cape > 1500 ? 'Medium-High' : 'Low-Medium';
-  const hail = cape > 2000 ? 'High' : cape > 800 ? 'Medium' : 'Low';
-
-  const dataQuality = currentConditions ? 25 : 0;
-  const confidence = Math.min(95, 40 + dataQuality + Math.min(30, cape / 100) + Math.min(10, shear / 5));
-
-  return { category, tornado, wind, hail, confidence: Math.round(confidence) };
-}
-
-// Ray-casting point-in-polygon, supports Polygon and MultiPolygon GeoJSON geometries.
-function polygonsContain(geometry, point) {
-  const polys = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
-  return polys.some((rings) => ringContains(rings[0], point));
-}
-
-function ringContains(ring, point) {
-  const [x, y] = point;
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
-    const intersects = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-    if (intersects) inside = !inside;
-  }
-  return inside;
-}
-
-// ---------- Render: Conditions / Chaser mode ----------
-function renderConditions() {
-  if (!currentConditions) {
-    $('currentTemp').textContent = '--°';
-    $('currentSummary').textContent = 'Live data is unavailable for this location right now.';
-    $('windValue').textContent = '--';
-    $('humidityValue').textContent = '--';
-    $('pressureValue').textContent = '--';
-  } else {
-    $('currentTemp').textContent = `${Math.round(currentConditions.tempF)}°F`;
-    $('currentSummary').textContent = currentConditions.summary;
-    $('windValue').textContent = `${Math.round(currentConditions.windMph)} mph ${degToCompass(currentConditions.windDirDeg)}`;
-    $('humidityValue').textContent = currentConditions.humidity != null ? `${currentConditions.humidity}%` : '--';
-    $('pressureValue').textContent = currentConditions.pressureMb != null ? `${currentConditions.pressureMb} mb` : '--';
-  }
-  renderChaserGrid();
-}
-
-function renderChaserGrid() {
-  if (!severeParams) {
-    $('capeValue').textContent = '--';
-    $('skewValue').textContent = 'No live model data';
-    $('lclValue').textContent = '--';
-    $('shearValue').textContent = '--';
-    return;
-  }
-  const cape = Math.round(severeParams.cape || 0);
-  $('capeValue').textContent = `${cape.toLocaleString()} J/kg`;
-  $('skewValue').textContent = cape > 2000 ? 'Strong instability' : cape > 800 ? 'Moderate instability' : 'Weak / stable';
-
-  if (currentConditions && currentConditions.tempC != null && currentConditions.dewpointC != null) {
-    const lclM = Math.round(125 * (currentConditions.tempC - currentConditions.dewpointC));
-    $('lclValue').textContent = `${Math.max(lclM, 0).toLocaleString()} m (est.)`;
-  } else {
-    $('lclValue').textContent = 'Needs live temp/dew point';
-  }
-
-  const shear = Math.max(0, Math.round((severeParams.windHigh || 0) - (severeParams.windLow || 0)));
-  $('shearValue').textContent = `${shear} mph`;
-}
-
-// ---------- Render: Outlook ----------
-function renderOutlook() {
-  const o = outlookData || heuristicOutlook();
-  $('outlookSource').textContent = o.source === 'live' ? 'SPC convective outlook (live)' : 'Estimated outlook (SPC feed unavailable)';
-  $('riskTitle').textContent = o.category;
-  $('riskCopy').textContent =
-    o.source === 'live'
-      ? 'Category pulled directly from the current SPC Day 1 categorical outlook polygon covering this location.'
-      : 'SPC live feed could not be reached from the browser, so this category is estimated from live CAPE and shear at your location.';
-  $('torRisk').textContent = o.tornado;
-  $('windRisk').textContent = o.wind;
-  $('hailRisk').textContent = o.hail;
-
-  const confidence = o.confidence != null ? o.confidence : 60;
-  $('confidenceValue').textContent = `${confidence}%`;
-  $('confidenceFill').style.width = `${confidence}%`;
-}
-
-// ---------- Render: Field ops ----------
-function renderField() {
-  const dir = severeParams ? severeParams.windDir : currentConditions ? currentConditions.windDirDeg : null;
-  if (dir == null) {
-    $('safeHeading').textContent = 'Recommended heading: --';
-    $('safeHeadingNote').textContent = 'Live wind direction unavailable — recommendation will populate once data loads.';
-    return;
-  }
-  const heading = computeSafeHeading(dir);
-  $('safeHeading').textContent = `Recommended heading: ${heading.compass}`;
-  $('safeHeadingNote').textContent = `Storms typically move with the mid-level flow; keep escape routes roughly ${heading.compass} of the current storm motion, away from the ${degToCompass(dir)} surface wind.`;
-}
-
-function computeSafeHeading(surfaceWindDirDeg) {
-  // Storms generally move in the direction the wind is blowing toward; a safe escape route
-  // runs roughly perpendicular-to-opposite that motion, biased toward paved road networks (E/S).
-  const stormMotion = (surfaceWindDirDeg + 180) % 360;
-  const escapeDeg = (stormMotion + 90) % 360;
-  return { deg: escapeDeg, compass: degToCompass(escapeDeg) };
-}
-
-// ---------- Chaser mode toggle ----------
-function toggleChaser() {
-  const grid = $('chaserGrid');
-  const btn = $('chaserToggle');
-  const enabling = grid.classList.contains('hidden');
-  grid.classList.toggle('hidden');
-  btn.setAttribute('aria-pressed', String(enabling));
-  btn.textContent = enabling ? 'Disable Storm Chaser Mode' : 'Enable Storm Chaser Mode';
-}
-
-// ---------- Voice ----------
-function loadVoices() {
-  voices = speechSynthesis.getVoices();
-}
-
-function pickVoice() {
-  return voices.find((v) => /en-US/i.test(v.lang) && /Google|Natural|Samantha|Alex/i.test(v.name)) || voices.find((v) => /en-US/i.test(v.lang)) || voices[0];
-}
-
-function speak(text, style) {
-  if (muted || !('speechSynthesis' in window)) return;
-  const utter = new SpeechSynthesisUtterance(text);
-  const voice = pickVoice();
-  if (voice) utter.voice = voice;
-  utter.rate = style ? style.rate : 1;
-  utter.pitch = style ? style.pitch : 1;
-  speechSynthesis.speak(utter);
-}
-
-function toggleMute() {
-  muted = !muted;
-  $('muteToggle').setAttribute('aria-pressed', String(muted));
-  $('muteToggle').textContent = muted ? 'Unmute Voice' : 'Mute Voice';
-  if (muted) speechSynthesis.cancel();
-}
-
-// ---------- Broadcast ----------
-function logLine(text, isAlert = false) {
-  const p = document.createElement('p');
-  if (isAlert) p.classList.add('alert');
-  p.textContent = text;
-  $('broadcastLog').appendChild(p);
-  $('broadcastLog').scrollTop = $('broadcastLog').scrollHeight;
-}
-
-function logIfBroadcastPage(text) {
-  // Small status messages (search errors, GPS fallback) surface in the broadcast log if present,
-  // otherwise just update the location meta line so nothing is silently lost.
-  if ($('broadcastLog')) logLine(text);
-}
-
-function buildScriptLines() {
-  const lines = [];
-  const locName = place ? place.name : 'your area';
-  if (currentConditions) {
-    lines.push(`Here in ${locName}, it's ${Math.round(currentConditions.tempF)} degrees with ${currentConditions.summary.toLowerCase()}.`);
-    lines.push(`Wind is out of the ${degToCompass(currentConditions.windDirDeg)} at ${Math.round(currentConditions.windMph)} miles per hour.`);
-  } else {
-    lines.push(`We don't have a live station reading for ${locName} right now, so treat conditions as unconfirmed.`);
-  }
-  if (outlookData) {
-    lines.push(`Today's severe weather outlook for this area is a ${outlookData.category.toLowerCase()}.`);
-  }
-  const warnings = activeAlerts.filter((a) => /warning/i.test(a.event));
-  if (warnings.length) {
-    lines.push(`We do have active alerts in effect: ${warnings.map((w) => w.event).join(', ')}.`);
-  }
-  lines.push(random(facts));
-  return lines;
-}
-
-function broadcast() {
-  if (broadcastRunning) return;
-  broadcastRunning = true;
-  const lines = buildScriptLines();
-  let i = 0;
-  const style = producerStyles[Math.floor(Math.random() * producerStyles.length)];
-  logLine(`— Producer cues a ${style.name} —`);
-  const speakNext = () => {
-    if (i >= lines.length) {
-      broadcastRunning = false;
-      return;
-    }
-    const line = lines[i++];
-    logLine(line);
-    speak(line, style);
-    const estMs = Math.max(1800, line.length * 55);
-    setTimeout(speakNext, estMs);
-  };
-  speakNext();
-}
-
-function severeInterrupt(customText) {
-  const text = customText || 'Severe weather interrupt: conditions in this area have changed. Stay tuned for updates.';
-  logLine(text, true);
-  speechSynthesis.cancel();
-  speak(text, { rate: 1.15, pitch: 1.1 });
-}
-
-// ---------- Helpers ----------
-function cToF(c) {
-  return c == null ? null : (c * 9) / 5 + 32;
-}
-function msToMph(ms) {
-  return ms == null ? null : ms * 2.23694;
-}
-function degToCompass(deg) {
-  if (deg == null) return '--';
-  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  return dirs[Math.round(deg / 22.5) % 16];
-}
-function random(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('beforeunload',()=>{broadcastRunning=false;cancelSpeech();clearInterval(alertPollTimer);clearInterval(fullRefreshTimer);if(locationWatchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(locationWatchId);radarMap?.remove();spcMap?.remove()});document.addEventListener('DOMContentLoaded',init);
