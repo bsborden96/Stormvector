@@ -1,125 +1,201 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Storm Vector</title>
-    <link rel="stylesheet" href="src/styles.css" />
-  </head>
-  <body>
-    <div class="sky-orb orb-one"></div>
-    <div class="sky-orb orb-two"></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050a12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-status-bar-style" content="black-translucent">
+  <title>StormVector — Vector Live Weather</title>
 
-    <div id="alertBanner" class="alert-banner hidden" role="alert"></div>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <div id="ariaLive" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
-    <header class="topbar">
-      <a class="brand" href="#conditions" aria-label="Storm Vector home">
-        <span class="brand-mark">SV</span>
-        <span><strong>Storm Vector</strong><small>Severe weather command center</small></span>
-      </a>
-      <nav class="tabs" aria-label="Primary navigation">
-        <a href="#conditions" data-page-link="conditions">Conditions</a>
-        <a href="#outlook" data-page-link="outlook">SPC Outlook</a>
-        <a href="#broadcast" data-page-link="broadcast">AI Broadcast</a>
-        <a href="#field" data-page-link="field">Field Ops</a>
-      </nav>
-    </header>
+  <div id="breakingBar" class="breaking-bar" hidden>
+    <span class="breaking-pulse"></span>
+    <strong id="breakingText">BREAKING WEATHER</strong>
+  </div>
 
-    <main>
-      <section class="location-panel glass">
-        <div>
-          <p class="eyebrow">Location lock</p>
-          <h1 id="locationTitle">Finding your sky...</h1>
-          <p id="locationMeta">Requesting GPS location. Search any U.S. city, town, or village to override.</p>
+  <header class="site-header">
+    <a class="brand" href="#live" aria-label="StormVector home">
+      <div class="brand-mark" aria-hidden="true">V</div>
+      <div class="brand-copy">
+        <strong>STORMVECTOR</strong>
+        <span>VECTOR AI WEATHER NETWORK</span>
+      </div>
+    </a>
+    <div class="header-status">
+      <span id="headerLocation">LOCATION OFF</span>
+      <strong id="headerThreat" data-level="normal">NORMAL</strong>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="location-command glass">
+      <div class="location-copy">
+        <span class="kicker">LIVE COVERAGE LOCATION</span>
+        <h1 id="locationTitle">Select a location</h1>
+        <p id="locationMeta">Use GPS or search any U.S. city, town, or place.</p>
+      </div>
+      <div class="location-controls">
+        <div class="search-shell">
+          <input id="locationSearch" type="search" placeholder="Search a U.S. location" autocomplete="off" autocapitalize="words" spellcheck="false" aria-controls="searchSuggestions" aria-expanded="false">
+          <button id="clearSearch" type="button" class="clear-button" aria-label="Clear search">×</button>
+          <div id="searchSuggestions" class="search-suggestions" hidden></div>
         </div>
-        <div class="search-wrap">
-          <label for="locationSearch">Search location</label>
-          <input id="locationSearch" type="search" list="citySuggestions" placeholder="Try Norman, OK" autocomplete="off" />
-          <datalist id="citySuggestions"></datalist>
-          <button id="useSearch">Set Location</button>
-          <button id="useGps" class="ghost">Use GPS</button>
+        <div class="button-row">
+          <button id="useGps" type="button">USE MY LOCATION</button>
+          <button id="returnGps" class="ghost" type="button" hidden>RETURN TO GPS</button>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section id="conditions" class="page active">
-        <div class="hero glass">
-          <div>
-            <p class="eyebrow">Current conditions</p>
-            <h2 id="currentTemp">--°</h2>
-            <p id="currentSummary">Waiting for live National Weather Service data.</p>
-            <div class="metrics">
-              <span><b id="windValue">--</b> Wind</span>
-              <span><b id="humidityValue">--</b> Humidity</span>
-              <span><b id="pressureValue">--</b> Pressure</span>
+    <nav class="view-tabs" aria-label="StormVector views">
+      <button class="view-tab active" data-view="live" type="button">LIVE</button>
+      <button class="view-tab" data-view="radar" type="button">RADAR</button>
+      <button class="view-tab" data-view="outlooks" type="button">OUTLOOKS</button>
+      <button class="view-tab" data-view="labs" type="button">LABS</button>
+    </nav>
+
+    <section id="view-live" class="view active">
+      <div class="live-grid">
+        <article class="vector-stage glass">
+          <div class="vector-status-row">
+            <div id="liveBadge" class="live-badge"><span class="live-dot"></span><strong>STANDBY</strong></div>
+            <span id="dataFreshness">WAITING FOR LOCATION</span>
+          </div>
+
+          <div id="vectorAvatar" class="vector-avatar" aria-label="Vector AI weather broadcaster">
+            <div class="vector-glow"></div>
+            <div class="vector-head">
+              <div class="vector-face">
+                <i class="eye eye-left"></i><i class="eye eye-right"></i>
+                <div class="vector-mouth"><b></b><b></b><b></b><b></b><b></b></div>
+              </div>
             </div>
+            <div class="vector-body"><span class="vector-core">V</span></div>
           </div>
-          <button id="chaserToggle" class="mode-button" aria-pressed="false">Enable Storm Chaser Mode</button>
-        </div>
-        <div id="chaserGrid" class="grid hidden">
-          <article class="card"><span>CAPE</span><strong id="capeValue">--</strong><p id="capeNote">Convective available potential energy — live model data.</p></article>
-          <article class="card"><span>Instability Read</span><strong id="skewValue">--</strong><p>Plain-language read on CAPE and cap strength for this location.</p></article>
-          <article class="card"><span>Est. LCL</span><strong id="lclValue">--</strong><p>Lifted condensation level, estimated from temperature/dew point spread.</p></article>
-          <article class="card"><span>Approx. Shear</span><strong id="shearValue">--</strong><p id="shearNote">10m–180m wind speed differential, a proxy for low-level shear.</p></article>
-        </div>
-      </section>
 
-      <section id="outlook" class="page">
-        <div class="split">
-          <article class="glass outlook-map">
-            <p class="eyebrow" id="outlookSource">SPC convective outlook</p>
-            <h2 id="riskTitle">--</h2>
-            <div class="risk-rings" aria-label="Stylized SPC risk map"><span></span><span></span><span></span><b id="riskDot"></b></div>
-            <p id="riskCopy">Loading outlook for the selected location.</p>
-          </article>
-          <article class="glass confidence">
-            <p class="eyebrow">Forecast confidence</p>
-            <div class="meter"><div id="confidenceFill"></div></div>
-            <strong id="confidenceValue">--</strong>
-            <p>Blends live data completeness, instability, and shear signal strength.</p>
-          </article>
-        </div>
-        <div class="grid">
-          <article class="card"><span>Tornado</span><strong id="torRisk">--</strong></article>
-          <article class="card"><span>Wind</span><strong id="windRisk">--</strong></article>
-          <article class="card"><span>Hail</span><strong id="hailRisk">--</strong></article>
-        </div>
-      </section>
+          <div class="vector-title"><strong>VECTOR</strong><span>AI METEOROLOGIST</span></div>
 
-      <section id="broadcast" class="page">
-        <div class="glass broadcast-console">
-          <div>
-            <p class="eyebrow">Live AI weather desk</p>
-            <h2>Producer-driven broadcast</h2>
-            <p>The producer rotates tone, facts, and live data so the weather read never sounds stale — spoken aloud, not just printed. Active NWS warnings interrupt automatically.</p>
+          <div class="caption-panel">
+            <div class="caption-head"><span>VECTOR LIVE</span><strong id="captionTopic">STANDBY</strong></div>
+            <p id="captionText">Choose a location to begin continuous weather coverage.</p>
           </div>
-          <div class="button-row">
-            <button id="startBroadcast">Start Broadcast</button>
-            <button id="testFact" class="ghost">Test Fact</button>
-            <button id="testSevere" class="danger">Test Severe Interrupt</button>
-            <button id="muteToggle" class="ghost" aria-pressed="false">Mute Voice</button>
-          </div>
-          <div id="broadcastLog" class="broadcast-log" aria-live="polite"></div>
-        </div>
-      </section>
 
-      <section id="field" class="page">
-        <div class="split">
-          <article class="glass">
-            <p class="eyebrow">Page four: Field Ops</p>
-            <h2>Chase Planner + Camera Layer</h2>
-            <p>Escape heading is computed from the live surface wind direction at your location, not a placeholder.</p>
-            <div class="route-card"><b id="safeHeading">Recommended heading: --</b><span id="safeHeadingNote">Keep paved escape routes open opposite storm motion.</span></div>
-          </article>
-          <article class="glass camera-board">
-            <p class="eyebrow">Traffic camera overlay (concept)</p>
-            <p class="camera-disclaimer">No free, keyless, nationwide traffic-camera API exists, so this panel stays illustrative until a specific state DOT feed is wired in.</p>
-            <div class="camera-grid">
-              <span>CAM-12 Wet lens / low visibility</span><span>CAM-27 Clear westbound flow</span><span>CAM-41 Lightning visible north</span><span>CAM-58 Construction shoulder closed</span>
-            </div>
-          </article>
+          <div class="button-row broadcast-buttons">
+            <button id="startBroadcast" type="button">START VECTOR</button>
+            <button id="replayLast" class="ghost" type="button">REPLAY</button>
+            <button id="muteToggle" class="ghost" type="button">STOP</button>
+          </div>
+        </article>
+
+        <article class="weather-desk glass">
+          <div class="section-heading">
+            <div><span class="kicker">CURRENT CONDITIONS</span><h2 id="conditionHeadline">Waiting for weather data</h2></div>
+            <span id="observationAge" class="status-chip">--</span>
+          </div>
+
+          <div class="temperature-panel"><strong id="currentTemp">--°</strong><span id="currentSummary">No observation loaded.</span></div>
+
+          <div class="metric-grid">
+            <div class="metric"><span>FEELS</span><strong id="feelsValue">--</strong></div>
+            <div class="metric"><span>DEW POINT</span><strong id="dewValue">--</strong></div>
+            <div class="metric"><span>HUMIDITY</span><strong id="humidityValue">--</strong></div>
+            <div class="metric"><span>WIND</span><strong id="windValue">--</strong></div>
+            <div class="metric"><span>GUSTS</span><strong id="gustValue">--</strong></div>
+            <div class="metric"><span>PRESSURE</span><strong id="pressureValue">--</strong></div>
+          </div>
+
+          <div class="forecast-panel"><span class="kicker">LOCAL NWS FORECAST</span><p id="forecastText">Forecast waiting for location.</p></div>
+          <div id="alertStack" class="alert-stack"><div class="empty-state">No active weather alerts loaded.</div></div>
+        </article>
+      </div>
+
+      <article class="change-board glass">
+        <div class="section-heading">
+          <div><span class="kicker">CONTINUITY ENGINE</span><h2>What changed</h2></div>
+          <span id="changeTime" class="status-chip">WAITING</span>
         </div>
-      </section>
-    </main>
-    <script src="src/app.js"></script>
-  </body>
+        <div id="changeList" class="change-list"><div class="change-item">Vector will compare each update with the previous weather snapshot.</div></div>
+      </article>
+    </section>
+
+    <section id="view-radar" class="view">
+      <article class="map-card glass">
+        <div class="section-heading">
+          <div><span class="kicker">NOAA / NWS MRMS</span><h2>Live radar</h2></div>
+          <span id="radarStatus" class="status-chip">WAITING</span>
+        </div>
+        <div class="button-row map-buttons">
+          <button class="ghost active" data-radar-zoom="local" type="button">LOCAL</button>
+          <button class="ghost" data-radar-zoom="state" type="button">STATE</button>
+          <button class="ghost" data-radar-zoom="regional" type="button">REGIONAL</button>
+          <button id="radarWarnings" class="ghost active" type="button">WARNINGS ON</button>
+          <button id="radarRefresh" class="ghost" type="button">REFRESH</button>
+        </div>
+        <div id="radarMap" class="map"></div>
+        <div class="map-footer"><span>Official NOAA/NWS MRMS base reflectivity</span><span id="radarLoaded">--</span></div>
+      </article>
+    </section>
+
+    <section id="view-outlooks" class="view">
+      <article class="map-card glass">
+        <div class="section-heading">
+          <div><span class="kicker">STORM PREDICTION CENTER</span><h2>Official severe outlooks</h2></div>
+          <span id="spcStatus" class="status-chip">READY</span>
+        </div>
+        <div class="product-tabs">
+          <button class="product-tab active" data-spc-layer="1" data-product="categorical" type="button">CATEGORICAL</button>
+          <button class="product-tab" data-spc-layer="3" data-product="tornado" type="button">TORNADO</button>
+          <button class="product-tab" data-spc-layer="5" data-product="hail" type="button">HAIL</button>
+          <button class="product-tab" data-spc-layer="7" data-product="wind" type="button">WIND</button>
+        </div>
+        <div id="spcMap" class="map"></div>
+        <div class="spc-readout"><span>YOUR LOCATION</span><strong id="spcLocalRisk">CHECKING</strong></div>
+        <div class="map-footer"><span>Rendered from official NOAA/NWS SPC outlook polygons</span><span id="spcValid">--</span></div>
+      </article>
+    </section>
+
+    <section id="view-labs" class="view">
+      <div class="labs-grid">
+        <article class="glass lab-card">
+          <div class="section-heading compact"><div><span class="kicker">ENVIRONMENT</span><h2>Storm Labs</h2></div></div>
+          <div class="metric-grid labs">
+            <div class="metric"><span>CAPE</span><strong id="capeValue">--</strong></div>
+            <div class="metric"><span>EST. LCL</span><strong id="lclValue">--</strong></div>
+            <div class="metric"><span>LOW-LEVEL WIND Δ</span><strong id="shearValue">--</strong></div>
+            <div class="metric"><span>FREEZING LEVEL</span><strong id="freezingValue">--</strong></div>
+          </div>
+          <p class="fine-print">Storm Labs uses model-derived environmental parameters as context only. It does not diagnose tornadoes or replace radar analysis or official warnings.</p>
+        </article>
+
+        <article class="glass lab-card">
+          <div class="section-heading compact"><div><span class="kicker">SYSTEM</span><h2>Data health</h2></div></div>
+          <div class="health-list">
+            <div><span>NWS OBSERVATION</span><strong id="healthObs">WAITING</strong></div>
+            <div><span>NWS FORECAST</span><strong id="healthForecast">WAITING</strong></div>
+            <div><span>NWS ALERTS</span><strong id="healthAlerts">WAITING</strong></div>
+            <div><span>OPEN-METEO</span><strong id="healthModel">WAITING</strong></div>
+            <div><span>SPC OUTLOOK</span><strong id="healthSpc">WAITING</strong></div>
+            <div><span>GPS TRACKING</span><strong id="healthGps">OFF</strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer>StormVector is supplemental weather software. During hazardous weather, follow official National Weather Service warnings and local emergency instructions.</footer>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="src/app.js"></script>
+</body>
 </html>
