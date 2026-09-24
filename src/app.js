@@ -2,10 +2,8 @@
    Data sources:
    - Current conditions + active alerts: api.weather.gov (National Weather Service, no key required)
    - Severe-weather parameters (CAPE, freezing level, wind-by-height): api.open-meteo.com (no key required)
-   - Location search + reverse geocoding: nominatim.openstreetmap.org (no key required, rate-limited — debounced)
-   - SPC categorical/probabilistic outlook: spc.noaa.gov geojson feeds, attempted live; if the browser
-     blocks the cross-origin request (SPC does not publish CORS headers for every product) the app
-     falls back to a heuristic outlook computed from live CAPE/shear so the page is never a placeholder.
+   - User-triggered location search + reverse geocoding: nominatim.openstreetmap.org
+   - SPC Day 1 categorical outlook: spc.noaa.gov GeoJSON, when accessible from the browser.
 */
 
 const $ = (id) => document.getElementById(id);
@@ -16,12 +14,16 @@ let currentConditions = null;
 let severeParams = null;
 let activeAlerts = [];
 let outlookData = null;
-let placeCache = {};
-let searchDebounce = null;
 let alertsPollTimer = null;
 let muted = false;
 let voices = [];
 let broadcastRunning = false;
+let alertsStatus = 'loading';
+let alertsCheckedAt = null;
+let seenWarningIds = new Set();
+let locationVersion = 0;
+let lastChangeText = '';
+const STORAGE_PREFIX = 'stormvector:';
 
 // ---------- Fallback location list (used only if live geocoding fails) ----------
 const fallbackCities = [
@@ -52,8 +54,8 @@ const producerStyles = [
 function init() {
   document.querySelectorAll('[data-page-link]').forEach((link) => link.addEventListener('click', route));
   window.addEventListener('hashchange', route);
-  $('locationSearch').addEventListener('input', onSearchInput);
   $('useSearch').addEventListener('click', searchLocation);
+  $('locationSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchLocation(); });
   $('useGps').addEventListener('click', () => useGps(true));
   $('chaserToggle').addEventListener('click', toggleChaser);
   $('startBroadcast').addEventListener('click', broadcast);
@@ -67,45 +69,24 @@ function init() {
     speechSynthesis.addEventListener('voiceschanged', loadVoices);
   }
 
-  // GPS-first: try to locate the user automatically so nothing needs to be typed.
-  useGps(false, true);
+  const saved = readSavedPlace();
+  if (saved) updateLocation(saved);
+  else useGps(false, true);
 }
 
 function route() {
-  const page = (location.hash || '#conditions').slice(1);
+  const requested = (location.hash || '#area').slice(1);
+  const page = document.getElementById(requested)?.classList.contains('page') ? requested : 'area';
   document.querySelectorAll('.page').forEach((section) => section.classList.toggle('active', section.id === page));
   document.querySelectorAll('[data-page-link]').forEach((link) => link.classList.toggle('active', link.dataset.pageLink === page));
 }
 
-// ---------- Location search (live geocoding, covers cities/towns/villages) ----------
-function onSearchInput() {
-  clearTimeout(searchDebounce);
-  const query = $('locationSearch').value.trim();
-  if (query.length < 2) return;
-  searchDebounce = setTimeout(() => searchPlaces(query), 400);
-}
-
+// ---------- Location search: one request per explicit submission ----------
 async function searchPlaces(query) {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&addressdetails=1&limit=8&q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) throw new Error('geocoding request failed');
-    const results = await res.json();
-    placeCache = {};
-    $('citySuggestions').innerHTML = results
-      .map((r) => {
-        const label = formatPlaceLabel(r);
-        placeCache[label] = { name: label, lat: parseFloat(r.lat), lon: parseFloat(r.lon) };
-        return `<option value="${escapeHtml(label)}"></option>`;
-      })
-      .join('');
-  } catch (err) {
-    // Live search failed (offline, or the geocoder is unreachable) — fall back to the static list.
-    $('citySuggestions').innerHTML = fallbackCities
-      .filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
-      .map(([name]) => `<option value="${name}"></option>`)
-      .join('');
-  }
+  const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error('Location search is unavailable. Try GPS or a suggested city later.');
+  return res.json();
 }
 
 function formatPlaceLabel(result) {
@@ -115,23 +96,40 @@ function formatPlaceLabel(result) {
   return state ? `${locality}, ${state}` : locality;
 }
 
-function searchLocation() {
+async function searchLocation() {
   const raw = $('locationSearch').value.trim();
   if (!raw) return;
-  if (placeCache[raw]) {
-    updateLocation(placeCache[raw]);
-    return;
-  }
-  const fallback = fallbackCities.find(([name]) => name.toLowerCase() === raw.toLowerCase() || name.toLowerCase().startsWith(raw.toLowerCase()));
+  $('useSearch').disabled = true;
+  $('locationMeta').textContent = 'Searching for your location…';
+  const fallback = fallbackCities.find(([name]) => name.toLowerCase() === raw.toLowerCase());
   if (fallback) {
     updateLocation({ name: fallback[0], lat: fallback[1], lon: fallback[2] });
-  } else {
-    logIfBroadcastPage(`Could not match "${raw}" to a location yet — keep typing or pick a suggestion.`);
+  } else try {
+    const results = await searchPlaces(raw);
+    if (!results.length) throw new Error('No matching U.S. location found. Try a city and state.');
+    const match = results[0];
+    updateLocation({ name: formatPlaceLabel(match), lat: Number(match.lat), lon: Number(match.lon) });
+  } catch (err) {
+    $('locationMeta').textContent = err.message;
+  } finally {
+    $('useSearch').disabled = false;
   }
+}
+
+function readSavedPlace() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}place`));
+    return saved && typeof saved.name === 'string' && Number.isFinite(saved.lat) && Number.isFinite(saved.lon) ? saved : null;
+  } catch { return null; }
+}
+
+function savePlace(nextPlace) {
+  try { localStorage.setItem(`${STORAGE_PREFIX}place`, JSON.stringify(nextPlace)); } catch { /* Storage disabled. */ }
 }
 
 // ---------- GPS ----------
 function useGps(showErrors, isInitialLoad = false) {
+  const requestVersion = locationVersion;
   if (!navigator.geolocation) {
     if (showErrors) logIfBroadcastPage('This browser does not support GPS location.');
     if (isInitialLoad) updateLocation({ name: 'Norman, OK', lat: 35.2226, lon: -97.4395 });
@@ -142,9 +140,11 @@ function useGps(showErrors, isInitialLoad = false) {
     async (pos) => {
       const { latitude, longitude } = pos.coords;
       const name = await reverseGeocode(latitude, longitude);
+      if (requestVersion !== locationVersion) return;
       updateLocation({ name, lat: latitude, lon: longitude });
     },
     () => {
+      if (requestVersion !== locationVersion) return;
       if (showErrors) logIfBroadcastPage('GPS was not available or was denied — search for a city instead.');
       if (isInitialLoad) {
         $('locationMeta').textContent = 'GPS unavailable — showing a default city. Search above to change it.';
@@ -169,28 +169,44 @@ async function reverseGeocode(lat, lon) {
 
 // ---------- Orchestrator ----------
 async function updateLocation(nextPlace) {
+  const version = ++locationVersion;
   place = nextPlace;
+  savePlace(nextPlace);
   $('locationTitle').textContent = place.name;
   $('locationMeta').textContent = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} • loading live data…`;
-
-  await Promise.allSettled([loadConditions(), loadSevereParams(), loadOutlook()]);
-  await loadAlerts();
-
+  $('briefingTitle').textContent = `Checking ${place.name}…`;
+  $('briefingStatus').textContent = 'Loading official alerts and observations.';
+  $('briefingChanges').textContent = '';
+  activeAlerts = [];
+  alertsStatus = 'loading';
+  alertsCheckedAt = null;
+  currentConditions = null;
+  severeParams = null;
+  outlookData = null;
+  clearInterval(alertsPollTimer);
+  renderAlertBanner();
+  const [conditions, severe, outlook, alerts] = await Promise.allSettled([
+    loadConditions(nextPlace), loadSevereParams(nextPlace), loadOutlook(nextPlace), loadAlerts(nextPlace)
+  ]);
+  if (version !== locationVersion) return;
+  currentConditions = conditions.status === 'fulfilled' ? conditions.value : null;
+  severeParams = severe.status === 'fulfilled' ? severe.value : null;
+  outlookData = outlook.status === 'fulfilled' ? outlook.value : null;
+  applyAlerts(alerts.status === 'fulfilled' ? alerts.value : null, true);
   $('locationMeta').textContent = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)} • synchronized across all pages`;
   renderConditions();
   renderOutlook();
-  renderField();
+  renderBriefing();
   startAlertsPolling();
 }
 
 // ---------- NWS current conditions ----------
-async function loadConditions() {
-  try {
-    const point = await fetch(`https://api.weather.gov/points/${place.lat},${place.lon}`).then((r) => r.json());
-    const stations = await fetch(point.properties.observationStations).then((r) => r.json());
-    const obs = await fetch(`${stations.features[0].id}/observations/latest`).then((r) => r.json());
+async function loadConditions(target) {
+    const point = await fetchJson(`https://api.weather.gov/points/${target.lat},${target.lon}`);
+    const stations = await fetchJson(point.properties.observationStations);
+    const obs = await fetchJson(`${stations.features[0].id}/observations/latest`);
     const p = obs.properties;
-    currentConditions = {
+    return {
       tempF: cToF(p.temperature.value),
       windMph: msToMph(p.windSpeed.value),
       windDirDeg: p.windDirection.value,
@@ -198,31 +214,28 @@ async function loadConditions() {
       pressureMb: p.barometricPressure && p.barometricPressure.value ? Math.round(p.barometricPressure.value / 100) : null,
       dewpointC: p.dewpoint ? p.dewpoint.value : null,
       tempC: p.temperature ? p.temperature.value : null,
+      observedAt: p.timestamp,
       summary: p.textDescription || 'Conditions reported by the nearest NWS station.',
     };
-  } catch (err) {
-    currentConditions = null;
-  }
 }
 
 // ---------- Open-Meteo severe-weather parameters ----------
-async function loadSevereParams() {
-  try {
+async function loadSevereParams(target) {
     const params = new URLSearchParams({
-      latitude: place.lat,
-      longitude: place.lon,
+      latitude: target.lat,
+      longitude: target.lon,
       hourly: 'cape,freezing_level_height,wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m,wind_direction_10m,wind_gusts_10m',
       wind_speed_unit: 'mph',
       temperature_unit: 'fahrenheit',
-      timezone: 'auto',
+      timezone: 'GMT',
       forecast_days: 1,
     });
-    const data = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`).then((r) => r.json());
+    const data = await fetchJson(`https://api.open-meteo.com/v1/forecast?${params}`);
     const times = data.hourly.time;
     const now = new Date();
-    let idx = times.findIndex((t) => new Date(t) >= now);
-    if (idx < 0) idx = 0;
-    severeParams = {
+    let idx = times.findIndex((t) => new Date(`${t}Z`) >= now);
+    if (idx < 0) idx = times.length - 1;
+    return {
       cape: data.hourly.cape[idx],
       freezingLevelM: data.hourly.freezing_level_height[idx],
       windLow: data.hourly.wind_speed_10m[idx],
@@ -230,116 +243,117 @@ async function loadSevereParams() {
       windDir: data.hourly.wind_direction_10m[idx],
       windGust: data.hourly.wind_gusts_10m[idx],
     };
-  } catch (err) {
-    severeParams = null;
-  }
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url, { headers: { Accept: 'application/geo+json, application/json' } });
+  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+  return response.json();
 }
 
 // ---------- NWS active alerts ----------
-async function loadAlerts() {
-  try {
-    const url = `https://api.weather.gov/alerts/active?point=${place.lat},${place.lon}`;
-    const data = await fetch(url).then((r) => r.json());
-    activeAlerts = (data.features || []).map((f) => f.properties);
+async function loadAlerts(target) {
+  const data = await fetchJson(`https://api.weather.gov/alerts/active?point=${target.lat},${target.lon}`);
+  return data.features || [];
+}
+
+function alertId(feature) {
+  return feature.id || feature.properties?.id || `${feature.properties?.event}:${feature.properties?.onset}`;
+}
+
+function applyAlerts(features, initial = false) {
+  if (!features) {
+    alertsStatus = 'unavailable';
     renderAlertBanner();
-    if (broadcastRunning) {
-      const warnings = activeAlerts.filter((a) => /warning/i.test(a.event));
-      warnings.forEach((w) => severeInterrupt(`${w.event} in effect: ${w.headline || w.event}.`));
-    }
-  } catch (err) {
-    activeAlerts = [];
-    renderAlertBanner();
+    renderBriefing();
+    return;
   }
+  alertsStatus = 'current';
+  alertsCheckedAt = new Date().toISOString();
+  const previousIds = new Set(activeAlerts.map(alertId));
+  const previousWarnings = activeAlerts.filter((a) => /warning/i.test(a.properties?.event || ''));
+  const newWarnings = features.filter((a) => /warning/i.test(a.properties?.event || '') && !seenWarningIds.has(alertId(a)));
+  activeAlerts = features;
+  if (initial) {
+    seenWarningIds = new Set(features.filter((a) => /warning/i.test(a.properties?.event || '')).map(alertId));
+    const key = alertStorageKey();
+    try {
+      const previous = JSON.parse(localStorage.getItem(key));
+      const previousIds = new Set(Array.isArray(previous?.ids) ? previous.ids : []);
+      const added = features.filter((a) => !previousIds.has(alertId(a)));
+      lastChangeText = previous
+        ? `${added.length} new alert${added.length === 1 ? '' : 's'} since your last visit. Last checked ${formatTime(previous.checkedAt)}.`
+        : 'First visit for this location. Changes will appear on your next visit.';
+    } catch { lastChangeText = 'Changes since your last visit are unavailable in this browser.'; }
+  } else {
+    const added = features.filter((a) => !previousIds.has(alertId(a)));
+    const removed = previousWarnings.filter((a) => !features.some((b) => alertId(b) === alertId(a)));
+    if (added.length || removed.length) lastChangeText = `${added.length} new alert${added.length === 1 ? '' : 's'} · ${removed.length} warning${removed.length === 1 ? '' : 's'} no longer active since the last check.`;
+    newWarnings.forEach((a) => {
+      seenWarningIds.add(alertId(a));
+      if (broadcastRunning) severeInterrupt(`${a.properties.event} in effect: ${a.properties.headline || a.properties.event}.`);
+    });
+  }
+  try { localStorage.setItem(alertStorageKey(), JSON.stringify({ ids: features.map(alertId), checkedAt: alertsCheckedAt })); } catch { /* Storage disabled. */ }
+  renderAlertBanner();
+  renderBriefing();
+}
+
+function alertStorageKey() {
+  return `${STORAGE_PREFIX}alerts:${place.lat.toFixed(3)},${place.lon.toFixed(3)}`;
 }
 
 function startAlertsPolling() {
   clearInterval(alertsPollTimer);
-  alertsPollTimer = setInterval(loadAlerts, 5 * 60 * 1000);
+  alertsPollTimer = setInterval(async () => {
+    const target = place;
+    try {
+      const features = await loadAlerts(target);
+      if (place === target) applyAlerts(features);
+    } catch {
+      if (place === target) applyAlerts(null);
+    }
+  }, 5 * 60 * 1000);
 }
 
 function renderAlertBanner() {
   const banner = $('alertBanner');
-  const warnings = activeAlerts.filter((a) => /warning/i.test(a.event));
+  const warnings = activeAlerts.filter((a) => /warning/i.test(a.properties?.event || ''));
   if (warnings.length === 0) {
     banner.classList.add('hidden');
     banner.textContent = '';
     return;
   }
   banner.classList.remove('hidden');
-  banner.textContent = `⚠ ${warnings.map((w) => w.event).join(' · ')} — ${place ? place.name : ''}`;
+  banner.textContent = `⚠ ${warnings.map((w) => w.properties.event).join(' · ')} — ${place ? place.name : ''}${alertsStatus === 'unavailable' ? ' · alert refresh unavailable' : ''}`;
 }
 
-// ---------- SPC outlook (live attempt, heuristic fallback) ----------
-async function loadOutlook() {
-  const live = await fetchLiveSpcOutlook();
-  if (live) {
-    outlookData = { ...live, source: 'live' };
-    return;
-  }
-  outlookData = { ...heuristicOutlook(), source: 'heuristic' };
+// ---------- SPC outlook: never substitute model heuristics for official categories ----------
+async function loadOutlook(target) {
+  return fetchLiveSpcOutlook(target);
 }
 
-async function fetchLiveSpcOutlook() {
-  try {
-    const geo = await fetch('https://www.spc.noaa.gov/products/outlook/day1otlk_cat.geojson').then((r) => r.json());
-    const point = [place.lon, place.lat];
-    const hit = geo.features.find((f) => polygonsContain(f.geometry, point));
-    if (!hit) return null;
-    const label = hit.properties.LABEL || hit.properties.DN || 'MRGL';
-    return {
-      category: spcLabelToName(label),
-      tornado: 'See SPC tornado outlook',
-      wind: 'See SPC wind outlook',
-      hail: 'See SPC hail outlook',
-    };
-  } catch (err) {
-    // Most likely a CORS restriction from spc.noaa.gov on direct browser fetches, or a network block.
-    return null;
-  }
+async function fetchLiveSpcOutlook(target) {
+    const query = new URLSearchParams({
+      geometry: `${target.lon},${target.lat}`,
+      geometryType: 'esriGeometryPoint',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+      outFields: 'label,valid,expire,issue',
+      returnGeometry: 'false',
+      f: 'geojson',
+    });
+    const geo = await fetchJson(`https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1/query?${query}`);
+    if (!Array.isArray(geo.features)) throw new Error('Invalid SPC data');
+    const labels = geo.features.map((f) => String(f.properties?.label || '').toUpperCase());
+    const ordered = ['TSTM', 'MRGL', 'SLGT', 'ENH', 'MDT', 'HIGH'];
+    const rank = Math.max(...labels.map((label) => ordered.indexOf(label)), -1);
+    return { category: rank < 0 ? 'Outside plotted Day 1 areas' : spcLabelToName(ordered[rank]), retrievedAt: new Date().toISOString() };
 }
 
 function spcLabelToName(label) {
   const map = { TSTM: 'General Thunderstorms', MRGL: 'Marginal Risk', SLGT: 'Slight Risk', ENH: 'Enhanced Risk', MDT: 'Moderate Risk', HIGH: 'High Risk' };
-  return map[label] || 'Marginal Risk';
-}
-
-function heuristicOutlook() {
-  if (!severeParams) {
-    return { category: 'Marginal Risk', tornado: 'Low', wind: 'Low', hail: 'Low', confidence: 30 };
-  }
-  const cape = severeParams.cape || 0;
-  const shear = Math.max(0, (severeParams.windHigh || 0) - (severeParams.windLow || 0));
-  let category = 'Marginal Risk';
-  if (cape > 2500 && shear > 45) category = 'Moderate Risk';
-  else if (cape > 1500 && shear > 30) category = 'Enhanced Risk';
-  else if (cape > 500 && shear > 15) category = 'Slight Risk';
-
-  const tornado = shear > 40 && cape > 1000 ? 'Elevated' : shear > 20 ? 'Low-Moderate' : 'Low';
-  const wind = severeParams.windGust > 45 || cape > 1500 ? 'Medium-High' : 'Low-Medium';
-  const hail = cape > 2000 ? 'High' : cape > 800 ? 'Medium' : 'Low';
-
-  const dataQuality = currentConditions ? 25 : 0;
-  const confidence = Math.min(95, 40 + dataQuality + Math.min(30, cape / 100) + Math.min(10, shear / 5));
-
-  return { category, tornado, wind, hail, confidence: Math.round(confidence) };
-}
-
-// Ray-casting point-in-polygon, supports Polygon and MultiPolygon GeoJSON geometries.
-function polygonsContain(geometry, point) {
-  const polys = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
-  return polys.some((rings) => ringContains(rings[0], point));
-}
-
-function ringContains(ring, point) {
-  const [x, y] = point;
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
-    const intersects = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-    if (intersects) inside = !inside;
-  }
-  return inside;
+  return map[label] || 'Category unavailable';
 }
 
 // ---------- Render: Conditions / Chaser mode ----------
@@ -351,9 +365,9 @@ function renderConditions() {
     $('humidityValue').textContent = '--';
     $('pressureValue').textContent = '--';
   } else {
-    $('currentTemp').textContent = `${Math.round(currentConditions.tempF)}°F`;
+    $('currentTemp').textContent = currentConditions.tempF == null ? '--°' : `${Math.round(currentConditions.tempF)}°F`;
     $('currentSummary').textContent = currentConditions.summary;
-    $('windValue').textContent = `${Math.round(currentConditions.windMph)} mph ${degToCompass(currentConditions.windDirDeg)}`;
+    $('windValue').textContent = currentConditions.windMph == null ? '--' : `${Math.round(currentConditions.windMph)} mph ${degToCompass(currentConditions.windDirDeg)}`;
     $('humidityValue').textContent = currentConditions.humidity != null ? `${currentConditions.humidity}%` : '--';
     $('pressureValue').textContent = currentConditions.pressureMb != null ? `${currentConditions.pressureMb} mb` : '--';
   }
@@ -385,41 +399,56 @@ function renderChaserGrid() {
 
 // ---------- Render: Outlook ----------
 function renderOutlook() {
-  const o = outlookData || heuristicOutlook();
-  $('outlookSource').textContent = o.source === 'live' ? 'SPC convective outlook (live)' : 'Estimated outlook (SPC feed unavailable)';
-  $('riskTitle').textContent = o.category;
-  $('riskCopy').textContent =
-    o.source === 'live'
-      ? 'Category pulled directly from the current SPC Day 1 categorical outlook polygon covering this location.'
-      : 'SPC live feed could not be reached from the browser, so this category is estimated from live CAPE and shear at your location.';
-  $('torRisk').textContent = o.tornado;
-  $('windRisk').textContent = o.wind;
-  $('hailRisk').textContent = o.hail;
-
-  const confidence = o.confidence != null ? o.confidence : 60;
-  $('confidenceValue').textContent = `${confidence}%`;
-  $('confidenceFill').style.width = `${confidence}%`;
+  $('outlookSource').textContent = 'SPC Day 1 categorical outlook';
+  $('riskTitle').textContent = outlookData?.category || 'Official outlook unavailable';
+  $('riskCopy').textContent = outlookData
+    ? 'Based on the SPC categorical outlook feed. Check SPC for the complete map, valid time, and hazards.'
+    : 'Storm Vector could not load the official SPC feed. No risk category is estimated.';
+  $('outlookTime').textContent = outlookData ? `Retrieved ${formatTime(outlookData.retrievedAt)}` : '';
 }
 
-// ---------- Render: Field ops ----------
-function renderField() {
-  const dir = severeParams ? severeParams.windDir : currentConditions ? currentConditions.windDirDeg : null;
-  if (dir == null) {
-    $('safeHeading').textContent = 'Recommended heading: --';
-    $('safeHeadingNote').textContent = 'Live wind direction unavailable — recommendation will populate once data loads.';
-    return;
-  }
-  const heading = computeSafeHeading(dir);
-  $('safeHeading').textContent = `Recommended heading: ${heading.compass}`;
-  $('safeHeadingNote').textContent = `Storms typically move with the mid-level flow; keep escape routes roughly ${heading.compass} of the current storm motion, away from the ${degToCompass(dir)} surface wind.`;
+// ---------- Render: local briefing ----------
+function renderBriefing() {
+  if (!place) return;
+  const alerts = activeAlerts.map((feature) => feature.properties);
+  const warnings = alerts.filter((a) => /warning/i.test(a.event || ''));
+  $('briefingTitle').textContent = warnings.length ? `${warnings.length} active warning${warnings.length === 1 ? '' : 's'} near ${place.name}` : `Your briefing for ${place.name}`;
+  $('briefingStatus').textContent = alertsStatus === 'unavailable'
+    ? `NWS alert refresh failed. ${alertsCheckedAt ? `Last checked ${formatTime(alertsCheckedAt)}. ` : 'No alerts could be loaded. '}Verify directly with NWS.`
+    : alertsStatus === 'loading' ? 'Checking NWS alerts…'
+    : alerts.length ? `${alerts.length} active NWS alert${alerts.length === 1 ? '' : 's'} · checked ${formatTime(alertsCheckedAt)}.` : `No active NWS alerts returned · checked ${formatTime(alertsCheckedAt)}.`;
+  $('briefingChanges').textContent = lastChangeText;
+  const list = $('briefingAlerts');
+  list.replaceChildren();
+  alerts.sort((a, b) => Number(/warning/i.test(b.event || '')) - Number(/warning/i.test(a.event || ''))).forEach((alert) => {
+    const item = document.createElement('article');
+    item.className = 'briefing-alert';
+    const title = document.createElement('strong');
+    title.textContent = alert.event || 'NWS alert';
+    const detail = document.createElement('p');
+    detail.textContent = alert.headline || alert.description?.slice(0, 250) || 'Open the NWS alert for details.';
+    const time = document.createElement('small');
+    time.textContent = alert.expires ? `Expires ${formatTime(alert.expires)}` : 'Expiration not provided';
+    item.append(title, detail, time);
+    if (alert['@id'] && /^https:\/\/api\.weather\.gov\//.test(alert['@id'])) {
+      const link = document.createElement('a');
+      link.href = alert['@id'];
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Full NWS alert';
+      item.append(link);
+    }
+    list.append(item);
+  });
+  $('briefingOutlook').textContent = outlookData?.category || 'Unavailable — check SPC';
+  $('briefingOutlookTime').textContent = outlookData ? `Feed retrieved ${formatTime(outlookData.retrievedAt)}` : 'Official feed could not be loaded';
+  $('briefingConditions').textContent = currentConditions?.tempF == null ? 'Unavailable' : `${Math.round(currentConditions.tempF)}°F · ${currentConditions.summary}`;
+  $('briefingObservationTime').textContent = currentConditions?.observedAt ? `Observed ${formatTime(currentConditions.observedAt)} at the nearest NWS station` : 'No observation timestamp available';
 }
 
-function computeSafeHeading(surfaceWindDirDeg) {
-  // Storms generally move in the direction the wind is blowing toward; a safe escape route
-  // runs roughly perpendicular-to-opposite that motion, biased toward paved road networks (E/S).
-  const stormMotion = (surfaceWindDirDeg + 180) % 360;
-  const escapeDeg = (stormMotion + 90) % 360;
-  return { deg: escapeDeg, compass: degToCompass(escapeDeg) };
+function formatTime(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'time unavailable' : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 // ---------- Chaser mode toggle ----------
@@ -477,17 +506,20 @@ function buildScriptLines() {
   const lines = [];
   const locName = place ? place.name : 'your area';
   if (currentConditions) {
-    lines.push(`Here in ${locName}, it's ${Math.round(currentConditions.tempF)} degrees with ${currentConditions.summary.toLowerCase()}.`);
-    lines.push(`Wind is out of the ${degToCompass(currentConditions.windDirDeg)} at ${Math.round(currentConditions.windMph)} miles per hour.`);
+    if (currentConditions.tempF != null) lines.push(`The nearest station to ${locName} reports ${Math.round(currentConditions.tempF)} degrees with ${currentConditions.summary.toLowerCase()}.`);
+    else lines.push(`The nearest station to ${locName} reports ${currentConditions.summary.toLowerCase()}, but no temperature reading.`);
+    if (currentConditions.windMph != null) lines.push(`Wind is out of the ${degToCompass(currentConditions.windDirDeg)} at ${Math.round(currentConditions.windMph)} miles per hour.`);
   } else {
     lines.push(`We don't have a live station reading for ${locName} right now, so treat conditions as unconfirmed.`);
   }
   if (outlookData) {
     lines.push(`Today's severe weather outlook for this area is a ${outlookData.category.toLowerCase()}.`);
+  } else {
+    lines.push('The official SPC outlook could not be loaded here. Check the SPC website for the current risk.');
   }
-  const warnings = activeAlerts.filter((a) => /warning/i.test(a.event));
+  const warnings = activeAlerts.filter((a) => /warning/i.test(a.properties?.event || ''));
   if (warnings.length) {
-    lines.push(`We do have active alerts in effect: ${warnings.map((w) => w.event).join(', ')}.`);
+    lines.push(`We do have active alerts in effect: ${warnings.map((w) => w.properties.event).join(', ')}.`);
   }
   lines.push(random(facts));
   return lines;
@@ -517,7 +549,7 @@ function broadcast() {
 function severeInterrupt(customText) {
   const text = customText || 'Severe weather interrupt: conditions in this area have changed. Stay tuned for updates.';
   logLine(text, true);
-  speechSynthesis.cancel();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
   speak(text, { rate: 1.15, pitch: 1.1 });
 }
 
@@ -536,8 +568,4 @@ function degToCompass(deg) {
 function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 document.addEventListener('DOMContentLoaded', init);
