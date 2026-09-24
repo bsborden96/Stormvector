@@ -17,4 +17,4 @@ A lightweight local weather briefing. Open `index.html` through a local HTTP ser
 - [OpenStreetMap Nominatim](https://operations.osmfoundation.org/policies/nominatim/) for user submitted U.S. location search and GPS reverse lookup. There is no autocomplete or search request while typing. This public service has usage limits; move geocoding to an appropriate provider or cached proxy before significant traffic.
 - Spoken broadcast uses the browser's speech synthesis. It does not generate an AI forecast, cannot speak after the page closes, and must not replace official warning channels.
 
-`npm test` currently checks JavaScript syntax. The app has no build step.
+`npm test` checks JavaScript syntax, official outlook parsing, alert refresh behavior, and element IDs. The app has no build step.
