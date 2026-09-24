@@ -13,15 +13,15 @@
     <div id="alertBanner" class="alert-banner hidden" role="alert"></div>
 
     <header class="topbar">
-      <a class="brand" href="#conditions" aria-label="Storm Vector home">
+      <a class="brand" href="#area" aria-label="Storm Vector home">
         <span class="brand-mark">SV</span>
         <span><strong>Storm Vector</strong><small>Severe weather command center</small></span>
       </a>
       <nav class="tabs" aria-label="Primary navigation">
+        <a href="#area" data-page-link="area">My Area</a>
         <a href="#conditions" data-page-link="conditions">Conditions</a>
         <a href="#outlook" data-page-link="outlook">SPC Outlook</a>
-        <a href="#broadcast" data-page-link="broadcast">AI Broadcast</a>
-        <a href="#field" data-page-link="field">Field Ops</a>
+        <a href="#broadcast" data-page-link="broadcast">Spoken Briefing</a>
       </nav>
     </header>
 
@@ -30,18 +30,33 @@
         <div>
           <p class="eyebrow">Location lock</p>
           <h1 id="locationTitle">Finding your sky...</h1>
-          <p id="locationMeta">Requesting GPS location. Search any U.S. city, town, or village to override.</p>
+          <p id="locationMeta">Loading your saved location or requesting GPS.</p>
         </div>
         <div class="search-wrap">
           <label for="locationSearch">Search location</label>
-          <input id="locationSearch" type="search" list="citySuggestions" placeholder="Try Norman, OK" autocomplete="off" />
-          <datalist id="citySuggestions"></datalist>
+          <input id="locationSearch" type="search" placeholder="Try Waupun, Wisconsin" autocomplete="off" />
           <button id="useSearch">Set Location</button>
           <button id="useGps" class="ghost">Use GPS</button>
+          <small class="search-credit">Location lookup by <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>. Search when ready; no queries while typing.</small>
         </div>
       </section>
 
-      <section id="conditions" class="page active">
+      <section id="area" class="page active">
+        <div class="glass briefing">
+          <p class="eyebrow">Your local briefing</p>
+          <h2 id="briefingTitle">Getting the latest information…</h2>
+          <p id="briefingStatus" class="muted" role="status">Checking National Weather Service alerts.</p>
+          <div id="briefingChanges" class="change-note" aria-live="polite"></div>
+          <div id="briefingAlerts" class="alert-list"></div>
+          <div class="briefing-facts">
+            <article><span>SPC Day 1 outlook</span><strong id="briefingOutlook">Checking…</strong><small id="briefingOutlookTime"></small></article>
+            <article><span>Nearest NWS observation</span><strong id="briefingConditions">Checking…</strong><small id="briefingObservationTime"></small></article>
+          </div>
+          <p class="source-note">Official alerts: <a href="https://www.weather.gov/alerts" target="_blank" rel="noopener noreferrer">NWS</a> · Outlook: <a href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noopener noreferrer">SPC</a>. This page refreshes alerts every five minutes while open; keep Wireless Emergency Alerts and NOAA Weather Radio enabled for urgent warnings.</p>
+        </div>
+      </section>
+
+      <section id="conditions" class="page">
         <div class="hero glass">
           <div>
             <p class="eyebrow">Current conditions</p>
@@ -57,9 +72,9 @@
         </div>
         <div id="chaserGrid" class="grid hidden">
           <article class="card"><span>CAPE</span><strong id="capeValue">--</strong><p id="capeNote">Convective available potential energy — live model data.</p></article>
-          <article class="card"><span>Instability Read</span><strong id="skewValue">--</strong><p>Plain-language read on CAPE and cap strength for this location.</p></article>
+          <article class="card"><span>Instability Read</span><strong id="skewValue">--</strong><p>Plain-language interpretation of model CAPE near this location.</p></article>
           <article class="card"><span>Est. LCL</span><strong id="lclValue">--</strong><p>Lifted condensation level, estimated from temperature/dew point spread.</p></article>
-          <article class="card"><span>Approx. Shear</span><strong id="shearValue">--</strong><p id="shearNote">10m–180m wind speed differential, a proxy for low-level shear.</p></article>
+          <article class="card"><span>Near-surface wind difference</span><strong id="shearValue">--</strong><p id="shearNote">10 m to 180 m model wind speed difference. This is not a storm-relative shear measurement.</p></article>
         </div>
       </section>
 
@@ -68,29 +83,29 @@
           <article class="glass outlook-map">
             <p class="eyebrow" id="outlookSource">SPC convective outlook</p>
             <h2 id="riskTitle">--</h2>
-            <div class="risk-rings" aria-label="Stylized SPC risk map"><span></span><span></span><span></span><b id="riskDot"></b></div>
+            <p id="outlookTime" class="source-note"></p>
             <p id="riskCopy">Loading outlook for the selected location.</p>
+            <a href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noopener noreferrer">Open the official SPC outlook</a>
           </article>
           <article class="glass confidence">
-            <p class="eyebrow">Forecast confidence</p>
-            <div class="meter"><div id="confidenceFill"></div></div>
-            <strong id="confidenceValue">--</strong>
-            <p>Blends live data completeness, instability, and shear signal strength.</p>
+            <p class="eyebrow">About this outlook</p>
+            <p>SPC categories describe the risk of organized severe thunderstorms over an area. They are not a forecast for one address.</p>
+            <p>When the official feed is unavailable, Storm Vector does not calculate a replacement category.</p>
           </article>
         </div>
         <div class="grid">
-          <article class="card"><span>Tornado</span><strong id="torRisk">--</strong></article>
-          <article class="card"><span>Wind</span><strong id="windRisk">--</strong></article>
-          <article class="card"><span>Hail</span><strong id="hailRisk">--</strong></article>
+          <article class="card"><span>Tornado outlook</span><strong>See SPC</strong></article>
+          <article class="card"><span>Wind outlook</span><strong>See SPC</strong></article>
+          <article class="card"><span>Hail outlook</span><strong>See SPC</strong></article>
         </div>
       </section>
 
       <section id="broadcast" class="page">
         <div class="glass broadcast-console">
           <div>
-            <p class="eyebrow">Live AI weather desk</p>
-            <h2>Producer-driven broadcast</h2>
-            <p>The producer rotates tone, facts, and live data so the weather read never sounds stale — spoken aloud, not just printed. Active NWS warnings interrupt automatically.</p>
+            <p class="eyebrow">Spoken briefing</p>
+            <h2>Weather broadcast</h2>
+            <p>Hear a spoken summary of the latest loaded information. New NWS warnings interrupt once while this page is open. Browser speech must stay open to work.</p>
           </div>
           <div class="button-row">
             <button id="startBroadcast">Start Broadcast</button>
@@ -102,23 +117,6 @@
         </div>
       </section>
 
-      <section id="field" class="page">
-        <div class="split">
-          <article class="glass">
-            <p class="eyebrow">Page four: Field Ops</p>
-            <h2>Chase Planner + Camera Layer</h2>
-            <p>Escape heading is computed from the live surface wind direction at your location, not a placeholder.</p>
-            <div class="route-card"><b id="safeHeading">Recommended heading: --</b><span id="safeHeadingNote">Keep paved escape routes open opposite storm motion.</span></div>
-          </article>
-          <article class="glass camera-board">
-            <p class="eyebrow">Traffic camera overlay (concept)</p>
-            <p class="camera-disclaimer">No free, keyless, nationwide traffic-camera API exists, so this panel stays illustrative until a specific state DOT feed is wired in.</p>
-            <div class="camera-grid">
-              <span>CAM-12 Wet lens / low visibility</span><span>CAM-27 Clear westbound flow</span><span>CAM-41 Lightning visible north</span><span>CAM-58 Construction shoulder closed</span>
-            </div>
-          </article>
-        </div>
-      </section>
     </main>
     <script src="src/app.js"></script>
   </body>
