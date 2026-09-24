@@ -3,7 +3,7 @@
    - Current conditions + active alerts: api.weather.gov (National Weather Service, no key required)
    - Severe-weather parameters (CAPE, freezing level, wind-by-height): api.open-meteo.com (no key required)
    - User-triggered location search + reverse geocoding: nominatim.openstreetmap.org
-   - SPC Day 1 categorical outlook: spc.noaa.gov GeoJSON, when accessible from the browser.
+   - SPC Day 1 categorical outlook: NOAA's weather map service GeoJSON point query.
 */
 
 const $ = (id) => document.getElementById(id);
@@ -25,7 +25,7 @@ let locationVersion = 0;
 let lastChangeText = '';
 const STORAGE_PREFIX = 'stormvector:';
 
-// ---------- Fallback location list (used only if live geocoding fails) ----------
+// ---------- Known locations available without geocoding ----------
 const fallbackCities = [
   ['Norman, OK', 35.2226, -97.4395], ['Oklahoma City, OK', 35.4676, -97.5164], ['Tulsa, OK', 36.154, -95.9928],
   ['Dallas, TX', 32.7767, -96.797], ['Houston, TX', 29.7604, -95.3698], ['Austin, TX', 30.2672, -97.7431],
