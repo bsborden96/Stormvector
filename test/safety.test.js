@@ -19,7 +19,8 @@ function app(fetch) {
   };
   const storage = new Map();
   const context = vm.createContext({
-    document, fetch, URLSearchParams, Date, console,
+    document, fetch, URLSearchParams, Date, console, AbortSignal,
+    Seasonal: { renderAlerts() {} },
     localStorage: { getItem: (k) => storage.get(k) || null, setItem: (k, v) => storage.set(k, v) },
   });
   vm.runInContext(fs.readFileSync('src/app.js', 'utf8'), context);
@@ -58,9 +59,9 @@ test('a failed alert refresh retains previous alerts and never repeats a warning
 });
 
 test('all referenced element IDs exist in the page', () => {
-  const js = fs.readFileSync('src/app.js', 'utf8');
+  const js = fs.readFileSync('src/app.js', 'utf8') + fs.readFileSync('src/seasonal.js', 'utf8');
   const html = fs.readFileSync('index.html', 'utf8');
-  for (const [, id] of js.matchAll(/\$\('([^']+)'\)/g)) {
+  for (const [, id] of js.matchAll(/(?:\$|document.getElementById)\('([^']+)'\)/g)) {
     assert.match(html, new RegExp(`id="${id}"`), `Missing #${id}`);
   }
 });

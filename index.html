@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Storm Vector</title>
+    <title>StormVector · Weather for what comes next</title>
+    <meta name="description" content="Local weather, official alerts, severe outlooks, fall color planning, and winter forecasts in one place." />
     <link rel="stylesheet" href="src/styles.css" />
   </head>
   <body>
@@ -15,12 +16,15 @@
     <header class="topbar">
       <a class="brand" href="#area" aria-label="Storm Vector home">
         <span class="brand-mark">SV</span>
-        <span><strong>Storm Vector</strong><small>Severe weather command center</small></span>
+        <span><strong>Storm Vector</strong><small>Weather for what comes next</small></span>
       </a>
       <nav class="tabs" aria-label="Primary navigation">
         <a href="#area" data-page-link="area">My Area</a>
+        <a href="#forecast" data-page-link="forecast">Forecast</a>
         <a href="#conditions" data-page-link="conditions">Conditions</a>
         <a href="#outlook" data-page-link="outlook">SPC Outlook</a>
+        <a href="#fall" data-page-link="fall">Fall Colors</a>
+        <a href="#winter" data-page-link="winter">Winter</a>
         <a href="#broadcast" data-page-link="broadcast">Spoken Briefing</a>
       </nav>
     </header>
@@ -28,7 +32,7 @@
     <main>
       <section class="location-panel glass">
         <div>
-          <p class="eyebrow">Location lock</p>
+          <p class="eyebrow">Your weather, in focus</p>
           <h1 id="locationTitle">Finding your sky...</h1>
           <p id="locationMeta">Loading your saved location or requesting GPS.</p>
         </div>
@@ -42,6 +46,11 @@
       </section>
 
       <section id="area" class="page active">
+        <div class="season-hero">
+          <div><p class="eyebrow">StormVector / Field notes</p><h2>A changing season.<br>A clearer forecast.</h2><p>Know what is coming. Find your next day outside.<br>Stay ahead of the weather that matters.</p><div class="button-row"><a class="action-link" href="#forecast">Plan your week ↗</a><a class="action-link secondary" href="#winter">Winter watch ↗</a></div></div>
+          <div class="landscape" role="img" aria-label="Illustrated autumn hills transitioning to a snowy ridge"><span class="sun"></span><span class="ridge back"></span><span class="ridge middle"></span><span class="ridge front"></span><span class="landscape-caption">FROM FALL COLOR TO FIRST SNOW</span></div>
+        </div>
+        <div class="feature-links"><a href="#outlook"><span>01 / Severe</span><strong>Official storm outlooks ↗</strong></a><a href="#fall"><span>02 / Outdoors</span><strong>Follow the fall color ↗</strong></a><a href="#winter"><span>03 / Winter</span><strong>Snow, ice & cold ↗</strong></a></div>
         <div class="glass briefing">
           <p class="eyebrow">Your local briefing</p>
           <h2 id="briefingTitle">Getting the latest information…</h2>
@@ -54,6 +63,35 @@
           </div>
           <p class="source-note">Official alerts: <a href="https://www.weather.gov/alerts" target="_blank" rel="noopener noreferrer">NWS</a> · Outlook: <a href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noopener noreferrer">SPC</a>. This page refreshes alerts every five minutes while open; keep Wireless Emergency Alerts and NOAA Weather Radio enabled for urgent warnings.</p>
         </div>
+      </section>
+
+      <section id="forecast" class="page">
+        <div class="section-heading"><p class="eyebrow">The week ahead</p><h2>Make a little room for outside.</h2><p>A seven-day model forecast for your selected location. Tap a day for the details.</p></div>
+        <p id="forecastStatus" class="source-note" role="status">Waiting for a location…</p>
+        <button id="refreshForecast" class="ghost">Refresh forecast</button>
+        <div id="forecastDays" class="forecast-days" aria-label="Forecast days"></div>
+        <article id="forecastDetail" class="glass detail-panel" aria-live="polite"></article>
+        <div class="split seasonal-tools"><article class="glass detail-panel"><p class="eyebrow">Official local forecast</p><h3>From the National Weather Service</h3><p id="officialForecast">Loading official forecast…</p><a id="officialForecastLink" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Full NWS forecast ↗</a></article><article class="glass detail-panel"><p class="eyebrow">Watch the sky</p><h3>Radar & current warnings</h3><p>Use the official radar to see precipitation. Check My Area for alerts at your selected location.</p><div class="button-row"><a href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">NWS radar ↗</a><a href="#area">Local alerts ↗</a></div></article></div>
+        <p class="source-note">Forecast: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>. Planning labels are StormVector heuristics, not official risk categories. Daily extremes may occur at different times. Model guidance becomes less certain farther out.</p>
+      </section>
+
+      <section id="fall" class="page">
+        <div class="section-heading"><p class="eyebrow">The autumn field guide / Wisconsin</p><h2>Chase color.<br>Take the scenic way.</h2><p>Start with current foliage reports, then use the weather to plan your day out.</p></div>
+        <div class="split"><article class="glass detail-panel foliage-feature"><span class="pill">On-the-ground reports</span><h3>Where are the leaves changing?</h3><p>Travel Wisconsin reports current color and estimated peak timing by county. Open the latest report before heading out.</p><a class="action-link" href="https://www.travelwisconsin.com/fall-color-report" target="_blank" rel="noopener noreferrer">Open current fall color map ↗</a><p class="source-note">Current color percentages are provided on the source site. StormVector does not estimate them from weather.</p></article><article class="glass detail-panel"><p class="eyebrow">Your outdoor window</p><h3 id="fallBestDay">Loading your forecast…</h3><p id="fallWeatherAdvice">Choose any U.S. location above for weather guidance. The foliage guide below covers Wisconsin.</p><a href="#forecast">Explore all seven days ↗</a></article></div>
+        <div class="season-calendar glass"><label for="fallDate">Explore a date</label><input id="fallDate" type="date" /><p id="fallSeasonNote" role="status"></p><p class="source-note">Seasonal context only: Wisconsin color generally develops from north to south from mid-September through October. This calendar does not predict this year's peak.</p></div>
+        <div class="section-heading compact"><p class="eyebrow">Choose a direction</p><h3>Three ways to find the season.</h3></div>
+        <div class="destination-grid"><article class="card destination north"><span>01 / Northwoods</span><h3>Quiet roads.<br>Deep forest.</h3><p>Explore Eagle River and the Northwoods. Northern areas generally change before southern Wisconsin.</p><button data-destination="north" class="ghost">Weather in Eagle River ↗</button></article><article class="card destination shore"><span>02 / Lake Michigan</span><h3>Color along<br>the shoreline.</h3><p>Explore Door County and Peninsula State Park. Check current reports; lake influence can change local timing.</p><button data-destination="shore" class="ghost">Weather in Fish Creek ↗</button></article><article class="card destination south"><span>03 / Closer to home</span><h3>Rolling hills.<br>One more turn.</h3><p>Explore Kettle Moraine and southern Wisconsin. Waupun makes a good starting point for a local day out.</p><button data-destination="south" class="ghost">Weather in Waupun ↗</button></article></div>
+        <details class="glass detail-panel seasonal-tools"><summary>What makes a good fall color day?</summary><p>Warm days and cool nights can support color. Frost, heavy rain, and strong wind can affect the display. For an outing, look for lower rain chances and lighter gusts; always give official warnings priority.</p><a href="https://www.travelwisconsin.com/stories/know-before-you-go-fall-color-in-wisconsin" target="_blank" rel="noopener noreferrer">Travel Wisconsin's fall color guide ↗</a></details>
+      </section>
+
+      <section id="winter" class="page">
+        <div class="section-heading"><p class="eyebrow">Winter watch</p><h2>Before the first flake.<br>Before the next drive.</h2><p>Local snow guidance, cold weather, and official alerts in one place.</p></div>
+        <p id="winterStatus" class="source-note" role="status">Waiting for a location…</p>
+        <div id="winterMetrics" class="briefing-facts winter-metrics"></div>
+        <article class="glass detail-panel"><p class="eyebrow">Official local alerts</p><h3>Snow, ice, frost & cold</h3><p id="winterAlertStatus" role="status">Checking NWS alerts…</p><div id="winterAlerts" class="alert-list"></div></article>
+        <div class="section-heading compact"><h3>Seven-day winter guidance</h3><p>Model snowfall is snowfall produced during each day, not snow depth or a guaranteed amount on the ground.</p></div>
+        <div class="table-scroll glass"><table class="winter-table"><caption>Daily snow, cold, and precipitation guidance</caption><thead><tr><th scope="col">Day</th><th scope="col">Snow</th><th scope="col">Low / feels like</th><th scope="col">Gusts</th><th scope="col">Planning note</th></tr></thead><tbody id="winterRows"></tbody></table></div>
+        <div class="destination-grid seasonal-tools"><article class="card"><span>Official impacts</span><h3>Winter Storm Severity Index</h3><p>See NWS guidance for potential winter impacts. WSSI adds context to forecasts; it is not a warning.</p><a href="https://www.weather.gov/arx/wssi" target="_blank" rel="noopener noreferrer">Explore WSSI ↗</a></article><article class="card"><span>Before you drive</span><h3>Check the actual roads</h3><p>Weather alone cannot tell you whether a road is clear. Check cameras, closures, and road reports for your route.</p><a href="https://511wi.gov/" target="_blank" rel="noopener noreferrer">Wisconsin 511 ↗</a></article><article class="card"><span>Ice & mixed precipitation</span><h3>Read the official forecast</h3><p>Freezing rain can cause trouble with very little accumulation. StormVector does not infer ice totals from daily temperatures or rainfall.</p><a href="#forecast">Local NWS forecast ↗</a></article></div>
       </section>
 
       <section id="conditions" class="page">
@@ -93,6 +131,7 @@
             <p>When the official feed is unavailable, Storm Vector does not calculate a replacement category.</p>
           </article>
         </div>
+        <article class="glass detail-panel seasonal-tools"><p class="eyebrow">National outlook maps / SPC</p><h3>Look beyond your location.</h3><div class="button-row" aria-label="SPC forecast day"><button data-spc-day="1" aria-pressed="true">Day 1</button><button data-spc-day="2" aria-pressed="false" class="ghost">Day 2</button><button data-spc-day="3" aria-pressed="false" class="ghost">Day 3</button></div><p id="spcMapCaption" class="source-note">Day 1 national categorical outlook. The local category above remains Day 1.</p><a id="spcMapLink" href="https://www.spc.noaa.gov/products/outlook/day1otlk.html" target="_blank" rel="noopener noreferrer"><img id="spcMap" class="outlook-image" src="https://www.spc.noaa.gov/products/outlook/day1otlk.gif" alt="SPC Day 1 national categorical outlook" loading="lazy" /></a><p id="spcImageStatus" class="source-note" role="status">Open the map for the official outlook, valid time, and discussion.</p></article>
         <div class="grid">
           <article class="card"><span>Tornado outlook</span><strong>See SPC</strong></article>
           <article class="card"><span>Wind outlook</span><strong>See SPC</strong></article>
@@ -118,6 +157,8 @@
       </section>
 
     </main>
+    <footer class="site-footer"><strong>StormVector</strong><p>Weather for what comes next. Official alerts from NWS · Outlooks from SPC · Model forecasts from Open-Meteo.</p><p>Keep Wireless Emergency Alerts and NOAA Weather Radio available. This page cannot alert you after it closes.</p></footer>
+    <script src="src/seasonal.js"></script>
     <script src="src/app.js"></script>
   </body>
 </html>

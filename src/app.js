@@ -14,6 +14,8 @@ let currentConditions = null;
 let severeParams = null;
 let activeAlerts = [];
 let outlookData = null;
+let seasonalData = null;
+let seasonalRequestVersion = 0;
 let alertsPollTimer = null;
 let muted = false;
 let voices = [];
@@ -27,6 +29,7 @@ const STORAGE_PREFIX = 'stormvector:';
 
 // ---------- Known locations available without geocoding ----------
 const fallbackCities = [
+  ['Waupun, WI', 43.6333, -88.7296], ['Eagle River, WI', 45.9172, -89.2443], ['Fish Creek, WI', 45.1275, -87.2465],
   ['Norman, OK', 35.2226, -97.4395], ['Oklahoma City, OK', 35.4676, -97.5164], ['Tulsa, OK', 36.154, -95.9928],
   ['Dallas, TX', 32.7767, -96.797], ['Houston, TX', 29.7604, -95.3698], ['Austin, TX', 30.2672, -97.7431],
   ['Kansas City, MO', 39.0997, -94.5786], ['Wichita, KS', 37.6872, -97.3301], ['Denver, CO', 39.7392, -104.9903],
@@ -62,6 +65,8 @@ function init() {
   $('testFact').addEventListener('click', () => logLine(random(facts)));
   $('testSevere').addEventListener('click', () => severeInterrupt('This is a test of the Storm Vector severe weather interrupt system.'));
   $('muteToggle').addEventListener('click', toggleMute);
+  Seasonal.init((destination) => { updateLocation(destination); location.hash = '#forecast'; });
+  $('refreshForecast').addEventListener('click', () => { if (place) refreshSeasonal(place, locationVersion); });
   route();
 
   if ('speechSynthesis' in window) {
@@ -71,12 +76,13 @@ function init() {
 
   const saved = readSavedPlace();
   if (saved) updateLocation(saved);
-  else useGps(false, true);
+  else updateLocation({ name: 'Waupun, WI', lat: 43.6333, lon: -88.7296 });
 }
 
 function route() {
   const requested = (location.hash || '#area').slice(1);
   const page = document.getElementById(requested)?.classList.contains('page') ? requested : 'area';
+  document.body.dataset.season = page === 'winter' ? 'winter' : 'fall';
   document.querySelectorAll('.page').forEach((section) => section.classList.toggle('active', section.id === page));
   document.querySelectorAll('[data-page-link]').forEach((link) => link.classList.toggle('active', link.dataset.pageLink === page));
 }
@@ -178,13 +184,20 @@ async function updateLocation(nextPlace) {
   $('briefingStatus').textContent = 'Loading official alerts and observations.';
   $('briefingChanges').textContent = '';
   activeAlerts = [];
+  seenWarningIds = new Set();
+  lastChangeText = '';
   alertsStatus = 'loading';
   alertsCheckedAt = null;
   currentConditions = null;
   severeParams = null;
   outlookData = null;
   clearInterval(alertsPollTimer);
+  renderConditions();
+  renderOutlook();
+  renderBriefing();
   renderAlertBanner();
+  Seasonal.renderAlerts([], 'loading', null);
+  refreshSeasonal(nextPlace, version);
   const [conditions, severe, outlook, alerts] = await Promise.allSettled([
     loadConditions(nextPlace), loadSevereParams(nextPlace), loadOutlook(nextPlace), loadAlerts(nextPlace)
   ]);
@@ -198,6 +211,43 @@ async function updateLocation(nextPlace) {
   renderOutlook();
   renderBriefing();
   startAlertsPolling();
+}
+
+// ---------- Seasonal forecast: independent feeds and stale-response protection ----------
+async function refreshSeasonal(target, version) {
+  const request = ++seasonalRequestVersion;
+  seasonalData = null;
+  Seasonal.render(null, target, 'loading');
+  $('officialForecast').textContent = 'Loading official forecast…';
+  $('officialForecastLink').href = `https://forecast.weather.gov/MapClick.php?lat=${target.lat}&lon=${target.lon}`;
+  $('refreshForecast').disabled = true;
+  // Each feed renders as soon as it settles; a slow NWS request cannot block model guidance.
+  const current = () => version === locationVersion && request === seasonalRequestVersion;
+  await Promise.allSettled([
+    (async () => {
+      try {
+        const data = await Seasonal.load(target, fetchJson);
+        if (!current()) return;
+        seasonalData = data;
+        Seasonal.render(data, target);
+      } catch {
+        if (current()) Seasonal.render(null, target, 'unavailable');
+      }
+    })(),
+    (async () => {
+      try {
+        const point = await fetchJson(`https://api.weather.gov/points/${target.lat},${target.lon}`);
+        const data = await fetchJson(point.properties.forecast);
+        if (!current()) return;
+        const now = Date.now();
+        const period = data.properties?.periods?.find(p => new Date(p.endTime).getTime() > now);
+        $('officialForecast').textContent = period ? `${period.name}: ${period.detailedForecast}` : 'Official forecast unavailable. Open NWS for the latest.';
+      } catch {
+        if (current()) $('officialForecast').textContent = 'Official forecast unavailable here. Open NWS for the latest.';
+      }
+    })(),
+  ]);
+  if (current()) $('refreshForecast').disabled = false;
 }
 
 // ---------- NWS current conditions ----------
@@ -246,7 +296,7 @@ async function loadSevereParams(target) {
 }
 
 async function fetchJson(url) {
-  const response = await fetch(url, { headers: { Accept: 'application/geo+json, application/json' } });
+  const response = await fetch(url, { headers: { Accept: 'application/geo+json, application/json' }, signal: AbortSignal.timeout(20000) });
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
   return response.json();
 }
@@ -266,6 +316,7 @@ function applyAlerts(features, initial = false) {
     alertsStatus = 'unavailable';
     renderAlertBanner();
     renderBriefing();
+    Seasonal.renderAlerts(activeAlerts, alertsStatus, alertsCheckedAt);
     return;
   }
   alertsStatus = 'current';
@@ -297,6 +348,7 @@ function applyAlerts(features, initial = false) {
   try { localStorage.setItem(alertStorageKey(), JSON.stringify({ ids: features.map(alertId), checkedAt: alertsCheckedAt })); } catch { /* Storage disabled. */ }
   renderAlertBanner();
   renderBriefing();
+  Seasonal.renderAlerts(activeAlerts, alertsStatus, alertsCheckedAt);
 }
 
 function alertStorageKey() {
@@ -305,14 +357,18 @@ function alertStorageKey() {
 
 function startAlertsPolling() {
   clearInterval(alertsPollTimer);
+  let polling = false;
   alertsPollTimer = setInterval(async () => {
+    if (polling) return;
+    polling = true;
     const target = place;
+    const version = locationVersion;
     try {
       const features = await loadAlerts(target);
-      if (place === target) applyAlerts(features);
+      if (version === locationVersion && place === target) applyAlerts(features);
     } catch {
-      if (place === target) applyAlerts(null);
-    }
+      if (version === locationVersion && place === target) applyAlerts(null);
+    } finally { polling = false; }
   }, 5 * 60 * 1000);
 }
 

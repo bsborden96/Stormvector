@@ -18,3 +18,17 @@ A lightweight local weather briefing. Open `index.html` through a local HTTP ser
 - Spoken broadcast uses the browser's speech synthesis. It does not generate an AI forecast, cannot speak after the page closes, and must not replace official warning channels.
 
 `npm test` checks JavaScript syntax, official outlook parsing, alert refresh behavior, and element IDs. The app has no build step.
+
+## Forecast, Fall Colors, and Winter
+
+The seasonal dashboard extends this repository's existing local briefing without adding a build step, videos, or a YouTube dependency.
+
+- **Forecast**: seven-day Open-Meteo guidance, selectable daily details, rain chances, temperatures, and gusts; the current NWS forecast period is fetched independently. Refresh explicitly with **Refresh forecast**. Retrieval time and the forecast location's timezone are displayed. Planning labels are simple StormVector heuristics, not official risk categories or an all-clear.
+- **Fall Colors**: Wisconsin destination shortcuts, date-based seasonal context, local outdoor weather windows, and a link to Travel Wisconsin's current county color reports. Current foliage percentages are not scraped, invented, or inferred from the model forecast. Seasonal dates do not predict peak color.
+- **Winter**: model snow amounts for the first three calendar forecast days (including hours already passed today), minimum air and apparent temperatures, a daily guidance table, and NWS winter/cold alerts at the selected location. Missing amounts stay unavailable. Snow units are validated and converted from the returned unit; snowfall is not snow depth. Ice accumulation and actual road conditions are not inferred from daily model fields. Official WSSI and Wisconsin 511 links provide additional context.
+- **SPC Outlook**: selectable Day 1–3 national map images linked to SPC's official products. Switching the national map does not change the separately labeled local Day 1 category.
+- **Location**: defaults to Waupun, WI when there is no saved location; GPS is requested only through **Use GPS**. Every page follows the selected location. Older model/NWS requests cannot overwrite a newer selection. Switching locations clears warning deduplication state; polling has location-version and overlap guards.
+
+The seasonal layout uses copper autumn colors and a blue winter accent. It retains the existing alert, conditions, chaser, and spoken-briefing features. External feeds require network access and may be unavailable; their failures are labeled instead of replaced with sample weather.
+
+`npm test` checks both scripts' syntax, official SPC parsing, alert-refresh behavior, location changes, stale seasonal responses, unit conversion, incomplete forecasts, winter/ice classification, safe text rendering, and navigation/element references. Tests use fixtures; a live API smoke check is a separate verification.
