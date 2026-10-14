@@ -1,164 +1,43 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StormVector · Weather for what comes next</title>
-    <meta name="description" content="Local weather, official alerts, severe outlooks, fall color planning, and winter forecasts in one place." />
-    <link rel="stylesheet" href="src/styles.css" />
-  </head>
-  <body>
-    <div class="sky-orb orb-one"></div>
-    <div class="sky-orb orb-two"></div>
-
-    <div id="alertBanner" class="alert-banner hidden" role="alert"></div>
-
-    <header class="topbar">
-      <a class="brand" href="#area" aria-label="Storm Vector home">
-        <span class="brand-mark">SV</span>
-        <span><strong>Storm Vector</strong><small>Weather for what comes next</small></span>
-      </a>
-      <nav class="tabs" aria-label="Primary navigation">
-        <a href="#area" data-page-link="area">My Area</a>
-        <a href="#forecast" data-page-link="forecast">Forecast</a>
-        <a href="#conditions" data-page-link="conditions">Conditions</a>
-        <a href="#outlook" data-page-link="outlook">SPC Outlook</a>
-        <a href="#fall" data-page-link="fall">Fall Colors</a>
-        <a href="#winter" data-page-link="winter">Winter</a>
-        <a href="#broadcast" data-page-link="broadcast">Spoken Briefing</a>
-      </nav>
-    </header>
-
-    <main>
-      <section class="location-panel glass">
-        <div>
-          <p class="eyebrow">Your weather, in focus</p>
-          <h1 id="locationTitle">Finding your sky...</h1>
-          <p id="locationMeta">Loading your saved location or requesting GPS.</p>
-        </div>
-        <div class="search-wrap">
-          <label for="locationSearch">Search location</label>
-          <input id="locationSearch" type="search" placeholder="Try Waupun, Wisconsin" autocomplete="off" />
-          <button id="useSearch">Set Location</button>
-          <button id="useGps" class="ghost">Use GPS</button>
-          <small class="search-credit">Location lookup by <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>. Search when ready; no queries while typing.</small>
-        </div>
-      </section>
-
-      <section id="area" class="page active">
-        <div class="season-hero">
-          <div><p class="eyebrow">StormVector / Field notes</p><h2>A changing season.<br>A clearer forecast.</h2><p>Know what is coming. Find your next day outside.<br>Stay ahead of the weather that matters.</p><div class="button-row"><a class="action-link" href="#forecast">Plan your week ↗</a><a class="action-link secondary" href="#winter">Winter watch ↗</a></div></div>
-          <div class="landscape" role="img" aria-label="Illustrated autumn hills transitioning to a snowy ridge"><span class="sun"></span><span class="ridge back"></span><span class="ridge middle"></span><span class="ridge front"></span><span class="landscape-caption">FROM FALL COLOR TO FIRST SNOW</span></div>
-        </div>
-        <div class="feature-links"><a href="#outlook"><span>01 / Severe</span><strong>Official storm outlooks ↗</strong></a><a href="#fall"><span>02 / Outdoors</span><strong>Follow the fall color ↗</strong></a><a href="#winter"><span>03 / Winter</span><strong>Snow, ice & cold ↗</strong></a></div>
-        <div class="glass briefing">
-          <p class="eyebrow">Your local briefing</p>
-          <h2 id="briefingTitle">Getting the latest information…</h2>
-          <p id="briefingStatus" class="muted" role="status">Checking National Weather Service alerts.</p>
-          <div id="briefingChanges" class="change-note" aria-live="polite"></div>
-          <div id="briefingAlerts" class="alert-list"></div>
-          <div class="briefing-facts">
-            <article><span>SPC Day 1 outlook</span><strong id="briefingOutlook">Checking…</strong><small id="briefingOutlookTime"></small></article>
-            <article><span>Nearest NWS observation</span><strong id="briefingConditions">Checking…</strong><small id="briefingObservationTime"></small></article>
-          </div>
-          <p class="source-note">Official alerts: <a href="https://www.weather.gov/alerts" target="_blank" rel="noopener noreferrer">NWS</a> · Outlook: <a href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noopener noreferrer">SPC</a>. This page refreshes alerts every five minutes while open; keep Wireless Emergency Alerts and NOAA Weather Radio enabled for urgent warnings.</p>
-        </div>
-      </section>
-
-      <section id="forecast" class="page">
-        <div class="section-heading"><p class="eyebrow">The week ahead</p><h2>Make a little room for outside.</h2><p>A seven-day model forecast for your selected location. Tap a day for the details.</p></div>
-        <p id="forecastStatus" class="source-note" role="status">Waiting for a location…</p>
-        <button id="refreshForecast" class="ghost">Refresh forecast</button>
-        <div id="forecastDays" class="forecast-days" aria-label="Forecast days"></div>
-        <article id="forecastDetail" class="glass detail-panel" aria-live="polite"></article>
-        <div class="split seasonal-tools"><article class="glass detail-panel"><p class="eyebrow">Official local forecast</p><h3>From the National Weather Service</h3><p id="officialForecast">Loading official forecast…</p><a id="officialForecastLink" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Full NWS forecast ↗</a></article><article class="glass detail-panel"><p class="eyebrow">Watch the sky</p><h3>Radar & current warnings</h3><p>Use the official radar to see precipitation. Check My Area for alerts at your selected location.</p><div class="button-row"><a href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">NWS radar ↗</a><a href="#area">Local alerts ↗</a></div></article></div>
-        <p class="source-note">Forecast: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>. Planning labels are StormVector heuristics, not official risk categories. Daily extremes may occur at different times. Model guidance becomes less certain farther out.</p>
-      </section>
-
-      <section id="fall" class="page">
-        <div class="section-heading"><p class="eyebrow">The autumn field guide / Wisconsin</p><h2>Chase color.<br>Take the scenic way.</h2><p>Start with current foliage reports, then use the weather to plan your day out.</p></div>
-        <div class="split"><article class="glass detail-panel foliage-feature"><span class="pill">On-the-ground reports</span><h3>Where are the leaves changing?</h3><p>Travel Wisconsin reports current color and estimated peak timing by county. Open the latest report before heading out.</p><a class="action-link" href="https://www.travelwisconsin.com/fall-color-report" target="_blank" rel="noopener noreferrer">Open current fall color map ↗</a><p class="source-note">Current color percentages are provided on the source site. StormVector does not estimate them from weather.</p></article><article class="glass detail-panel"><p class="eyebrow">Your outdoor window</p><h3 id="fallBestDay">Loading your forecast…</h3><p id="fallWeatherAdvice">Choose any U.S. location above for weather guidance. The foliage guide below covers Wisconsin.</p><a href="#forecast">Explore all seven days ↗</a></article></div>
-        <div class="season-calendar glass"><label for="fallDate">Explore a date</label><input id="fallDate" type="date" /><p id="fallSeasonNote" role="status"></p><p class="source-note">Seasonal context only: Wisconsin color generally develops from north to south from mid-September through October. This calendar does not predict this year's peak.</p></div>
-        <div class="section-heading compact"><p class="eyebrow">Choose a direction</p><h3>Three ways to find the season.</h3></div>
-        <div class="destination-grid"><article class="card destination north"><span>01 / Northwoods</span><h3>Quiet roads.<br>Deep forest.</h3><p>Explore Eagle River and the Northwoods. Northern areas generally change before southern Wisconsin.</p><button data-destination="north" class="ghost">Weather in Eagle River ↗</button></article><article class="card destination shore"><span>02 / Lake Michigan</span><h3>Color along<br>the shoreline.</h3><p>Explore Door County and Peninsula State Park. Check current reports; lake influence can change local timing.</p><button data-destination="shore" class="ghost">Weather in Fish Creek ↗</button></article><article class="card destination south"><span>03 / Closer to home</span><h3>Rolling hills.<br>One more turn.</h3><p>Explore Kettle Moraine and southern Wisconsin. Waupun makes a good starting point for a local day out.</p><button data-destination="south" class="ghost">Weather in Waupun ↗</button></article></div>
-        <details class="glass detail-panel seasonal-tools"><summary>What makes a good fall color day?</summary><p>Warm days and cool nights can support color. Frost, heavy rain, and strong wind can affect the display. For an outing, look for lower rain chances and lighter gusts; always give official warnings priority.</p><a href="https://www.travelwisconsin.com/stories/know-before-you-go-fall-color-in-wisconsin" target="_blank" rel="noopener noreferrer">Travel Wisconsin's fall color guide ↗</a></details>
-      </section>
-
-      <section id="winter" class="page">
-        <div class="section-heading"><p class="eyebrow">Winter watch</p><h2>Before the first flake.<br>Before the next drive.</h2><p>Local snow guidance, cold weather, and official alerts in one place.</p></div>
-        <p id="winterStatus" class="source-note" role="status">Waiting for a location…</p>
-        <div id="winterMetrics" class="briefing-facts winter-metrics"></div>
-        <article class="glass detail-panel"><p class="eyebrow">Official local alerts</p><h3>Snow, ice, frost & cold</h3><p id="winterAlertStatus" role="status">Checking NWS alerts…</p><div id="winterAlerts" class="alert-list"></div></article>
-        <div class="section-heading compact"><h3>Seven-day winter guidance</h3><p>Model snowfall is snowfall produced during each day, not snow depth or a guaranteed amount on the ground.</p></div>
-        <div class="table-scroll glass"><table class="winter-table"><caption>Daily snow, cold, and precipitation guidance</caption><thead><tr><th scope="col">Day</th><th scope="col">Snow</th><th scope="col">Low / feels like</th><th scope="col">Gusts</th><th scope="col">Planning note</th></tr></thead><tbody id="winterRows"></tbody></table></div>
-        <div class="destination-grid seasonal-tools"><article class="card"><span>Official impacts</span><h3>Winter Storm Severity Index</h3><p>See NWS guidance for potential winter impacts. WSSI adds context to forecasts; it is not a warning.</p><a href="https://www.weather.gov/arx/wssi" target="_blank" rel="noopener noreferrer">Explore WSSI ↗</a></article><article class="card"><span>Before you drive</span><h3>Check the actual roads</h3><p>Weather alone cannot tell you whether a road is clear. Check cameras, closures, and road reports for your route.</p><a href="https://511wi.gov/" target="_blank" rel="noopener noreferrer">Wisconsin 511 ↗</a></article><article class="card"><span>Ice & mixed precipitation</span><h3>Read the official forecast</h3><p>Freezing rain can cause trouble with very little accumulation. StormVector does not infer ice totals from daily temperatures or rainfall.</p><a href="#forecast">Local NWS forecast ↗</a></article></div>
-      </section>
-
-      <section id="conditions" class="page">
-        <div class="hero glass">
-          <div>
-            <p class="eyebrow">Current conditions</p>
-            <h2 id="currentTemp">--°</h2>
-            <p id="currentSummary">Waiting for live National Weather Service data.</p>
-            <div class="metrics">
-              <span><b id="windValue">--</b> Wind</span>
-              <span><b id="humidityValue">--</b> Humidity</span>
-              <span><b id="pressureValue">--</b> Pressure</span>
-            </div>
-          </div>
-          <button id="chaserToggle" class="mode-button" aria-pressed="false">Enable Storm Chaser Mode</button>
-        </div>
-        <div id="chaserGrid" class="grid hidden">
-          <article class="card"><span>CAPE</span><strong id="capeValue">--</strong><p id="capeNote">Convective available potential energy — live model data.</p></article>
-          <article class="card"><span>Instability Read</span><strong id="skewValue">--</strong><p>Plain-language interpretation of model CAPE near this location.</p></article>
-          <article class="card"><span>Est. LCL</span><strong id="lclValue">--</strong><p>Lifted condensation level, estimated from temperature/dew point spread.</p></article>
-          <article class="card"><span>Near-surface wind difference</span><strong id="shearValue">--</strong><p id="shearNote">10 m to 180 m model wind speed difference. This is not a storm-relative shear measurement.</p></article>
-        </div>
-      </section>
-
-      <section id="outlook" class="page">
-        <div class="split">
-          <article class="glass outlook-map">
-            <p class="eyebrow" id="outlookSource">SPC convective outlook</p>
-            <h2 id="riskTitle">--</h2>
-            <p id="outlookTime" class="source-note"></p>
-            <p id="riskCopy">Loading outlook for the selected location.</p>
-            <a href="https://www.spc.noaa.gov/products/outlook/" target="_blank" rel="noopener noreferrer">Open the official SPC outlook</a>
-          </article>
-          <article class="glass confidence">
-            <p class="eyebrow">About this outlook</p>
-            <p>SPC categories describe the risk of organized severe thunderstorms over an area. They are not a forecast for one address.</p>
-            <p>When the official feed is unavailable, Storm Vector does not calculate a replacement category.</p>
-          </article>
-        </div>
-        <article class="glass detail-panel seasonal-tools"><p class="eyebrow">National outlook maps / SPC</p><h3>Look beyond your location.</h3><div class="button-row" aria-label="SPC forecast day"><button data-spc-day="1" aria-pressed="true">Day 1</button><button data-spc-day="2" aria-pressed="false" class="ghost">Day 2</button><button data-spc-day="3" aria-pressed="false" class="ghost">Day 3</button></div><p id="spcMapCaption" class="source-note">Day 1 national categorical outlook. The local category above remains Day 1.</p><a id="spcMapLink" href="https://www.spc.noaa.gov/products/outlook/day1otlk.html" target="_blank" rel="noopener noreferrer"><img id="spcMap" class="outlook-image" src="https://www.spc.noaa.gov/products/outlook/day1otlk.gif" alt="SPC Day 1 national categorical outlook" loading="lazy" /></a><p id="spcImageStatus" class="source-note" role="status">Open the map for the official outlook, valid time, and discussion.</p></article>
-        <div class="grid">
-          <article class="card"><span>Tornado outlook</span><strong>See SPC</strong></article>
-          <article class="card"><span>Wind outlook</span><strong>See SPC</strong></article>
-          <article class="card"><span>Hail outlook</span><strong>See SPC</strong></article>
-        </div>
-      </section>
-
-      <section id="broadcast" class="page">
-        <div class="glass broadcast-console">
-          <div>
-            <p class="eyebrow">Spoken briefing</p>
-            <h2>Weather broadcast</h2>
-            <p>Hear a spoken summary of the latest loaded information. New NWS warnings interrupt once while this page is open. Browser speech must stay open to work.</p>
-          </div>
-          <div class="button-row">
-            <button id="startBroadcast">Start Broadcast</button>
-            <button id="testFact" class="ghost">Test Fact</button>
-            <button id="testSevere" class="danger">Test Severe Interrupt</button>
-            <button id="muteToggle" class="ghost" aria-pressed="false">Mute Voice</button>
-          </div>
-          <div id="broadcastLog" class="broadcast-log" aria-live="polite"></div>
-        </div>
-      </section>
-
-    </main>
-    <footer class="site-footer"><strong>StormVector</strong><p>Weather for what comes next. Official alerts from NWS · Outlooks from SPC · Model forecasts from Open-Meteo.</p><p>Keep Wireless Emergency Alerts and NOAA Weather Radio available. This page cannot alert you after it closes.</p></footer>
-    <script src="src/seasonal.js"></script>
-    <script src="src/app.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#090a0e" />
+  <meta name="description" content="Explore nature across Wisconsin, Minnesota, Michigan and the Upper Peninsula. Fall colors, northern lights, winter scenery and destination weather inside StormVector." />
+  <title>StormVector · Nature &amp; the North</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="src/styles.css?v=nature-1" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to guide</a>
+  <header class="topbar">
+    <a class="brand" href="#explore" aria-label="StormVector nature guide home"><svg viewBox="0 0 52 52" width="46" height="46" aria-hidden="true" focusable="false"><path d="M6 13 26 40 46 8 31 15 26 23 19 14Z" fill="none" stroke="#14b8ff" stroke-width="3"/><path d="M11 17 25 36 40 14 29 24 24 30Z" fill="#137cdd"/><path d="m31 22 9-17 7-2-9 20-6-2-9 23 5-22Z" fill="#e6f4ff"/></svg><span>STORM<span>VECTOR</span></span></a>
+    <nav aria-label="Main navigation"><a href="#explore" data-view="explore">Explore</a><a href="#fall" data-view="fall">Fall Colors</a><a href="#aurora" data-view="aurora">Northern Lights</a><a href="#winter" data-view="winter">Winter</a><a href="#weather" data-view="weather">Local Weather</a><a href="#saved" data-view="saved">Saved <span id="savedCount">0</span></a></nav>
+    <span class="brand-chip">NATURE &amp; THE NORTH</span>
+  </header>
+  <main id="main">
+    <section class="intro" aria-labelledby="heroTitle"><div><p class="eyebrow">WISCONSIN / MINNESOTA / MICHIGAN / UPPER PENINSULA</p><h1 id="heroTitle">Find your<br /><span>next outside.</span></h1><p id="heroCopy">Follow the color. Watch the northern sky. Find a quiet trail.<br />Explore the Great Lakes with the conditions in view.</p><div class="intro-actions"><a href="#guide" class="primary-link">Explore the map <span>↗</span></a><button id="nearMe" class="quiet">Use my location</button></div></div><div class="north-art" aria-hidden="true"><div class="aurora-ribbon"></div><div class="moon"></div><div class="mountains far"></div><div class="mountains near"></div><div class="trees"></div><span>THE GREAT LAKES / FOUR SEASONS / ONE GUIDE</span></div></section>
+    <section class="live-strip" aria-label="Guide status"><div><span class="status-dot"></span><strong>18 places to explore</strong><small>Curated starting points</small></div><div><strong id="stripFoliage">Loading color reports</strong><small>Reported observations, dated</small></div><div><strong id="stripAurora">Checking the northern sky</strong><small>NOAA short-term guidance</small></div></section>
+    <section id="guide" class="guide-shell">
+      <div class="guide-heading"><div><p class="eyebrow" id="viewEyebrow">EXPLORE / THE GREAT LAKES</p><h2 id="viewTitle">A little farther. A little wilder.</h2></div><div class="button-row"><button id="compareWeather" class="quiet">Compare weather</button><button id="refreshData" class="quiet">Refresh data ↻</button></div></div>
+      <div class="filters" aria-label="Find destinations"><label>Region<select id="regionFilter"><option value="all">All regions</option><option value="WI">Wisconsin</option><option value="MN">Minnesota</option><option value="UP">Upper Peninsula</option><option value="MI">Michigan · Lower Peninsula</option></select></label><label>Experience<select id="interestFilter"><option value="all">Anything outside</option><option value="fall">Fall colors</option><option value="aurora">Northern skies</option><option value="winter">Winter scenery</option><option value="waterfalls">Waterfalls</option><option value="shore">Lakeshores</option><option value="forest">Forests</option><option value="trails">Trails</option><option value="wildlife">Wildlife</option><option value="overlooks">Overlooks</option></select></label><label>Radius from your area<select id="radiusFilter"><option value="all">Any distance</option><option value="75">Within 75 miles</option><option value="150">Within 150 miles</option><option value="300">Within 300 miles</option></select></label><label>When<input id="tripDate" type="date" /></label><label class="search-filter">Find a place<input id="placeSearch" type="search" placeholder="Waterfalls, Door County, forests…" /></label></div>
+      <div class="origin-row"><span id="originLabel">Starting near Waupun, WI</span><form id="originForm"><label for="originSearch" class="sr-only">Change starting area</label><input id="originSearch" placeholder="City, state" type="search" autocomplete="off" /><button type="submit" id="setOrigin">Set area</button></form><span id="originStatus" role="status"></span></div>
+      <p class="fineprint">Radius and distances are straight-line miles, not driving distances. Forecast dates cover the next seven days. Nature experiences depend on the season.</p>
+      <div id="contextPanel" class="context-panel" aria-live="polite"></div>
+      <div class="map-layout"><div class="map-panel"><div class="map-topline"><span>EXPLORE THE REGION</span><span id="mapModeLabel">Destination map</span></div><div id="natureMap" role="region" aria-label="Great Lakes destination map"></div><div id="mapFallback" class="map-fallback" hidden>The map is unavailable. All destinations and conditions are available in the list below.</div><div class="map-bottomline"><span id="mapLegend">● Destinations · tap a marker to explore</span><button id="fitMap" class="quiet">Show results</button></div></div><aside id="destinationPanel" class="destination-panel" aria-label="Destination details" aria-live="polite"></aside></div>
+      <div class="results-heading"><div><p class="eyebrow">CHOOSE YOUR NEXT STOP</p><h2 id="resultsTitle">Places worth exploring</h2></div><p id="resultsStatus" role="status"></p></div><div id="destinationGrid" class="destination-grid"></div>
+      <section id="reportsPanel" class="reports-panel" hidden><div class="results-heading"><div><p class="eyebrow">ON-THE-GROUND OBSERVATIONS</p><h2>Follow the color, right here.</h2></div><label>Filter reports<input id="reportSearch" type="search" placeholder="Town or county" /></label></div><p id="reportStatus" class="fineprint" role="status"></p><div class="table-wrap"><table><caption>Wisconsin foliage reports · Travel Wisconsin</caption><thead><tr><th scope="col">Place / county</th><th scope="col">Reported color</th><th scope="col">Estimated peak</th><th scope="col">Reporter update</th><th scope="col">Map</th></tr></thead><tbody id="reportRows"></tbody></table></div></section>
+      <section id="auroraPanel" class="aurora-panel" hidden><div class="results-heading"><div><p class="eyebrow">SPACE WEATHER / NOAA</p><h2>The northern sky, in context.</h2></div></div><div class="aurora-grid"><article class="panel"><h3>Short-term aurora oval</h3><p id="auroraImageStatus" class="fineprint">Map provided by NOAA. Check the valid time printed on the image.</p><img id="auroraImage" alt="NOAA northern hemisphere short-term aurora forecast with valid time" loading="lazy" /><p class="fineprint">The oval is not a personal chance of seeing aurora. Clouds, darkness, brightness, and your northern horizon matter. This map covers roughly the next 30–90 minutes, not your whole trip.</p></article><article class="panel"><h3>Geomagnetic activity ahead</h3><p id="kpStatus" class="fineprint" role="status">Loading NOAA Kp guidance…</p><div class="table-wrap"><table><caption>NOAA three-hour Kp intervals</caption><thead><tr><th scope="col">Time</th><th scope="col">Kp</th><th scope="col">Type</th></tr></thead><tbody id="kpRows"></tbody></table></div><p class="fineprint">Higher Kp means stronger global geomagnetic activity. It is not a destination visibility forecast. Times are displayed in your browser’s timezone.</p></article></div></section>
+    </section>
+  </main>
+  <footer><div><strong>STORM<span>VECTOR</span></strong><p>Nature &amp; the North. Explore with the conditions in view.</p></div><details><summary>Sources &amp; coverage</summary><p>Destination weather: Open-Meteo. Official local alerts: National Weather Service. Aurora oval and Kp: NOAA Space Weather Prediction Center. Wisconsin foliage observations: Travel Wisconsin, with reporter and retrieval dates. Minnesota and Michigan foliage observations are not yet connected; no current color percentages are invented.</p><p>Destination details are a curated guide, not a live park-access service. Model snowfall is not snow depth, safe lake ice, or a guarantee of winter scenery. Alerts load when you select a place; this site is not a warning alarm.</p><div class="source-links"><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a><a href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">NWS</a><a href="https://www.spaceweather.gov/products/aurora-30-minute-forecast" target="_blank" rel="noopener noreferrer">NOAA</a><a href="https://www.travelwisconsin.com/fall-color-report" target="_blank" rel="noopener noreferrer">Travel Wisconsin</a><a href="https://www.dnr.state.mn.us/fall_colors/index.html" target="_blank" rel="noopener noreferrer">Minnesota DNR</a><a href="https://www.michigan.org/fallcolormap" target="_blank" rel="noopener noreferrer">Pure Michigan</a></div></details></footer>
+  <noscript><p class="noscript">Enable JavaScript to use the nature guide and load destination conditions.</p></noscript>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="src/destinations.js?v=nature-1"></script>
+  <script src="src/nature.js?v=nature-1"></script>
+  <script src="src/app.js?v=nature-1"></script>
+</body>
 </html>

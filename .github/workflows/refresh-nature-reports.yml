@@ -1,0 +1,29 @@
+name: Refresh nature reports
+on:
+  schedule:
+    - cron: '20 11 * 9-11 *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: nature-reports
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refresh attributed foliage observations
+        run: python scripts/update_reports.py
+      - name: Commit refreshed observations
+        run: |
+          git config user.name 'StormVector Reports'
+          git config user.email 'reports@users.noreply.github.com'
+          git add data/fall-reports.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh Wisconsin foliage observations'
+            git push
+          fi

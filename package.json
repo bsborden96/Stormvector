@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node --check src/app.js && node --check src/seasonal.js && node --test test/*.test.js"
+    "test": "node --check src/app.js && node --check src/nature.js && node --check src/destinations.js && node --test test/*.test.js && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s test -p '*_test.py'"
   },
   "dependencies": {},
   "devDependencies": {}
