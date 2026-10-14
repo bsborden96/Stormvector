@@ -1,6 +1,8 @@
 /* StormVector Nature Guide — static, buildless, no weather bot or speech engine. */
 const $ = id => document.getElementById(id);
 const forecastCache = Nature.makeCache();
+const forecastErrors = new Map();
+let autoForecastRunning = false;
 let view = 'explore';
 let origin = {name:'Waupun, WI',lat:43.6333,lon:-88.7296};
 let selected = null;
@@ -27,6 +29,7 @@ const themes = {
   winter:['WINTER / OUTSIDE IN THE QUIET','Find the quieter side of winter.','Explore the','winter north.','Snowy forests, lakeshore scenery, and winter outings. Check snow guidance and access before setting out.'],
   weather:['LOCAL WEATHER / YOUR AREA','The conditions, before you go.','Know your','local sky.','See the forecast, daylight, and official alerts for your starting area, then plan an outing nearby.'],
   saved:['YOUR SHORTLIST / SAVED HERE','Your next stops, all together.','Keep your','next adventure.','Save the places you want to come back to. Your shortlist stays in this browser.'],
+  photos:['COMMUNITY / PHOTOS ON THE MAP','A field journal from all of us.','Every moment.','A place on the map.','Share the northern lights, fresh snow, fall color, and nature you find. Explore community photos where they were taken.'],
 };
 function el(tag,text,cls) {
   const node=document.createElement(tag);
@@ -47,7 +50,10 @@ async function fetchJson(url) {
   return r.json();
 }
 function forecastKey(p) {return `${p.lat},${p.lon}`;}
-function getForecast(p) {return forecastCache.get(forecastKey(p),async()=>Nature.parseForecast(await fetchJson(Nature.forecastUrl(p))));}
+async function getForecast(p) {
+  try{const f=await forecastCache.get(forecastKey(p),async()=>Nature.parseForecast(await fetchJson(Nature.forecastUrl(p))));forecastErrors.delete(forecastKey(p));return f;}
+  catch(e){forecastErrors.set(forecastKey(p),Date.now());throw e;}
+}
 function selectedDate() {return $('tripDate').value;}
 function today() {return Nature.dateInZone(Date.now(),'America/Chicago');}
 function init() {
@@ -79,29 +85,38 @@ function setDateRange() {
   if(!$('tripDate').value||$('tripDate').value<first||$('tripDate').value>$('tripDate').max)$('tripDate').value=first;
 }
 function route() {
-  const requested=location.hash.slice(1);
-  if(requested==='guide'){document.getElementById('guide').scrollIntoView({behavior:'smooth'});return;}
+  let requested=location.hash.slice(1);
+  const photoAnchor=['photoForm','communityGallery'].includes(requested)?requested:null;
+  if(photoAnchor&&view!=='photos')requested='photos';
+  else if(['guide','photoForm','communityGallery'].includes(requested)){document.getElementById(requested==='communityGallery'?'communityMap':requested).scrollIntoView({behavior:'smooth'});return;}
   view=themes[requested]?requested:'explore';
   document.body.dataset.view=view;
   document.querySelectorAll('[data-view]').forEach(a=>{a.classList.toggle('active',a.dataset.view===view);if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   const t=themes[view];$('viewEyebrow').textContent=t[0];$('viewTitle').textContent=t[1];
   $('heroTitle').replaceChildren(el('span',t[2]),el('br'),el('span',t[3],'accent'));
   $('heroCopy').textContent=t[4];
-  $('interestFilter').value=['fall','aurora','winter'].includes(view)?view:'all';
+  $('sceneLabel').textContent={aurora:'DARK SKIES / CLOUD WINDOWS / NOAA GUIDANCE',fall:'WOODED TRAILS / FALL COLOR / CHANGING SEASONS',winter:'SNOWY FORESTS / COLD DAYS / WINTER QUIET',weather:'YOUR LOCATION / YOUR WEEK / YOUR WEATHER',photos:'SHARED MOMENTS / REAL PLACES / COMMUNITY PHOTOS'}[view]||'THE GREAT LAKES / FOUR SEASONS / ONE GUIDE';
+  $('guide').hidden=view==='photos';$('communityPanel').hidden=view!=='photos';$('liveStrip').hidden=view==='photos';$('nearMe').hidden=view==='photos';
+  $('heroAction').href=view==='photos'?'#photoForm':'#guide';$('heroAction').textContent=view==='photos'?'Share your photo ↓':view==='aurora'?'Plan a night under the sky ↗':view==='winter'?'See the snow forecast ↗':view==='fall'?'Follow the color ↗':'Explore the map ↗';
+  if(view==='photos'){Community.activate();if(photoAnchor)requestAnimationFrame(()=>document.getElementById(photoAnchor==='communityGallery'?'communityMap':photoAnchor).scrollIntoView({behavior:'smooth'}));return;}
+  // Seasonal tabs include every place; interests can still narrow the results explicitly.
+  $('interestFilter').value='all';
   $('reportsPanel').hidden=view!=='fall';$('auroraPanel').hidden=view!=='aurora';
   $('mapModeLabel').textContent=view==='fall'?'Destinations + reported foliage':view==='aurora'?'Destinations + short-term aurora grid':'Destination map';
-  renderContext();renderResults();renderReports();renderKp();
+  renderContext();renderResults();renderReports();renderKp();renderDestination();
   if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Your starting area. Use its forecast to plan an outing nearby.',access:'Weather at this point does not establish road, trail, or park conditions.'});
   else if(!selected||selected.id==='local'||!visible.some(p=>p.id===selected.id)){if(visible[0])selectDestination(visible[0]);else{selected=null;selectedVersion++;renderDestination();}}
+  else selectDestination(selected);
   if(map)requestAnimationFrame(()=>map.invalidateSize());
 }
 function filters() {return {region:$('regionFilter').value,interest:$('interestFilter').value,query:$('placeSearch').value,
   radius:$('radiusFilter').value==='all'?Infinity:Number($('radiusFilter').value),origin,saved:view==='saved'?saved:null};}
 function renderResults() {
+  if(view==='photos')return;
   visible=Nature.filterPlaces(DESTINATIONS,filters());
   $('originLabel').textContent=`Starting near ${origin.name}`;
   $('resultsStatus').textContent=`${visible.length} place${visible.length===1?'':'s'} · closest first · ${dayLabel(selectedDate())}`;
-  $('resultsTitle').textContent=view==='saved'?'Your saved places':'Places worth exploring';
+  $('resultsTitle').textContent={saved:'Your saved places',aurora:'Night-sky conditions by place',winter:'Winter conditions by place',fall:'Color and outing conditions by place',weather:'Compare destination weather'}[view]||'Places worth exploring';
   const grid=$('destinationGrid');grid.replaceChildren();
   if(!visible.length){grid.append(el('p',view==='saved'?'No saved places match these filters. Save a destination with the bookmark button.':'No places match these filters. Try a larger radius or another experience.','empty-state'));}
   visible.forEach(p=>{
@@ -110,14 +125,23 @@ function renderResults() {
     const content=el('div',null,'place-content');content.append(el('p',`${regionNames[p.region]} · ${Math.round(p.distance)} mi straight-line`,'eyebrow'),el('h3',p.name),el('p',p.summary,'place-summary'));
     const tags=el('div',null,'tags');p.tags.slice(0,3).forEach(t=>tags.append(el('span',t)));content.append(tags);
     const report=Nature.nearestReport(p,reportSnapshot);
-    if(report)content.append(el('p',`${fmt(report.percent,'%')} reported color${report.status==='recent'?'':' · older / unverified report'}`,'color-note'));
+    if(report&&view==='fall')content.append(el('p',`${fmt(report.percent,'%')} reported color${report.status==='recent'?'':' · older / unverified report'}`,'color-note'));
     const forecast=forecastCache.peek(forecastKey(p)),day=forecast?.days.find(d=>d.date===selectedDate());
-    content.append(el('p',day?`${Nature.weather(day.code)[0]} ${fmt(day.high,'°F')} · ${fmt(day.rainChance,'%')} precip.${view==='winter'?` · ${fmt(day.snow,' in snow',1)}`:''}`:'Select to load destination weather','card-weather'));
-    if(day)content.append(el('small',`${Nature.outingNote(day)} · Loaded ${timeLabel(forecast.retrievedAt)}`,'fineprint'));
+    content.append(el('p',day?`${Nature.weather(day.code)[0]} ${fmt(day.high,'°F')} · ${fmt(day.rainChance,'%')} precip.`:forecastErrors.has(forecastKey(p))?'Forecast unavailable · try Refresh data':'Loading destination forecast…','card-weather'));
+    if(day)content.append(el('p',SeasonalViews.cardNote(view,p,forecast,reportSnapshot,kpRows,selectedDate()),'card-season-note'),el('small',`Loaded ${timeLabel(forecast.retrievedAt)}`,'fineprint'));
     const actions=el('div',null,'card-actions');actions.append(button('Explore conditions ↗',()=>{selectDestination(p);$('destinationPanel').scrollIntoView({behavior:'smooth',block:'nearest'});},'primary-link'));
     const save=button(saved.has(p.id)?'★ Saved':'☆ Save',()=>toggleSave(p.id));save.setAttribute('aria-pressed',String(saved.has(p.id)));save.setAttribute('aria-label',`${saved.has(p.id)?'Unsave':'Save'} ${p.name}`);actions.append(save);content.append(actions);card.append(content);grid.append(card);
   });
   renderMap();
+  ensureVisibleForecasts();
+}
+async function ensureVisibleForecasts() {
+  if(autoForecastRunning||view==='photos')return;
+  const targets=visible.filter(p=>!forecastCache.peek(forecastKey(p))&&(!forecastErrors.has(forecastKey(p))||Date.now()-forecastErrors.get(forecastKey(p))>30*60000));
+  if(!targets.length)return;
+  autoForecastRunning=true;let cursor=0;
+  try{await Promise.allSettled(Array.from({length:Math.min(3,targets.length)},async()=>{while(cursor<targets.length){const p=targets[cursor++];try{await getForecast(p);}catch{}renderResults();}}));}
+  finally{autoForecastRunning=false;queueMicrotask(ensureVisibleForecasts);}
 }
 function toggleSave(id) {
   if(saved.has(id))saved.delete(id);else saved.add(id);
@@ -149,6 +173,7 @@ async function selectDestination(place) {
 }
 function renderDestination() {
   const panel=$('destinationPanel');panel.replaceChildren();
+  SeasonalViews.render($('seasonDashboard'),{view,place:selected,forecast:selectedForecast,reports:reportSnapshot,kp:kpRows,date:selectedDate(),onDate:date=>{if(date<$('tripDate').min||date>$('tripDate').max)return;$('tripDate').value=date;renderDestination();renderResults();}});
   if(!selected){panel.append(el('h3','Choose your next stop'),el('p','Select a place from the map or destination list.'));return;}
   const p=selected,forecast=selectedForecast;
   panel.append(el('p',p.region==='LOCAL'?'YOUR AREA':regionNames[p.region],'eyebrow'),el('h2',p.name),el('p',p.summary,'destination-summary'));
@@ -163,6 +188,7 @@ function renderDestination() {
     panel.append(color);
   }
   const day=forecast&&forecast.days.find(d=>d.date===selectedDate());
+  if(view==='aurora')renderNightPanel(panel,p,forecast);
   const weather=el('section',null,'detail-block');weather.append(el('h3',`${dayLabel(selectedDate())} · Destination weather`));
   if(forecast===null)weather.append(el('p','Loading destination forecast…','loading'));
   else if(forecast===false)weather.append(el('p','Forecast unavailable. Try Refresh data.','feed-error'));
@@ -177,7 +203,6 @@ function renderDestination() {
     const week=el('div',null,'week-strip');forecast.days.forEach(d=>{const b=button(`${dayLabel(d.date)}\n${fmt(d.high,'°')} / ${fmt(d.low,'°')}`,()=>{$('tripDate').value=d.date;renderDestination();renderResults();},'week-day');b.setAttribute('aria-pressed',String(d.date===selectedDate()));week.append(b);});weather.append(week);
   }
   panel.append(weather);
-  if(view==='aurora')renderNightPanel(panel,p,forecast);
   const safety=el('section',null,'detail-block safety-block');safety.append(el('h3','Official alerts at this point'));
   if(selectedAlerts===null)safety.append(el('p','Checking NWS…','loading'));
   else if(selectedAlerts===false)safety.append(el('p','NWS alerts unavailable here. This is not an all-clear.','feed-error'));
@@ -209,11 +234,11 @@ function renderNightPanel(panel,p,forecast) {
 async function compareVisible() {
   if(pendingCompare)return;
   pendingCompare=true;$('compareWeather').disabled=true;$('compareWeather').textContent='Comparing…';
-  const targets=visible.slice(0,6);
+  const targets=visible;
   let cursor=0;
   await Promise.allSettled(Array.from({length:Math.min(3,targets.length)},async()=>{while(cursor<targets.length){const p=targets[cursor++];try{await getForecast(p);}catch{}renderResults();}}));
   pendingCompare=false;$('compareWeather').disabled=false;$('compareWeather').textContent='Compare weather';
-  $('resultsStatus').textContent=`Compared weather for up to ${targets.length} displayed places. Unavailable feeds stay labeled.`;
+  $('resultsStatus').textContent=`Weather comparison updated for ${targets.length} displayed places. Unavailable feeds stay labeled.`;
 }
 async function loadReports() {
   try{
@@ -250,7 +275,7 @@ async function loadSpaceWeather() {
   image.onerror=()=>{image.hidden=true;$('auroraImageStatus').textContent='NOAA aurora image unavailable. The native grid is shown on the regional map when available.';};
   image.onload=()=>{image.hidden=false;};
   $('auroraImageStatus').textContent=aurora?`NOAA model valid ${timeLabel(aurora.validAt)}${aurora.stale?' · Stale guidance; do not treat as current.':''}`:'NOAA model feed unavailable. Check the valid time printed on the image; it is not verified here.';
-  renderKp();renderMap();if(view==='aurora')renderDestination();
+  renderKp();renderMap();if(view==='aurora'){renderDestination();renderResults();}
 }
 function renderKp() {
   $('kpRows').replaceChildren();
@@ -266,7 +291,7 @@ function initMap() {
     markers=L.layerGroup().addTo(map);overlay=L.layerGroup().addTo(map);
   }catch{showMapFailure();}
 }
-function showMapFailure() {$('natureMap').hidden=true;$('mapFallback').hidden=false;}
+function showMapFailure() {map=null;markers=null;overlay=null;$('natureMap').hidden=true;$('mapFallback').hidden=false;}
 function renderMap() {
   if(!map)return;
   markers.clearLayers();overlay.clearLayers();
@@ -280,7 +305,7 @@ function renderMap() {
 }
 function fitMap() {if(map&&visible.length)map.fitBounds(L.latLngBounds(visible.map(p=>[p.lat,p.lon])).pad(.15),{maxZoom:10});}
 async function refreshData() {
-  forecastCache.clear();$('refreshData').disabled=true;
+  forecastCache.clear();forecastErrors.clear();$('refreshData').disabled=true;
   try{await Promise.allSettled([loadReports(),loadSpaceWeather(),selected?selectDestination(selected):Promise.resolve()]);}
   finally{$('refreshData').disabled=false;}
 }

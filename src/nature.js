@@ -127,7 +127,7 @@ const Nature = (() => {
       if(pending.has(key))return pending.get(key);
       const work=Promise.resolve().then(loader).then(data=>{cache.set(key,{data,savedAt:Date.now()});return data}).finally(()=>pending.delete(key));
       pending.set(key,work);return work;
-    },clear(){cache.clear();},peek(key){return cache.get(key)?.data||null;}};
+    },clear(){cache.clear();},peek(key){const old=cache.get(key);return old&&Date.now()-old.savedAt<ttl?old.data:null;}};
   }
   return {value,miles,filterPlaces,forecastUrl,parseForecast,weather,outingNote,reportStatus,nearestReport,parseAurora,auroraAt,parseKp,nightHours,dateInZone,daylightLabel,makeCache};
 })();
