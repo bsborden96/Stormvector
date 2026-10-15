@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-14T15:50:23.403017+00:00",
+  "retrievedAt": "2026-10-15T15:37:04.192761+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -46,22 +46,10 @@
       "state": "WI",
       "lat": 43.472644,
       "lon": -89.773726,
-      "percent": 65.0,
-      "condition": "65% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-13T13:26:00-05:00"
-    },
-    {
-      "id": "2058cf05-7ab1-4198-be91-c9ebb956c4eb",
-      "name": "Barron County",
-      "county": "Barron",
-      "state": "WI",
-      "lat": 45.399518,
-      "lon": -91.850596,
-      "percent": 95.0,
-      "condition": "95% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-09T13:12:00-05:00"
+      "reportedAt": "2026-10-15T09:09:00-05:00"
     },
     {
       "id": "afa419a1-55f0-42be-9b02-58eea9d0456c",
@@ -82,10 +70,10 @@
       "state": "WI",
       "lat": 42.502256,
       "lon": -89.04255,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 65.0,
+      "condition": "65% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-12T10:25:00-05:00"
+      "reportedAt": "2026-10-14T11:37:00-05:00"
     },
     {
       "id": "6aa9dace-d421-4bb4-9f3a-06a1c07039b7",
@@ -130,10 +118,10 @@
       "state": "WI",
       "lat": 46.058685,
       "lon": -92.27889,
-      "percent": 65.0,
-      "condition": "65% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-10T06:45:00-05:00"
+      "reportedAt": "2026-10-14T19:06:00-05:00"
     },
     {
       "id": "13ebab8a-b8b7-4e42-bc6b-fdd3c331d1d6",
@@ -238,22 +226,10 @@
       "state": "WI",
       "lat": 44.842762,
       "lon": -87.376943,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-13T11:37:00-05:00"
-    },
-    {
-      "id": "1b269e3d-49fe-40a2-9cf3-331473926b4d",
-      "name": "Eagle River",
-      "county": "Vilas",
-      "state": "WI",
-      "lat": 45.917797,
-      "lon": -89.252356,
-      "percent": 95.0,
-      "condition": "95% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-07T17:44:00-05:00"
+      "reportedAt": "2026-10-15T09:07:00-05:00"
     },
     {
       "id": "e405866d-4030-4af2-8607-dbe224c988bf",
@@ -298,10 +274,10 @@
       "state": "WI",
       "lat": 43.770455,
       "lon": -88.483024,
-      "percent": 55.0,
-      "condition": "55% Color",
+      "percent": 65.0,
+      "condition": "65% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-12T09:14:00-05:00"
+      "reportedAt": "2026-10-14T12:02:00-05:00"
     },
     {
       "id": "bbc30794-9eef-4a27-bdaf-e395f4c53330",
@@ -346,10 +322,10 @@
       "state": "WI",
       "lat": 44.505961,
       "lon": -88.078727,
-      "percent": 40.0,
-      "condition": "40% Color",
+      "percent": 55.0,
+      "condition": "55% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-05T15:22:00-05:00"
+      "reportedAt": "2026-10-14T11:12:00-05:00"
     },
     {
       "id": "84ad6ee8-e566-4e0f-baa8-cce33941d073",
@@ -388,28 +364,16 @@
       "reportedAt": "2026-10-14T10:22:00-05:00"
     },
     {
-      "id": "76d588ce-e280-46f7-95ae-0d5c632a558e",
-      "name": "Hayward",
-      "county": "Sawyer",
-      "state": "WI",
-      "lat": 46.013343,
-      "lon": -91.486989,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "1st Week of October",
-      "reportedAt": "2026-10-08T15:21:00-05:00"
-    },
-    {
       "id": "6f626ae1-328e-472f-b90f-894e26cde8d5",
       "name": "Hudson",
       "county": "St. Croix",
       "state": "WI",
       "lat": 44.972712,
       "lon": -92.756933,
-      "percent": 25.0,
-      "condition": "25% Color",
+      "percent": 50.0,
+      "condition": "50% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-07T09:19:00-05:00"
+      "reportedAt": "2026-10-14T11:27:00-05:00"
     },
     {
       "id": "f15bdedc-b401-4246-95b6-6a37b07b0765",
@@ -469,7 +433,7 @@
       "percent": 65.0,
       "condition": "65% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-13T13:23:00-05:00"
+      "reportedAt": "2026-10-15T09:26:00-05:00"
     },
     {
       "id": "ae1330c4-05b9-41a5-b6ac-60aeef728bb1",
@@ -502,10 +466,10 @@
       "state": "WI",
       "lat": 44.457315,
       "lon": -87.52458,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-12T09:49:00-05:00"
+      "reportedAt": "2026-10-14T14:03:00-05:00"
     },
     {
       "id": "6c8d6143-a887-4e47-bec4-4ea21bb772f9",
@@ -574,22 +538,10 @@
       "state": "WI",
       "lat": 42.589705,
       "lon": -88.437732,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 60.0,
+      "condition": "60% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-12T11:05:00-05:00"
-    },
-    {
-      "id": "59d19adc-8398-4cbc-91bd-87c5980574a8",
-      "name": "Langlade County",
-      "county": "Langlade",
-      "state": "WI",
-      "lat": 45.140694,
-      "lon": -89.153514,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-12T09:06:00-05:00"
+      "reportedAt": "2026-10-14T18:23:00-05:00"
     },
     {
       "id": "dea79527-44ca-4f73-a029-9ed2eb1b537d",
@@ -622,22 +574,10 @@
       "state": "WI",
       "lat": 44.088792,
       "lon": -87.66856,
-      "percent": 60.0,
-      "condition": "60% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "2nd Week of October",
-      "reportedAt": "2026-10-12T15:08:00-05:00"
-    },
-    {
-      "id": "939b39c6-e8ea-458f-ad96-efaf77c08fe6",
-      "name": "Marinette County - Central",
-      "county": "Marinette",
-      "state": "WI",
-      "lat": 45.355404,
-      "lon": -88.12698,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-09T13:29:00-05:00"
+      "reportedAt": "2026-10-14T11:32:00-05:00"
     },
     {
       "id": "34ad3eec-6f44-4733-8c4a-524fdc8f387f",
@@ -646,10 +586,10 @@
       "state": "WI",
       "lat": 45.098073,
       "lon": -87.779815,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-09T13:20:00-05:00"
+      "reportedAt": "2026-10-14T12:18:00-05:00"
     },
     {
       "id": "7150b4ad-77bf-4df5-8bd3-cdfd0992307a",
@@ -686,18 +626,6 @@
       "condition": "100% Color",
       "peak": "3rd Week of October",
       "reportedAt": "2026-10-13T13:57:00-05:00"
-    },
-    {
-      "id": "2b30c892-43a8-4636-a4b5-1eb92353de04",
-      "name": "Menominee County",
-      "county": "Menominee",
-      "state": "WI",
-      "lat": 44.997048,
-      "lon": -88.729498,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-12T15:47:00-05:00"
     },
     {
       "id": "84386dae-6d6c-492f-8eed-890a2a3fa5b0",
@@ -754,10 +682,10 @@
       "state": "WI",
       "lat": 46.651613,
       "lon": -92.284352,
-      "percent": 70.0,
-      "condition": "70% Color",
+      "percent": 80.0,
+      "condition": "80% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-10T09:35:00-05:00"
+      "reportedAt": "2026-10-14T11:13:00-05:00"
     },
     {
       "id": "ab445a86-bd22-482b-bd5e-c3bec352a664",
@@ -766,10 +694,10 @@
       "state": "WI",
       "lat": 42.862307,
       "lon": -88.390369,
-      "percent": 35.0,
-      "condition": "35% Color",
+      "percent": 45.0,
+      "condition": "45% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-09T15:44:00-05:00"
+      "reportedAt": "2026-10-14T14:22:00-05:00"
     },
     {
       "id": "f37962ba-0037-416d-8936-0c0fa16f8640",
@@ -778,10 +706,10 @@
       "state": "WI",
       "lat": 45.126766,
       "lon": -92.543255,
-      "percent": 30.0,
-      "condition": "30% Color",
+      "percent": 60.0,
+      "condition": "60% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-05T21:00:00-05:00"
+      "reportedAt": "2026-10-14T11:42:00-05:00"
     },
     {
       "id": "72b3f1ee-28f0-40a6-8722-7db9a4e07628",
@@ -802,10 +730,10 @@
       "state": "WI",
       "lat": 43.110827,
       "lon": -88.496952,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 65.0,
+      "condition": "65% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-08T08:59:00-05:00"
+      "reportedAt": "2026-10-14T13:27:00-05:00"
     },
     {
       "id": "873e7b49-6cd6-4eb5-939b-43b55ff15c8f",
@@ -826,10 +754,10 @@
       "state": "WI",
       "lat": 44.014771,
       "lon": -88.540005,
-      "percent": 60.0,
-      "condition": "60% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-07T09:26:00-05:00"
+      "reportedAt": "2026-10-14T11:25:00-05:00"
     },
     {
       "id": "d169a7dc-8da3-4e6f-bea3-f2e3347d2077",
@@ -874,10 +802,10 @@
       "state": "WI",
       "lat": 44.860096,
       "lon": -92.622965,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-09T14:54:00-05:00"
+      "reportedAt": "2026-10-14T15:57:00-05:00"
     },
     {
       "id": "2810c76d-9d2c-4a71-b5dc-f0b96be27906",
@@ -886,10 +814,10 @@
       "state": "WI",
       "lat": 42.72351,
       "lon": -90.485411,
-      "percent": 45.0,
-      "condition": "45% Color",
+      "percent": 50.0,
+      "condition": "50% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-09T08:58:00-05:00"
+      "reportedAt": "2026-10-15T08:57:00-05:00"
     },
     {
       "id": "f2abc13c-6547-49a9-9e1f-bc953b9dde4a",
@@ -922,10 +850,10 @@
       "state": "WI",
       "lat": 45.400152,
       "lon": -92.396046,
-      "percent": 95.0,
-      "condition": "95% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-14T08:04:00-05:00"
+      "reportedAt": "2026-10-15T07:38:00-05:00"
     },
     {
       "id": "e18d6fff-f8c8-4caf-af35-2c0214dc85dd",
@@ -970,10 +898,10 @@
       "state": "WI",
       "lat": 42.722733,
       "lon": -87.795522,
-      "percent": 25.0,
-      "condition": "25% Color",
+      "percent": 40.0,
+      "condition": "40% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-01T15:31:00-05:00"
+      "reportedAt": "2026-10-14T15:31:00-05:00"
     },
     {
       "id": "01748694-962c-492f-9932-46eb41a5de28",
@@ -1024,40 +952,16 @@
       "reportedAt": "2026-10-09T15:05:00-05:00"
     },
     {
-      "id": "1c7aeaad-7a2c-43b2-ac6d-2cea5a6964b0",
-      "name": "Shawano",
-      "county": "Shawano",
-      "state": "WI",
-      "lat": 44.763029,
-      "lon": -88.609293,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-12T15:47:00-05:00"
-    },
-    {
-      "id": "8cdd4712-7cf6-431a-8897-17b3902fd042",
-      "name": "St. Germain",
-      "county": "Vilas",
-      "state": "WI",
-      "lat": 45.911686,
-      "lon": -89.492713,
-      "percent": 90.0,
-      "condition": "90% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-06T14:16:00-05:00"
-    },
-    {
       "id": "949be7d7-4cc7-42fd-aa77-fe8c07f04070",
       "name": "Stevens Point Area",
       "county": "Portage",
       "state": "WI",
       "lat": 44.523187,
       "lon": -89.583151,
-      "percent": 55.0,
-      "condition": "55% Color",
+      "percent": 65.0,
+      "condition": "65% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-12T14:12:00-05:00"
+      "reportedAt": "2026-10-14T13:28:00-05:00"
     },
     {
       "id": "f74ea92b-abb5-41b1-882a-f907e1ae802f",
@@ -1078,10 +982,10 @@
       "state": "WI",
       "lat": 43.990856,
       "lon": -90.505195,
-      "percent": 40.0,
-      "condition": "40% Color",
+      "percent": 60.0,
+      "condition": "60% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-08T14:00:00-05:00"
+      "reportedAt": "2026-10-14T11:17:00-05:00"
     },
     {
       "id": "aada76a3-bd2c-4b3d-9f62-701d162504d0",
@@ -1138,10 +1042,10 @@
       "state": "WI",
       "lat": 44.354191,
       "lon": -89.087231,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "2nd Week of October",
-      "reportedAt": "2026-09-30T08:31:00-05:00"
+      "reportedAt": "2026-10-14T11:54:00-05:00"
     },
     {
       "id": "726d0a41-4d77-49dd-be9b-9129952800da",
@@ -1186,10 +1090,10 @@
       "state": "WI",
       "lat": 44.392006,
       "lon": -89.823156,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 60.0,
+      "condition": "60% Color",
       "peak": "2nd Week of October",
-      "reportedAt": "2026-10-12T11:31:00-05:00"
+      "reportedAt": "2026-10-14T11:13:00-05:00"
     }
   ],
   "coverage": {
