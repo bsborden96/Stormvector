@@ -4,7 +4,7 @@ const forecastCache = Nature.makeCache();
 const forecastErrors = new Map();
 let autoForecastRunning = false;
 let view = 'explore';
-let origin = {name:'Waupun, WI',lat:43.6333,lon:-88.7296};
+let origin = {name:'Waupun, WI',lat:43.6333,lon:-88.7296,source:'default'};
 let selected = null;
 let selectedVersion = 0;
 let originVersion = 0;
@@ -76,6 +76,9 @@ function init() {
   $('compareWeather').addEventListener('click',compareVisible);
   $('refreshData').addEventListener('click',refreshData);
   $('fitMap').addEventListener('click',fitMap);
+  $('centerOnMe').addEventListener('click',centerOnOrigin);
+  $('showWisconsin').addEventListener('click',()=>{if(map)map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);});
+  ['showFallReports','showParkPins','showOldReports'].forEach(id=>$(id).addEventListener('change',()=>{mapRenderKey='';renderMap();}));
   window.addEventListener('hashchange',route);
   setupExperience();
   initMap();
@@ -110,6 +113,9 @@ function route() {
   $('guide').hidden=view==='photos';$('communityPanel').hidden=view!=='photos';$('liveStrip').hidden=true;$('nearMe').hidden=view==='photos';
   $('filterDrawer').open=view==='weather';
   $('mapSwitch').hidden=view==='weather';
+  $('locationBar').hidden=view==='photos';
+  ['fallMapControls','fallMapKey','fallMapStatus'].forEach(id=>$(id).hidden=view!=='fall');
+  $('mapHeading').textContent=view==='fall'?'WISCONSIN FALL COLOR MAP':'EXPLORE THE REGION';
   $('comparisonPanel').hidden=true;
   if(view==='saved')setMapDisplay('list');else if(document.body.dataset.display==='list')setMapDisplay('map');
   $('heroAction').href=view==='photos'?'#photoForm':'#guide';$('heroAction').textContent=view==='photos'?'Share your photo ↓':view==='aurora'?'Plan a night under the sky ↗':view==='winter'?'See the snow forecast ↗':view==='fall'?'Follow the color ↗':'Explore the map ↗';
@@ -117,19 +123,19 @@ function route() {
   // Seasonal tabs include every place; interests can still narrow the results explicitly.
   $('interestFilter').value='all';
   $('reportsPanel').hidden=view!=='fall';$('auroraPanel').hidden=view!=='aurora';
-  $('mapModeLabel').textContent=view==='fall'?'Destinations + reported foliage':view==='aurora'?'Destinations + short-term aurora grid':'Destination map';
+  $('mapModeLabel').textContent=view==='fall'?'Fall color reports · tap a dot':view==='aurora'?'Destinations + short-term aurora grid':'Destination map';
   renderContext();renderResults();renderReports();renderKp();renderDestination();
   if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Your starting area. Use its forecast to plan an outing nearby.',access:'Weather at this point does not establish road, trail, or park conditions.'});
   else if(!selected||selected.id==='local'||!visible.some(p=>p.id===selected.id)){if(visible[0])selectDestination(visible[0]);else{selected=null;selectedVersion++;renderDestination();}}
   else selectDestination(selected);
-  if(map)requestAnimationFrame(()=>map.invalidateSize());
+  if(map)requestAnimationFrame(()=>{map.invalidateSize();if(view==='fall')map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);else if(origin.source!=='default')centerOnOrigin();});
 }
 function filters() {return {region:$('regionFilter').value,interest:$('interestFilter').value,query:$('placeSearch').value,
   radius:$('radiusFilter').value==='all'?Infinity:Number($('radiusFilter').value),origin,saved:view==='saved'?saved:null};}
 function renderResults() {
   if(view==='photos')return;
   visible=Experience.rank(Nature.filterPlaces(DESTINATIONS,filters()),view,reportSnapshot,forecastCache,selectedDate(),kpRows);
-  $('originLabel').textContent=`Starting near ${origin.name}`;
+  renderLocation();
   $('resultsStatus').textContent=`${visible.length} place${visible.length===1?'':'s'} · ${{fall:'recent color first',aurora:'northern-sky places first',winter:'forecast snow first'}[view]||'closest first'} · ${dayLabel(selectedDate())}`;
   $('resultsTitle').textContent={saved:'Your saved places',aurora:'Night-sky conditions by place',winter:'Winter conditions by place',fall:'Color and outing conditions by place',weather:'Compare destination weather'}[view]||'Places worth exploring';
   const grid=$('destinationGrid');grid.replaceChildren();
@@ -197,7 +203,7 @@ function renderDestination() {
   if(!selected){panel.append(el('h3','Choose your next stop'),el('p','Select a place from the map or destination list.'));return;}
   const p=selected,forecast=selectedForecast;
   panel.append(el('p',p.region==='LOCAL'?'YOUR AREA':regionNames[p.region],'eyebrow'),el('h2',p.name),el('p',p.summary,'destination-summary'));
-  if(p.id!=='local'){const save=button(saved.has(p.id)?'★ Saved to your shortlist':'☆ Save this place',()=>toggleSave(p.id));save.setAttribute('aria-pressed',String(saved.has(p.id)));panel.append(save);}
+  if(p.id!=='local'&&!p.reportOnly){const save=button(saved.has(p.id)?'★ Saved to your shortlist':'☆ Save this place',()=>toggleSave(p.id));save.setAttribute('aria-pressed',String(saved.has(p.id)));panel.append(save);}
   if(p.visit)panel.append(el('p',p.visit));
   if(p.id!=='local'){
     panel.append(button('Close place details',()=>closeSheet(),'quiet sheet-close'));
@@ -306,7 +312,7 @@ function renderKp() {
 function initMap() {
   if(typeof L==='undefined'){showMapFailure();return;}
   try{
-    map=L.map('natureMap',{scrollWheelZoom:false,tapTolerance:20}).setView([46,-89.5],6);
+    map=L.map('natureMap',{scrollWheelZoom:false,tapTolerance:20}).setView([origin.lat,origin.lon],origin.source==='default'?7:10);
     const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:16,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'}).addTo(map);
     let failures=0;tiles.on('tileerror',()=>{if(++failures>=3)$('mapFallback').hidden=false;});
     markers=L.layerGroup().addTo(map);overlay=L.layerGroup().addTo(map);
@@ -314,44 +320,61 @@ function initMap() {
 }
 function showMapFailure() {map=null;markers=null;overlay=null;$('natureMap').hidden=true;$('mapFallback').hidden=false;}
 function renderMap() {
-  if(!map)return;
-  const key=JSON.stringify([view,visible.map(p=>p.id),selected?.id,origin.lat,origin.lon,reportSnapshot?.retrievedAt,aurora?.validAt]);if(key===mapRenderKey)return;mapRenderKey=key;
+  if(!map){renderFallMap();return;}
+  const key=JSON.stringify([view,visible.map(p=>p.id),selected?.id,origin.lat,origin.lon,origin.accuracy,reportSnapshot?.retrievedAt,aurora?.validAt,$('showFallReports').checked,$('showParkPins').checked,$('showOldReports').checked]);if(key===mapRenderKey)return;mapRenderKey=key;
   markers.clearLayers();overlay.clearLayers();
-  visible.forEach(p=>{const icon=L.divIcon({className:`nature-marker ${selected?.id===p.id?'is-selected':''}`,html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12]});const m=L.marker([p.lat,p.lon],{icon,title:p.name,alt:p.name,keyboard:true}).addTo(markers);
+  (view==='fall'&&!$('showParkPins').checked?[]:visible).forEach(p=>{const icon=L.divIcon({className:`nature-marker ${selected?.id===p.id?'is-selected':''}`,html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12]});const m=L.marker([p.lat,p.lon],{icon,title:p.name,alt:p.name,keyboard:true}).addTo(markers);
     m.bindTooltip(el('span',p.name));m.on('click',()=>{selectDestination(p);openSheet();});});
-  L.circleMarker([origin.lat,origin.lon],{radius:6,color:'#ffffff',fillColor:'#8b5cf6',fillOpacity:1}).addTo(markers).bindTooltip(el('span',`Starting area: ${origin.name}`));
-  if(view==='fall'&&reportSnapshot){reportSnapshot.reports.forEach(r=>{const status=Nature.reportStatus(r,reportSnapshot.retrievedAt),color=status!=='recent'?'#8d909b':r.percent>=85?'#ff6b55':r.percent>=50?'#efb85f':'#6ba880';
-    L.circleMarker([r.lat,r.lon],{radius:5,color,fillColor:color,fillOpacity:.8,weight:1}).addTo(overlay).bindTooltip(el('span',`${r.name}: ${fmt(r.percent,'%')} · ${status==='recent'?'reported':'older report'}`));});}
+  if(origin.source==='gps'&&Number.isFinite(origin.accuracy))L.circle([origin.lat,origin.lon],{radius:origin.accuracy,color:'#59bded',weight:1,fillOpacity:.1,interactive:false}).addTo(markers);
+  L.circleMarker([origin.lat,origin.lon],{radius:8,color:'#ffffff',fillColor:'#168ed1',fillOpacity:1}).addTo(markers).bindTooltip(el('span',`Starting area: ${origin.name}`));
+  renderFallMap();
   if(view==='aurora'&&aurora&&!aurora.stale){aurora.points.filter(p=>p.strength>0).forEach(p=>L.rectangle([[p.lat-.5,p.lon-.5],[p.lat+.5,p.lon+.5]],{color:'#67efa2',weight:0,fillOpacity:Math.min(.55,.06+p.strength/180)}).addTo(overlay).bindTooltip(el('span',`NOAA overhead model: ${p.strength}% · not visibility probability`)));}
-  $('mapLegend').textContent=view==='fall'?'● Places · small dots: foliage reports · gray: older reports':view==='aurora'?'● Places · green cells: NOAA overhead aurora model':'● Destinations · tap a marker to explore';
+  $('mapLegend').textContent=view==='fall'?'Tap a color dot for its report, date and nearby weather':view==='aurora'?'● Places · green cells: NOAA overhead aurora model':'● Destinations · tap a marker to explore';
 }
-function fitMap() {if(map&&visible.length)map.fitBounds(L.latLngBounds(visible.map(p=>[p.lat,p.lon])).pad(.15),{maxZoom:10});}
+function fitMap() {if(view==='fall'){if(map)map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);return;}if(map&&visible.length)map.fitBounds(L.latLngBounds(visible.map(p=>[p.lat,p.lon])).pad(.15),{maxZoom:10});}
 async function refreshData() {
   forecastCache.clear();forecastErrors.clear();$('refreshData').disabled=true;
   try{await Promise.allSettled([loadReports(),loadSpaceWeather(),selected?selectDestination(selected):Promise.resolve()]);}
   finally{$('refreshData').disabled=false;}
 }
 function changeOrigin(next) {
-  origin=next;writeStorage('origin',origin);$('originStatus').textContent='Starting area updated.';
-  renderResults();if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Your starting area. Use its forecast to plan an outing nearby.',access:'Weather does not establish road or trail conditions.'});
+  origin=next;writeStorage('origin',origin);driveRequest++;
+  if(driveRoute&&map)map.removeLayer(driveRoute);driveRoute=null;
+  renderResults();centerOnOrigin();
+  $('originStatus').textContent=origin.source==='gps'?'GPS fix received. Nearby distances and map updated.':'Starting area updated. City results use a city-center point.';
+  if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Forecast at your selected coordinates.',access:'Weather does not establish road or trail conditions.'});
+  else if(visible.length){const closest=[...visible].sort((a,b)=>a.distance-b.distance)[0];selectDestination(closest);}
+}
+function centerOnOrigin() {
+  if(map){setMapDisplay('map');map.setView([origin.lat,origin.lon],10);}
+}
+function renderLocation() {
+  $('originLabel').textContent=origin.source==='gps'?'Starting at your GPS location':`${origin.source==='default'?'Default area':origin.source==='city'?'City center':'Saved area'} · ${origin.name}`;
+  const age=Number.isFinite(origin.locatedAt)?Math.max(0,Date.now()-origin.locatedAt):null;
+  $('locationAccuracy').textContent=origin.source==='gps'?`${age!=null&&age>15*60000?'Saved GPS fix':'GPS fix'}${Number.isFinite(origin.accuracy)?` · reported accuracy ±${Math.round(origin.accuracy)} m`:''}${origin.locatedAt?` · ${timeLabel(origin.locatedAt)}`:''}. ${origin.accuracy>1000?'Approximate location; enable precise location in your browser settings.':'Tap Use my location to refresh.'}`:'Use my location for a fresh GPS fix, or enter a city. City centers are approximate.';
 }
 async function setOriginFromSearch(e) {
   e.preventDefault();const query=$('originSearch').value.trim();if(!query)return;
-  const version=++originVersion;$('setOrigin').disabled=true;$('originStatus').textContent='Finding your area…';
+  const version=++originVersion;$('nearMe').disabled=false;$('setOrigin').disabled=true;$('originStatus').textContent='Finding your area…';
   const known=[origin,{name:'Waupun, WI',lat:43.6333,lon:-88.7296},{name:'Madison, WI',lat:43.0731,lon:-89.4012},{name:'Minneapolis, MN',lat:44.9778,lon:-93.265},{name:'Marquette, MI',lat:46.5436,lon:-87.3954}].find(p=>p.name.toLowerCase()===query.toLowerCase());
   try{
-    if(known){if(version===originVersion)changeOrigin(known);return;}
+    if(known){if(version===originVersion)changeOrigin({...known,source:'city',accuracy:null,locatedAt:Date.now()});return;}
     const data=await fetchJson(`https://nominatim.openstreetmap.org/search?${new URLSearchParams({q:query,format:'json',countrycodes:'us',limit:1})}`);
     if(version!==originVersion)return;if(!data.length)throw Error('No location');
     const p=data[0],lat=Number(p.lat),lon=Number(p.lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))throw Error('Invalid coordinates');
-    changeOrigin({name:p.display_name.split(',').slice(0,2).join(','),lat,lon});
+    changeOrigin({name:p.display_name.split(',').slice(0,2).join(','),lat,lon,source:'city',accuracy:null,locatedAt:Date.now()});
   }catch{if(version===originVersion)$('originStatus').textContent='Could not find this area. Try city and state.';}
   finally{if(version===originVersion)$('setOrigin').disabled=false;}
 }
 function useGps() {
-  if(!navigator.geolocation){$('originStatus').textContent='Location is unavailable in this browser.';return;}
-  const version=++originVersion;$('originStatus').textContent='Requesting your location…';
-  navigator.geolocation.getCurrentPosition(pos=>{if(version!==originVersion)return;$('setOrigin').disabled=false;changeOrigin({name:'your location',lat:pos.coords.latitude,lon:pos.coords.longitude});},()=>{if(version===originVersion){$('originStatus').textContent='Location unavailable. Set a city instead.';$('setOrigin').disabled=false;}},{timeout:10000,maximumAge:60000});
+  if(!navigator.geolocation){$('originStatus').textContent='Location is unavailable in this browser. Enter a city instead.';return;}
+  const version=++originVersion;$('originStatus').textContent='Getting a fresh GPS fix…';$('nearMe').disabled=true;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(version!==originVersion)return;$('setOrigin').disabled=false;$('nearMe').disabled=false;
+    const {latitude:lat,longitude:lon,accuracy}=pos.coords;
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)){ $('originStatus').textContent='The browser returned an invalid location. Try again or enter a city.';return; }
+    changeOrigin({name:'your location',lat,lon,accuracy:Number.isFinite(accuracy)?accuracy:null,locatedAt:pos.timestamp||Date.now(),source:'gps'});
+  },error=>{if(version===originVersion){$('originStatus').textContent=error.code===1?'Location permission is off. Allow location for this site, or enter a city.':error.code===3?'GPS timed out. Try again outdoors or enter a city.':'GPS unavailable. Try again or enter a city.';$('setOrigin').disabled=false;$('nearMe').disabled=false;}},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
 document.addEventListener('DOMContentLoaded',init);
 
@@ -424,4 +447,24 @@ function renderAuroraImage() {
   ctx.fillStyle='#b7c5cc';ctx.font='13px sans-serif';ctx.fillText(`NOAA overhead activity · valid ${timeLabel(aurora.validAt)}`,18,355);ctx.fillText('98°W                 92°W                 86°W                 80°W',18,375);
   image.src=canvas.toDataURL('image/png');image.hidden=false;image.alt='Regional NOAA aurora model grid: brighter green cells show stronger overhead activity, with destination dots. See interactive map for place names.';
   $('auroraImageStatus').textContent=`Regional view of the native NOAA grid · valid ${timeLabel(aurora.validAt)}. Latitude/longitude grid, not a visibility probability. Green intensity 0–100%; dots are destinations.`;
+}
+
+function renderFallMap() {
+  const key=$('fallMapKey');key.replaceChildren();if(view!=='fall')return;
+  [['#65aa80','0–24%'],['#d4c45d','25–49%'],['#eaa454','50–74%'],['#e57555','75–100%'],['#7f8b97','Older']].forEach(([color,label])=>{const item=el('span',null,'fall-key-item'),dot=el('i');dot.style.backgroundColor=color;dot.setAttribute('aria-hidden','true');item.append(dot,el('span',label));key.append(item);});
+  if(!reportSnapshot){$('fallMapStatus').textContent='Color observations unavailable. No estimated color is filled in.';return;}
+  const recent=reportSnapshot.reports.filter(r=>Nature.reportStatus(r,reportSnapshot.retrievedAt)==='recent');
+  const reports=$('showOldReports').checked?reportSnapshot.reports:recent;
+  $('fallMapStatus').textContent=`${reports.length} report points${$('showOldReports').checked?' including older observations':''} · Travel Wisconsin snapshot ${timeLabel(reportSnapshot.retrievedAt)}. Percent is reported color, not leaf retention. Wisconsin only; unreported areas are not estimated.`;
+  if(!map||!overlay||!$('showFallReports').checked)return;
+  reports.forEach(r=>{
+    const status=Nature.reportStatus(r,reportSnapshot.retrievedAt),color=status!=='recent'?'#7f8b97':r.percent>=75?'#e57555':r.percent>=50?'#eaa454':r.percent>=25?'#d4c45d':'#65aa80';
+    const marker=L.circleMarker([r.lat,r.lon],{radius:10,color:'#fff1d4',fillColor:color,fillOpacity:.95,weight:1.5}).addTo(overlay);
+    marker.bindTooltip(el('span',`${r.name} · ${fmt(r.percent,'%')} color${status==='recent'?'':' · older'}`));
+    const popup=el('div',null,'fall-report-popup');popup.append(el('p','FALL COLOR REPORT','eyebrow'),el('h3',r.name),el('strong',`${fmt(r.percent,'%')} reported color`),el('p',`${r.county} County`),el('p',`Updated ${timeLabel(r.reportedAt)}${status==='recent'?'':' · Older / unverified observation'}`),el('p',`Reporter’s estimated peak: ${r.peak||'Unavailable'}`),el('p','A report point describes the surrounding area, not an exact foliage boundary.','fineprint'));
+    popup.append(button('Report & weather here',()=>{selectDestination({id:`report:${r.id||r.name}`,reportOnly:true,name:r.name,lat:r.lat,lon:r.lon,region:'WI',county:r.county,tags:['fall'],summary:'Weather at this foliage report point. The color observation describes the reporter’s surrounding area.',source:reportSnapshot.sourceUrl,access:'This is a report location, not a verified public trailhead. Choose a destination for visit and access notes.'});closeSheet(false);openSheet();},'primary-link'));
+    const nearby=Nature.filterPlaces(DESTINATIONS,{origin:r,radius:60}).slice(0,2);
+    if(nearby.length){popup.append(el('p','Places nearby','eyebrow'));nearby.forEach(p=>popup.append(button(`${p.name} · ${Math.round(p.distance)} mi`,()=>{selectDestination(p);openSheet();},'quiet')));}
+    marker.bindPopup(popup,{maxWidth:310});
+  });
 }

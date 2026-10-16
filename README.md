@@ -40,3 +40,9 @@ Uploads are hosted in R2 through the service under `community-service/`. The fro
 ## Validation and limits
 
 `npm test` runs syntax checks, seasonal data/forecast tests, cache invalidation, contiguous sky/outdoor window tests, sun/moon and Kp overlap, route navigation, report parsing (including the source's Delafield county correction), photo grouping, timestamp conversion, and community service upload/list/media/removal behavior. A separate DOM-only smoke check exercised all seven pages, mobile menu and map/list/panel events, and photo field rendering. It does not verify layout. Physical iPhone/Android Safari/Chrome testing and browser visual QA were unavailable in the managed environment; responsive CSS and DOM behaviors were checked without claiming device certification. Live forecast/routing endpoints can be unavailable independently of the page.
+
+## Location and foliage map update
+
+The visible starting-location bar distinguishes the default area, a searched city center, a saved area, and a GPS fix. GPS requests high accuracy with no cached-position allowance; the browser still controls actual precision. The guide displays the reported accuracy and fix time, marks older GPS fixes, and draws an accuracy circle. Changing the starting area recenters the map and invalidates pending driving estimates. Local Weather always uses the full selected coordinates; curated destinations remain separate places.
+
+Fall Colors leads with a Wisconsin map of dated observation points, a five-color percentage/age legend, optional destination pins and older reports, and tappable reports with nearby destinations and weather at the report point. The default view hides old reports. No unsurveyed county polygons, foliage boundaries, or future color percentages are inferred.

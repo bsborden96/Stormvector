@@ -37,3 +37,20 @@ test('switching tabs refreshes the same destination and shows distinct dashboard
   context.location.hash='#explore';vm.runInContext('route()',context);assert.equal(elements.communityPanel.hidden,true);assert.equal(elements.guide.hidden,false);assert.equal(elements.seasonDashboard.hidden,true);
   context.location.hash='#photoForm';vm.runInContext('route()',context);assert.equal(elements.communityPanel.hidden,false);assert.equal(doc.body.dataset.view,'photos');
 });
+
+test('GPS keeps full coordinates, requests a fresh high-accuracy fix and recenters; stale fixes are ignored',()=>{
+  const html=fs.readFileSync('index.html','utf8'),elements={};for(const [,id] of html.matchAll(/id="([^"]+)"/g))elements[id]=new Element();
+  for(const id of ['regionFilter','interestFilter','radiusFilter'])elements[id].value='all';elements.tripDate.value='2026-10-16';
+  let success,options;const centers=[];
+  const doc={getElementById:id=>elements[id],createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener(){},body:{dataset:{}}};
+  const context=vm.createContext({document:doc,Nature,Planning,DESTINATIONS:destinations,Community:{},location:{hash:'#explore'},navigator:{geolocation:{getCurrentPosition(ok,fail,opts){success=ok;options=opts;}}},Date,Intl,URLSearchParams,AbortSignal,Promise,Set,Map,requestAnimationFrame:f=>f(),queueMicrotask(){},localStorage:{getItem:()=>null,setItem(){}},window:{addEventListener(){}},testMap:{invalidateSize(){},setView:(point,zoom)=>centers.push({point:[...point],zoom})}});
+  for(const file of ['field-guide','experience','views','app'])vm.runInContext(fs.readFileSync(`src/${file}.js`,'utf8'),context);
+  vm.runInContext('ensureVisibleForecasts=()=>{};renderMap=()=>{};selectDestination=p=>{selected=p;};map=testMap;useGps();',context);
+  assert.equal(options.enableHighAccuracy,true);assert.equal(options.maximumAge,0);
+  success({coords:{latitude:43.634123456,longitude:-88.727654321,accuracy:18},timestamp:Date.now()});
+  assert.equal(vm.runInContext('origin.lat',context),43.634123456);assert.equal(vm.runInContext('origin.lon',context),-88.727654321);
+  assert.equal(centers.at(-1).zoom,10);assert.deepEqual(centers.at(-1).point,[43.634123456,-88.727654321]);
+  assert.match(elements.locationAccuracy.textContent,/±18 m/);assert.match(elements.originLabel.textContent,/GPS location/);
+  vm.runInContext('useGps();originVersion++;',context);success({coords:{latitude:45,longitude:-90,accuracy:20},timestamp:Date.now()});
+  assert.equal(vm.runInContext('origin.lat',context),43.634123456);
+});
