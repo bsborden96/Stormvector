@@ -64,3 +64,12 @@ test('local static page has its own brand, references the guide, and omits the s
   assert.match(html,/src\/nature\.js/);
   assert.doesNotMatch(html,/Wisconsin-Storm-Alerts|speechSynthesis|seasonal\.js|weather bot/i);
 });
+
+test('current model units and snow depth stay distinct from new snowfall; invalid hours do not shift arrays',()=>{
+  const data=structuredClone(base),t=Date.parse('2026-10-15T01:00:00Z')/1000;
+  data.hourly.time=[null,t];data.hourly.cloud_cover=[99,20];data.hourly.is_day=[1,0];data.hourly.snow_depth=[4,.1];data.hourly_units.snow_depth='m';
+  data.current={time:t,temperature_2m:31,apparent_temperature:25,wind_speed_10m:10,wind_gusts_10m:18,weather_code:0};
+  data.current_units={time:'unixtime',temperature_2m:'°F',apparent_temperature:'°F',wind_speed_10m:'mp/h',wind_gusts_10m:'mp/h'};
+  const f=Nature.parseForecast(data);assert.equal(f.hours.length,1);assert.equal(f.hours[0].cloud,20);assert.ok(Math.abs(f.hours[0].snowDepth-3.937)<.001);assert.equal(f.days[0].snow,1);assert.equal(f.current.temp,31);
+  data.hourly_units.snow_depth='cm';assert.equal(Nature.parseForecast(data).hours[0].snowDepth,null);
+});

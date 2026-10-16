@@ -40,8 +40,14 @@ class ReportParser(HTMLParser):
             if not 0 <= percent <= 100 or not 40 < lat < 49 or not -95 < lon < -85 or not updated:
                 return
             timestamp = datetime.strptime(updated[1], '%m/%d/%y %I:%M %p').replace(tzinfo=ZoneInfo('America/Chicago')).isoformat()
+            # Travel Wisconsin currently tags Delafield with Waushara. Its
+            # coordinates and official Southern Savanna county guide place it in Waukesha.
+            # https://www.travelwisconsin.com/pdf/southern-savanna-guide.pdf
+            county = a.get('data-county', '').replace(' County', '')
+            if a.get('data-title') == 'Delafield' and 43 < lat < 43.1 and -88.5 < lon < -88.3:
+                county = 'Waukesha'
             self.rows.append({'id': a.get('data-id'), 'name': a.get('data-title'),
-                'county': a.get('data-county', '').replace(' County', ''), 'state': 'WI',
+                'county': county, 'state': 'WI',
                 'lat': lat, 'lon': lon, 'percent': percent, 'condition': a.get('data-condition', ''),
                 'peak': peak[1].strip() if peak else None, 'reportedAt': timestamp})
         except (KeyError, ValueError):

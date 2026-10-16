@@ -16,6 +16,8 @@ class ReportParserTest(unittest.TestCase):
         self.assertEqual(result[0]['county'],'Dane')
         self.assertEqual(result[0]['peak'],'3rd Week of October')
         self.assertEqual(result[0]['reportedAt'],'2026-10-13T19:40:00-05:00')
+        corrected=reports.extract(card.replace('data-title="Madison"','data-title="Delafield"').replace('Dane County','Waushara County').replace('43.0731','43.060796').replace('-89.4012','-88.406791')*50)
+        self.assertEqual(corrected[0]['county'],'Waukesha')
         with self.assertRaisesRegex(ValueError,'Too few'):
             reports.extract(card.replace('data-filter-percent-to-peak="55"','data-filter-percent-to-peak="105"')*50)
 

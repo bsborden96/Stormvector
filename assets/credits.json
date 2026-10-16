@@ -1,0 +1,89 @@
+{
+  "note": "Illustrative regional photographs; not live observations. NPS credited photographs selected; third-party credited works excluded. No endorsement implied.",
+  "photos": [
+    {
+      "file": "assets/photos/pictured-rocks.webp",
+      "caption": "Pictured Rocks sandstone cliffs above Lake Superior, Michigan",
+      "author": "NPS",
+      "source": "https://www.nps.gov/piro/index.htm",
+      "original": "https://www.nps.gov/common/uploads/structured_data/B502655F-03A4-E3C2-33CEA40037E6DC09.jpg",
+      "license": "Public domain \u2014 U.S. National Park Service photograph",
+      "licenseSource": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "checkedAt": "2026-10-16",
+      "width": 1400,
+      "height": 788,
+      "bytes": 132482,
+      "adaptation": "Resized and WebP encoded; no content edits"
+    },
+    {
+      "file": "assets/photos/autumn-shore.webp",
+      "caption": "Autumn at Miners Beach and Elliot Falls, Michigan",
+      "author": "NPS",
+      "source": "https://www.nps.gov/piro/index.htm",
+      "original": "https://www.nps.gov/common/uploads/structured_data/675E64F1-03C9-54DB-108B59FF08185025.jpg",
+      "license": "Public domain \u2014 U.S. National Park Service photograph",
+      "licenseSource": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "checkedAt": "2026-10-16",
+      "width": 1400,
+      "height": 933,
+      "bytes": 180200,
+      "adaptation": "Resized and WebP encoded; no content edits"
+    },
+    {
+      "file": "assets/photos/aurora-lake.webp",
+      "caption": "Northern lights over Kabetogama Lake, Voyageurs National Park, Minnesota",
+      "author": "NPS / Dimse",
+      "source": "https://www.nps.gov/voya/learn/nature/northern-lights.htm",
+      "original": "https://www.nps.gov/voya/learn/nature/images/Jan_2.jpg",
+      "license": "Public domain \u2014 U.S. National Park Service photograph",
+      "licenseSource": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "checkedAt": "2026-10-16",
+      "width": 694,
+      "height": 1000,
+      "bytes": 18324,
+      "adaptation": "Resized and WebP encoded; no content edits"
+    },
+    {
+      "file": "assets/photos/winter-forest.webp",
+      "caption": "Snowshoes in Voyageurs National Park, Minnesota",
+      "author": "NPS",
+      "source": "https://www.nps.gov/voya/planyourvisit/winter-activities.htm",
+      "original": "https://www.nps.gov/voya/planyourvisit/images/VOYA_snowshoes-2.jpg",
+      "license": "Public domain \u2014 U.S. National Park Service photograph",
+      "licenseSource": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "checkedAt": "2026-10-16",
+      "width": 804,
+      "height": 1000,
+      "bytes": 191454,
+      "adaptation": "Resized and WebP encoded; no content edits"
+    },
+    {
+      "file": "assets/photos/sleeping-bear.webp",
+      "caption": "Glen Lakes overlook, Sleeping Bear Dunes, Michigan",
+      "author": "NPS",
+      "source": "https://www.nps.gov/slbe/index.htm",
+      "original": "https://www.nps.gov/common/uploads/structured_data/FDFEAB66-BE14-5198-2192383739CEEA99.jpg",
+      "license": "Public domain \u2014 U.S. National Park Service photograph",
+      "licenseSource": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "checkedAt": "2026-10-16",
+      "width": 1400,
+      "height": 933,
+      "bytes": 148244,
+      "adaptation": "Resized and WebP encoded; no content edits"
+    },
+    {
+      "file": "assets/photos/miners-castle.webp",
+      "caption": "Miners Castle above Lake Superior, Pictured Rocks, Michigan",
+      "author": "NPS",
+      "source": "https://www.nps.gov/piro/index.htm",
+      "original": "https://www.nps.gov/common/uploads/structured_data/6714EE96-A13B-894C-6B03888F3D6641DD.jpg",
+      "license": "Public domain \u2014 U.S. National Park Service photograph",
+      "licenseSource": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "checkedAt": "2026-10-16",
+      "width": 1400,
+      "height": 869,
+      "bytes": 125636,
+      "adaptation": "Resized and WebP encoded; no content edits"
+    }
+  ]
+}

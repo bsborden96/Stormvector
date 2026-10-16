@@ -13,7 +13,7 @@ const SeasonalViews = (() => {
     if(view==='fall') {
       if(!reports){panel.append(element('p','Loading dated Wisconsin foliage observations…'));return;}
       const recent=reports.reports.filter(r=>N.reportStatus(r,reports.retrievedAt,now)==='recent');
-      const stats=element('div',null,'season-stats');stats.append(stat('Report locations',String(reports.reports.length),'Wisconsin coverage'),stat('Updated recently',String(recent.length),'Reporter and snapshot freshness checked'),stat('85–100% reported color',String(recent.filter(r=>r.percent>=85).length),'Current reports only; not a peak prediction'));panel.append(stats);
+      const stats=element('div',null,'season-stats');stats.append(stat('Report locations',String(reports.reports.length),'Wisconsin coverage'),stat('Updated recently',String(recent.length),'Reporter and snapshot freshness checked'),stat('85–100% reported color',String(recent.filter(r=>r.percent>=85).length),'Reported color, not leaf retention'));panel.append(stats);
       const report=place&&N.nearestReport(place,reports,now),callout=element('div',null,'foliage-callout');
       callout.append(element('h3',place?place.name:'Choose a destination'));
       if(report){callout.append(element('strong',`${fmt(report.percent,'%')} reported color near ${report.name}`),element('p',`Estimated peak: ${report.peak||'unavailable'} · ${report.status==='recent'?'Recent observation':'Older / unverified observation'}`));const bar=element('div',null,'color-track'),fill=element('span');fill.style.width=`${report.percent}%`;bar.append(fill);callout.append(bar);}
@@ -27,7 +27,7 @@ const SeasonalViews = (() => {
       for(let i=0;i<3;i++){
         const d=P.addDays(date,i),night=P.nightSummary(forecast,d,kp,now),card=element('article',null,'night-card');
         card.append(element('p',label(d),'eyebrow'),element('h3',i===0?'Your selected night':i===1?'The following night':'Two nights ahead'));
-        const m=element('div',null,'night-metrics');m.append(stat('Lowest forecast clouds',night.best?fmt(night.best.cloud,'%'):'Unavailable',night.best?`Around ${N.daylightLabel(night.best.timestamp,forecast.timezone)}`:'No dark hourly guidance'),stat('NOAA peak nighttime Kp',fmt(night.peakKp,'',1),night.peakKp==null?'Beyond or missing NOAA guidance':'Three-hour forecast / estimate'));
+        const m=element('div',null,'night-metrics');m.append(stat('Sustained dark cloud window',(()=>{const window=P.clearWindow(P.skyHours(forecast,d,place,kp,now));return window.length?`${N.daylightLabel(window[0].timestamp,forecast.timezone)}–${N.daylightLabel(window[window.length-1].timestamp,forecast.timezone)}`:'None in guidance';})(),'At least two samples ≤25% clouds; full darkness'),stat('NOAA peak nighttime Kp',fmt(night.peakKp,'',1),night.peakKp==null?'Beyond or missing NOAA guidance':'Three-hour forecast / estimate'));
         const plan=choose('Plan this night',d,onDate);plan.disabled=!forecast.days.some(day=>day.date===d);
         card.append(m,element('p',night.best?night.best.cloud<=25?'A lower-cloud window. Geomagnetic activity and the northern horizon still matter.':night.best.cloud>=75?'Clouds may obstruct the sky during this window.':'Variable clouds. Check the hourly sky window.':'Forecast data is incomplete for this night.','night-note'),plan);nights.append(card);
       }
@@ -36,6 +36,8 @@ const SeasonalViews = (() => {
     const days=forecast.days.filter(d=>d.date>=date);
     if(view==='winter'){
       const stats=element('div',null,'season-stats');const selectedDay=days[0];
+      const depth=forecast.hours.filter(h=>h.timestamp<=now&&now-h.timestamp<2*3600000&&h.snowDepth!=null).slice(-1)[0];
+      panel.append(element('p',`Snow on the ground now: ${fmt(depth?.snowDepth,' in',1)} · model depth, not a field measurement.`,'snow-depth-note'));
       stats.append(stat('Forecast snow',fmt(P.snowTotal(days),' in',1),`Total over ${days.length} loaded calendar days`),stat('Lowest air temperature',days.length&&days.every(d=>d.low!=null)?fmt(Math.min(...days.map(d=>d.low)),'°F'):'Unavailable','Across these forecast days'),stat('Selected-day feels like low',fmt(selectedDay?.feels,'°F'),'Model apparent temperature'));panel.append(stats);
       const week=element('div',null,'snow-week');const max=Math.max(1,...days.map(d=>d.snow||0));
       days.forEach(d=>{const card=element('button',null,'snow-day');card.type='button';card.setAttribute('aria-pressed',String(d.date===date));const track=element('div',null,'snow-track'),bar=element('div',null,'snow-bar');bar.style.height=d.snow==null?'0px':`${Math.max(d.snow>0?4:0,d.snow/max*70)}px`;track.append(bar);card.append(element('small',label(d.date)),track,element('strong',fmt(d.snow,' in',1)),element('span',`${fmt(d.high,'°')} / ${fmt(d.low,'°')}`));card.addEventListener('click',()=>onDate(d.date));week.append(card);});panel.append(week,element('p',`Daily snow covers the entire calendar day. It is not measured snow depth, trail access, frozen waterfalls, or lake ice. Forecast loaded ${new Date(forecast.retrievedAt).toLocaleString()}.`,'fineprint'));return;
@@ -49,7 +51,7 @@ const SeasonalViews = (() => {
       const night=P.nightSummary(forecast,date,kp,now);
       return `Night clouds: ${night.best?fmt(night.best.cloud,'%')+' lowest':'unavailable'} · Nighttime Kp: ${fmt(night.peakKp,'',1)}`;
     }
-    if(view==='winter')return `Forecast snow ${fmt(day.snow,' in',1)} · Feels like low ${fmt(day.feels,'°F')}`;
+    if(view==='winter')return `New snow ${fmt(day.snow,' in',1)} · Model depth now ${fmt(forecast.hours.filter(h=>h.timestamp<=now&&now-h.timestamp<2*3600000&&h.snowDepth!=null).slice(-1)[0]?.snowDepth,' in',1)} · Feels like low ${fmt(day.feels,'°F')}`;
     if(view==='fall')return `Fall outing: ${N.outingNote(day)} · Sunset ${N.daylightLabel(day.sunset,forecast.timezone)}`;
     return N.outingNote(day);
   }

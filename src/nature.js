@@ -20,7 +20,8 @@ const Nature = (() => {
   function forecastUrl(place) {
     return `https://api.open-meteo.com/v1/forecast?${new URLSearchParams({latitude:place.lat,longitude:place.lon,
       daily:'weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_min,precipitation_probability_max,precipitation_sum,snowfall_sum,wind_gusts_10m_max,sunrise,sunset,daylight_duration',
-      hourly:'cloud_cover,is_day,temperature_2m,precipitation_probability',temperature_unit:'fahrenheit',wind_speed_unit:'mph',
+      current:'temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,is_day',
+      hourly:'cloud_cover,is_day,temperature_2m,apparent_temperature,precipitation_probability,wind_gusts_10m,snow_depth,weather_code',temperature_unit:'fahrenheit',wind_speed_unit:'mph',
       precipitation_unit:'inch',timezone:'auto',timeformat:'unixtime',forecast_days:7})}`;
   }
   function parseForecast(data, now=Date.now()) {
@@ -41,11 +42,15 @@ const Nature = (() => {
         sunrise:get('sunrise',i)==null?null:get('sunrise',i)*1000,sunset:get('sunset',i)==null?null:get('sunset',i)*1000,
         daylight:get('daylight_duration',i)==null?null:get('daylight_duration',i)/3600};
     });
-    const hours=hu.time==='unixtime'&&hu.cloud_cover==='%' ? (h.time||[]).filter(t=>value(t)!=null).map((t,i)=>({
+    const hours=hu.time==='unixtime'&&hu.cloud_cover==='%' ? (h.time||[]).flatMap((t,i)=>value(t)==null?[]:[{
       timestamp:t*1000,date:dateInZone(t*1000,zone),cloud:value(h.cloud_cover?.[i]),night:h.is_day?.[i]===0,
       temp:hu.temperature_2m==='°F'?value(h.temperature_2m?.[i]):null,rainChance:value(h.precipitation_probability?.[i]),
-    })) : [];
-    return {days,hours,timezone:zone,retrievedAt:now};
+      feels:hu.apparent_temperature==='°F'?value(h.apparent_temperature?.[i]):null,gust:hu.wind_gusts_10m==='mp/h'?value(h.wind_gusts_10m?.[i]):null,
+      snowDepth:hu.snow_depth==='m'&&value(h.snow_depth?.[i])!=null?h.snow_depth[i]*39.37007874:null,code:value(h.weather_code?.[i]),
+    }]) : [];
+    const c=data.current||{},cu=data.current_units||{};
+    const current=cu.time==='unixtime'&&cu.temperature_2m==='°F'&&value(c.time)!=null?{timestamp:c.time*1000,temp:value(c.temperature_2m),feels:cu.apparent_temperature==='°F'?value(c.apparent_temperature):null,code:value(c.weather_code),wind:cu.wind_speed_10m==='mp/h'?value(c.wind_speed_10m):null,gust:cu.wind_gusts_10m==='mp/h'?value(c.wind_gusts_10m):null}:null;
+    return {days,hours,current,timezone:zone,retrievedAt:now};
   }
   function weather(code) {
     if(code===0)return ['☀','Clear'];
@@ -78,7 +83,7 @@ const Nature = (() => {
   }
   function nearestReport(place,snapshot,now=Date.now()) {
     if(place.region!=='WI'||!snapshot?.reports)return null;
-    const reports=snapshot.reports.filter(r=>r.county===place.county&&value(r.percent)!=null);
+    const reports=snapshot.reports.filter(r=>r.county===place.county&&!r.locationUnverified&&value(r.percent)!=null);
     if(!reports.length)return null;
     const report=reports.sort((a,b)=>miles(place,a)-miles(place,b))[0];
     return {...report,status:reportStatus(report,snapshot.retrievedAt,now),distance:miles(place,report)};
@@ -121,13 +126,14 @@ const Nature = (() => {
     return time==null?'Unavailable':new Date(time).toLocaleTimeString([],{timeZone:zone,hour:'numeric',minute:'2-digit'});
   }
   function makeCache(ttl=30*60000) {
-    const cache=new Map(),pending=new Map();
+    const cache=new Map(),pending=new Map();let generation=0;
     return {async get(key,loader,now=Date.now()) {
       const old=cache.get(key);if(old&&now-old.savedAt<ttl)return old.data;
       if(pending.has(key))return pending.get(key);
-      const work=Promise.resolve().then(loader).then(data=>{cache.set(key,{data,savedAt:Date.now()});return data}).finally(()=>pending.delete(key));
+      const version=generation;
+      const work=Promise.resolve().then(loader).then(data=>{if(version===generation)cache.set(key,{data,savedAt:Date.now()});return data}).finally(()=>{if(pending.get(key)===work)pending.delete(key);});
       pending.set(key,work);return work;
-    },clear(){cache.clear();},peek(key){const old=cache.get(key);return old&&Date.now()-old.savedAt<ttl?old.data:null;}};
+    },clear(){generation++;cache.clear();pending.clear();},peek(key){const old=cache.get(key);return old&&Date.now()-old.savedAt<ttl?old.data:null;}};
   }
   return {value,miles,filterPlaces,forecastUrl,parseForecast,weather,outingNote,reportStatus,nearestReport,parseAurora,auroraAt,parseKp,nightHours,dateInZone,daylightLabel,makeCache};
 })();

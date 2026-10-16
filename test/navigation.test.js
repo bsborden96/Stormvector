@@ -6,13 +6,14 @@ const Nature=require('../src/nature.js');
 const Planning=require('../src/planning.js');
 const destinations=require('../src/destinations.js');
 class Element {
-  constructor(){this.children=[];this.dataset={};this.style={};this.value='';this.hidden=false;this.attributes={};this.classList={toggle(){}};}
+  constructor(){this.children=[];this.dataset={};this.style={};this.value='';this.hidden=false;this.attributes={};this.classList={toggle(){},remove(){},add(){}};}
   append(...children){this.children.push(...children);}
   replaceChildren(...children){this.children=[...children];this._text='';}
   set textContent(value){this._text=String(value);this.children=[];}
   get textContent(){return (this._text||'')+this.children.map(c=>c.textContent||'').join(' ');}
   setAttribute(k,v){this.attributes[k]=v;}
   removeAttribute(k){delete this.attributes[k];}
+  getAttribute(k){return this.attributes[k]??null;}
   addEventListener(){}
   scrollIntoView(){}
 }
@@ -22,7 +23,7 @@ test('switching tabs refreshes the same destination and shows distinct dashboard
   let activated=0;
   const doc={getElementById:id=>elements[id],createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener(){},body:{dataset:{}}};
   const context=vm.createContext({document:doc,Nature,Planning,DESTINATIONS:destinations,Community:{activate(){activated++;}},location:{hash:'#explore'},Date,Intl,URLSearchParams,AbortSignal,Promise,Set,Map,requestAnimationFrame:f=>f(),queueMicrotask(){},setInterval(){},localStorage:{getItem:()=>null,setItem(){}},window:{addEventListener(){}}});
-  vm.runInContext(fs.readFileSync('src/views.js','utf8'),context);vm.runInContext(fs.readFileSync('src/app.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('src/field-guide.js','utf8'),context);vm.runInContext(fs.readFileSync('src/experience.js','utf8'),context);vm.runInContext(fs.readFileSync('src/views.js','utf8'),context);vm.runInContext(fs.readFileSync('src/app.js','utf8'),context);
   // Keep the network separate from this navigation regression test.
   vm.runInContext('ensureVisibleForecasts=()=>{};selectDestination=p=>{selected=p;renderDestination();renderResults();};selected=DESTINATIONS[0];selectedForecast=null;',context);
   for(const [view,title] of [['aurora','Follow the night.'],['winter','Watch the snow line.'],['fall','Find the color while it lasts.'],['weather','Your forecast, at a glance.']]){

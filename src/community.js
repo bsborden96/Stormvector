@@ -48,7 +48,7 @@ const Community = (() => {
     $('photoForm').addEventListener('submit',submit);
   }
   function timestampPreview() {
-    try{$('photoTimestampPreview').textContent=`Photo timestamp: ${captureTimestamp($('photoTakenAt').value,$('photoTimezone').value)}. Submission time is added automatically.`;}
+    try{const captured=captureTimestamp($('photoTakenAt').value,$('photoTimezone').value);$('photoTimestampPreview').textContent=`Taken ${new Date(captured).toLocaleString([],{timeZone:$('photoTimezone').value,dateStyle:'medium',timeStyle:'short'})} · ${$('photoTimezone').selectedOptions[0].textContent}.`; }
     catch(e){$('photoTimestampPreview').textContent=e.message;}
   }
   function maps() {
@@ -66,7 +66,7 @@ const Community = (() => {
   function setPin(lat,lon,custom) {
     $('photoLat').value=lat.toFixed(5);$('photoLon').value=lon.toFixed(5);
     if(pinMap){if(pin)pin.setLatLng([lat,lon]);else pin=L.marker([lat,lon],{draggable:true}).addTo(pinMap).on('dragend',()=>{const p=pin.getLatLng();if($('photoLocation').value!=='custom')$('photoLocationName').value='';$('photoLocation').value='custom';setPin(p.lat,p.lng,true);});pinMap.setView([lat,lon],custom?pinMap.getZoom():10);}
-    $('photoPinStatus').textContent=`Photo location: ${lat.toFixed(5)}, ${lon.toFixed(5)}. ${custom?'Add a location name above.':'Drag the pin to refine it.'}`;
+    $('photoPinStatus').textContent=custom?'Pin placed. Add a location name above; a general area is fine.':'Place selected. Drag the pin to refine the location.';
   }
   function useLocation() {
     if(!navigator.geolocation){$('photoPinStatus').textContent='Your browser cannot provide a location. Choose a destination or use the map.';return;}
@@ -102,7 +102,7 @@ const Community = (() => {
       const captured=new Date(photo.takenAt).toLocaleString([],{timeZone:photo.timezone,dateStyle:'medium',timeStyle:'short'});
       detail.append(node('p',`Taken ${captured} · ${photo.timezone}`,'fineprint'),node('p',`Submitted ${new Date(photo.submittedAt).toLocaleString()}`,'fineprint'));
       if(photo.photographer)detail.append(node('p',`Shared by ${photo.photographer}`,'fineprint'));if(photo.caption)detail.append(node('p',photo.caption));
-      const locate=node('button','Locate on map ↗','quiet');locate.type='button';locate.addEventListener('click',()=>{galleryMap?.setView([photo.lat,photo.lon],12);$('communityMap').scrollIntoView({behavior:'smooth'});});detail.append(locate);
+      const locate=node('button','Locate on map ↗','quiet');locate.type='button';locate.addEventListener('click',()=>{activeGroup=groupPhotos([photo])[0].key;renderGallery();galleryMap?.setView([photo.lat,photo.lon],12);$('communityMap').scrollIntoView({behavior:'smooth'});});detail.append(locate);
       if(receipts[photo.id]){const remove=node('button','Remove my photo','quiet');remove.type='button';remove.addEventListener('click',async()=>{remove.disabled=true;try{await api('/api/photos',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:photo.id,deleteToken:receipts[photo.id]})});delete receipts[photo.id];saveReceipts();photos=photos.filter(p=>p.id!==photo.id);activeGroup=null;renderGallery();}catch(e){detail.append(node('p',e.message,'feed-error'));remove.disabled=false;}});detail.append(remove);}
       card.append(detail);$('photoGrid').append(card);
     });
@@ -134,6 +134,7 @@ const Community = (() => {
     finally{$('submitPhoto').disabled=false;}
   }
   function activate(){setup();maps();loadPhotos();}
-  return {activate,captureTimestamp,groupPhotos};
+  function photosFor(place){return photos.filter(p=>Nature.miles(place,p)<15);}
+  return {activate,captureTimestamp,groupPhotos,photosFor};
 })();
 if(typeof module!=='undefined')module.exports=Community;
