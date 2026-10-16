@@ -127,14 +127,25 @@ const Community = (() => {
       const fields={lat:$('photoLat').value,lon:$('photoLon').value,location:$('photoLocationName').value,eventType:$('photoEvent').value,takenWith:$('photoCamera').value,takenAt,timezone:$('photoTimezone').value,title:$('photoTitle').value,photographer:$('photoPhotographer').value,caption:$('photoCaption').value,consent:String($('photoConsent').checked)};
       Object.entries(fields).forEach(([key,value])=>body.set(key,value));$('photoSubmitStatus').textContent='Sharing your photo and placing its map pin…';
       const data=await api('/api/photos',{method:'POST',body});receipts[data.photo.id]=data.deleteToken;const stored=saveReceipts();
-      photos=[data.photo,...photos];activeGroup=null;$('photoEventFilter').value='all';$('photoAgeFilter').value='all';$('photoSearch').value='';renderGallery();galleryMap?.setView([data.photo.lat,data.photo.lon],11);
+      photos=[data.photo,...photos];feedCache=null;activeGroup=null;$('photoEventFilter').value='all';$('photoAgeFilter').value='all';$('photoSearch').value='';renderGallery();galleryMap?.setView([data.photo.lat,data.photo.lon],11);
       $('photoSubmitStatus').textContent=stored?'Photo shared. Your map pin and timestamps are saved.':'Photo shared. Receipt storage is unavailable; keep this page open to remove this photo.';
       $('photoFile').value='';$('photoPreview').hidden=true;if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}$('photoConsent').checked=false;
     }catch(e){$('photoSubmitStatus').textContent=e.message;}
     finally{$('submitPhoto').disabled=false;}
   }
+  let feedCache=null,feedPending=null;
+  async function getFeed(force=false) {
+    if(!force&&feedCache&&Date.now()-feedCache.retrievedAt<5*60000)return feedCache;
+    if(feedPending)return feedPending;
+    feedPending=api('/api/photos').then(data=>{
+      if(!Array.isArray(data.photos))throw Error('Photo list unavailable.');
+      feedCache={items:data.photos.filter(p=>TYPES[p.eventType]&&Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&typeof p.id==='string'&&p.imageUrl?.startsWith('/api/media/')),hasMore:!!data.cursor,retrievedAt:Date.now()};
+      return feedCache;
+    }).finally(()=>{feedPending=null;});return feedPending;
+  }
+  function mediaUrl(photo){return photo?.imageUrl?.startsWith('/api/media/')?API+photo.imageUrl:null;}
   function activate(){setup();maps();loadPhotos();}
   function photosFor(place){return photos.filter(p=>Nature.miles(place,p)<15);}
-  return {activate,captureTimestamp,groupPhotos,photosFor};
+  return {activate,captureTimestamp,groupPhotos,photosFor,getFeed,mediaUrl};
 })();
 if(typeof module!=='undefined')module.exports=Community;

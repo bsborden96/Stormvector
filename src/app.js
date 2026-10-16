@@ -24,6 +24,9 @@ let pendingCompare = false;
 let driveRequest = 0;
 let driveRoute = null;
 const driveCache = new Map();
+const drivePending = new Map();
+let routeQueue = Promise.resolve();
+let lastRouteRequest = 0;
 let mapRenderKey = '';
 let sheetReturnFocus = null;
 const regionNames = {WI:'Wisconsin',MN:'Minnesota',UP:'Upper Peninsula',MI:'Michigan · Lower Peninsula'};
@@ -56,7 +59,7 @@ async function fetchJson(url) {
 }
 function forecastKey(p) {return `${p.lat},${p.lon}`;}
 async function getForecast(p) {
-  try{const f=await forecastCache.get(forecastKey(p),async()=>Nature.parseForecast(await fetchJson(Nature.forecastUrl(p))));forecastErrors.delete(forecastKey(p));return f;}
+  try{const f=await forecastCache.get(forecastKey(p),async()=>Nature.parseForecast(await fetchJson(Nature.forecastUrl(p))));forecastErrors.delete(forecastKey(p));if(typeof TripDesk!=='undefined')TripDesk.observe(p,f);return f;}
   catch(e){forecastErrors.set(forecastKey(p),Date.now());throw e;}
 }
 function selectedDate() {return $('tripDate').value;}
@@ -81,6 +84,7 @@ function init() {
   ['showFallReports','showParkPins','showOldReports'].forEach(id=>$(id).addEventListener('change',()=>{mapRenderKey='';renderMap();}));
   window.addEventListener('hashchange',route);
   setupExperience();
+  if(typeof TripDesk!=='undefined')TripDesk.init();
   initMap();
   route();
   loadReports();loadSpaceWeather();
@@ -119,7 +123,7 @@ function route() {
   $('comparisonPanel').hidden=true;
   if(view==='saved')setMapDisplay('list');else if(document.body.dataset.display==='list')setMapDisplay('map');
   $('heroAction').href=view==='photos'?'#photoForm':'#guide';$('heroAction').textContent=view==='photos'?'Share your photo ↓':view==='aurora'?'Plan a night under the sky ↗':view==='winter'?'See the snow forecast ↗':view==='fall'?'Follow the color ↗':'Explore the map ↗';
-  if(view==='photos'){Community.activate();if(photoAnchor)requestAnimationFrame(()=>document.getElementById(photoAnchor==='communityGallery'?'communityMap':photoAnchor).scrollIntoView({behavior:'smooth'}));return;}
+  if(view==='photos'){if(typeof TripDesk!=='undefined')TripDesk.route(view);Community.activate();if(photoAnchor)requestAnimationFrame(()=>document.getElementById(photoAnchor==='communityGallery'?'communityMap':photoAnchor).scrollIntoView({behavior:'smooth'}));return;}
   // Seasonal tabs include every place; interests can still narrow the results explicitly.
   $('interestFilter').value='all';
   $('reportsPanel').hidden=view!=='fall';$('auroraPanel').hidden=view!=='aurora';
@@ -128,6 +132,7 @@ function route() {
   if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Your starting area. Use its forecast to plan an outing nearby.',access:'Weather at this point does not establish road, trail, or park conditions.'});
   else if(!selected||selected.id==='local'||!visible.some(p=>p.id===selected.id)){if(visible[0])selectDestination(visible[0]);else{selected=null;selectedVersion++;renderDestination();}}
   else selectDestination(selected);
+  if(typeof TripDesk!=='undefined')TripDesk.route(view);
   if(map)requestAnimationFrame(()=>{map.invalidateSize();if(view==='fall')map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);else if(origin.source!=='default')centerOnOrigin();});
 }
 function filters() {return {region:$('regionFilter').value,interest:$('interestFilter').value,query:$('placeSearch').value,
@@ -157,6 +162,7 @@ function renderResults() {
     const save=button(saved.has(p.id)?'★ Saved':'☆ Save',()=>toggleSave(p.id));save.setAttribute('aria-pressed',String(saved.has(p.id)));save.setAttribute('aria-label',`${saved.has(p.id)?'Unsave':'Save'} ${p.name}`);actions.append(save);content.append(actions);card.append(content);grid.append(card);
   });
   renderBrief();
+  if(typeof TripDesk!=='undefined')TripDesk.sync();
   renderMap();
   ensureVisibleForecasts();
 }
@@ -425,8 +431,7 @@ async function estimateDrive(p,container) {
   const version=++driveRequest,from={...origin},key=`${from.lat},${from.lon}:${p.lat},${p.lon}`;
   const b=container.querySelector('button');b.disabled=true;b.textContent='Estimating…';
   try{
-    let data=driveCache.get(key);
-    if(!data){const r=await fetchJson(`https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${p.lon},${p.lat}?overview=simplified&geometries=geojson&alternatives=false&steps=false`);if(r.code!=='Ok'||!r.routes?.length)throw Error('No route');data=r.routes[0];driveCache.set(key,data);}
+    const data=await requestDrive(from,p);
     if(version!==driveRequest||selected?.id!==p.id)return;
     const minutes=Math.round(data.duration/60),hours=Math.floor(minutes/60);
     b.textContent=`${hours?`${hours} hr `:''}${minutes%60} min · ${Math.round(data.distance/1609.344)} road miles`;
@@ -467,4 +472,18 @@ function renderFallMap() {
     if(nearby.length){popup.append(el('p','Places nearby','eyebrow'));nearby.forEach(p=>popup.append(button(`${p.name} · ${Math.round(p.distance)} mi`,()=>{selectDestination(p);openSheet();},'quiet')));}
     marker.bindPopup(popup,{maxWidth:310});
   });
+}
+
+async function requestDrive(from,to) {
+  const key=`${from.lat},${from.lon}:${to.lat},${to.lon}`,cached=driveCache.get(key);
+  if(cached&&Date.now()-cached.checkedAt<30*60000)return cached;
+  if(drivePending.has(key))return drivePending.get(key);
+  const work=routeQueue.catch(()=>{}).then(async()=>{
+    const wait=1000-(Date.now()-lastRouteRequest);if(wait>0)await new Promise(resolve=>setTimeout(resolve,wait));
+    lastRouteRequest=Date.now();
+    const data=await fetchJson(`https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=simplified&geometries=geojson&alternatives=false&steps=false`);
+    const r=data.routes?.[0];if(data.code!=='Ok'||!r||!Number.isFinite(r.duration)||r.duration<0||!Number.isFinite(r.distance)||r.distance<0)throw Error('Road route unavailable.');
+    const result={...r,checkedAt:Date.now()};driveCache.set(key,result);return result;
+  });
+  routeQueue=work.catch(()=>{});drivePending.set(key,work);work.finally(()=>{if(drivePending.get(key)===work)drivePending.delete(key);}).catch(()=>{});return work;
 }

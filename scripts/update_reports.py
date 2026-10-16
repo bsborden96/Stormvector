@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 
 URL = 'https://www.travelwisconsin.com/fall-color-report'
 OUTPUT = Path(__file__).resolve().parents[1] / 'data' / 'fall-reports.json'
+HISTORY = OUTPUT.with_name('fall-history.json')
 
 class ReportParser(HTMLParser):
     def __init__(self):
@@ -61,6 +62,24 @@ def extract(html):
         raise ValueError('Too few valid foliage reports; keeping the previous snapshot')
     return parser.rows
 
+def merge_history(history, *snapshots):
+    """Keep the last 14 real source retrievals; never synthesize a prior report."""
+    found = {}
+    for snapshot in list(history.get('snapshots', []) if isinstance(history, dict) else []) + list(snapshots):
+        if not isinstance(snapshot, dict) or not snapshot.get('retrievedAt') or not isinstance(snapshot.get('reports'), list):
+            continue
+        try:
+            retrieved = datetime.fromisoformat(snapshot['retrievedAt'].replace('Z', '+00:00'))
+            if retrieved.tzinfo is None:
+                continue
+        except (ValueError, TypeError):
+            continue
+        keys = ('id', 'name', 'county', 'lat', 'lon', 'percent', 'reportedAt')
+        found[retrieved.timestamp()] = {'retrievedAt': snapshot['retrievedAt'],
+            'reports': [{key: row.get(key) for key in keys} for row in snapshot['reports']]}
+    return {'source': 'Travel Wisconsin', 'sourceUrl': URL,
+        'snapshots': [found[key] for key in sorted(found)[-14:]]}
+
 def main():
     # --html supports repeatable offline fixture testing and the initial verified fetch.
     if len(sys.argv) == 3 and sys.argv[1] == '--html':
@@ -73,6 +92,16 @@ def main():
     output = {'source': 'Travel Wisconsin', 'sourceUrl': URL,
         'retrievedAt': datetime.now(timezone.utc).isoformat(), 'reports': rows,
         'coverage': {'WI': 'Reported observations', 'MN': 'Current foliage feed not connected', 'MI': 'Current foliage feed not connected'}}
+    try:
+        prior = json.loads(OUTPUT.read_text())
+    except (OSError, ValueError):
+        prior = {}
+    try:
+        history = json.loads(HISTORY.read_text())
+    except (OSError, ValueError):
+        history = {}
+    archive = merge_history(history, prior, output)
+    HISTORY.write_text(json.dumps(archive, indent=2) + '\n')
     OUTPUT.write_text(json.dumps(output, indent=2) + '\n')
     print(f'Saved {len(rows)} attributed Wisconsin reports')
 

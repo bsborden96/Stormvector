@@ -21,5 +21,14 @@ class ReportParserTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Too few'):
             reports.extract(card.replace('data-filter-percent-to-peak="55"','data-filter-percent-to-peak="105"')*50)
 
+    def test_history_retains_only_real_dated_snapshots_and_caps_at_fourteen(self):
+        snapshots = [{'retrievedAt': f'2026-10-{i:02d}T15:00:00+00:00', 'reports': [{'id': 'a', 'percent': i}]} for i in range(1, 17)]
+        history = reports.merge_history({}, *snapshots, {'retrievedAt': 'invalid', 'reports': []})
+        self.assertEqual(len(history['snapshots']), 14)
+        self.assertEqual(history['snapshots'][0]['reports'][0]['percent'], 3)
+        same = reports.merge_history(history, snapshots[-1])
+        self.assertEqual(len(same['snapshots']), 14)
+        self.assertEqual(same['snapshots'][-1]['retrievedAt'], snapshots[-1]['retrievedAt'])
+
 if __name__=='__main__':
     unittest.main()

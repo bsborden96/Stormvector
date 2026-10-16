@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="src/styles.css?v=north-4" />
+  <link rel="stylesheet" href="src/styles.css?v=north-5" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to guide</a>
@@ -22,7 +22,21 @@
     <section class="intro" aria-labelledby="heroTitle"><div><p class="eyebrow">WISCONSIN / MINNESOTA / MICHIGAN / UPPER PENINSULA</p><h1 id="heroTitle">Find your<br /><span>next outside.</span></h1><p id="heroCopy">Follow the color. Watch the northern sky. Find a quiet trail.<br />Explore the Great Lakes with the conditions in view.</p><div class="intro-actions"><a href="#guide" id="heroAction" class="primary-link">Explore the map ↗</a><button id="nearMe" class="quiet">Use my location</button></div></div><figure class="hero-photo"><img id="heroImage" alt="" width="1280" height="850" fetchpriority="high" /><figcaption><span id="sceneLabel">THE GREAT LAKES / FOUR SEASONS / ONE GUIDE</span><a id="heroCredit" target="_blank" rel="noopener noreferrer">Photo credit</a></figcaption></figure></section>
       <section id="locationBar" class="origin-row location-bar" aria-label="Your starting location"><span id="originLabel">Starting near Waupun, WI</span><form id="originForm"><label for="originSearch" class="sr-only">Change starting area</label><input id="originSearch" placeholder="City, state" type="search" autocomplete="off" /><button type="submit" id="setOrigin">Set area</button></form><span id="locationAccuracy" class="fineprint"></span><a class="quiet local-forecast-link" href="#weather">Weather at my location ↗</a><button id="centerOnMe" type="button" class="quiet">Center on my area</button><span id="originStatus" role="status"></span></section>
     <section id="liveStrip" class="live-strip" aria-label="Guide status"><div><span class="status-dot"></span><strong>18 places to explore</strong><small>Curated starting points</small></div><div><strong id="stripFoliage">Loading color reports</strong><small>Reported observations, dated</small></div><div><strong id="stripAurora">Checking the northern sky</strong><small>NOAA short-term guidance</small></div></section>
-    <section id="guide" class="guide-shell"><div id="pageBrief" class="page-brief"></div>
+    <section id="guide" class="guide-shell"><section id="tripDesk" class="trip-desk" aria-label="Personal trip planner" hidden>
+        <div class="desk-heading"><div><p class="eyebrow">YOUR AREA / YOUR NEXT OUTING</p><h2>Make it worth the trip.</h2></div><span class="desk-origin" id="deskOrigin"></span></div>
+        <div class="desk-modes" role="group" aria-label="Planning tool"><button type="button" data-desk="worth" aria-pressed="true">Worth the trip?</button><button type="button" data-desk="budget" aria-pressed="false">I have two hours</button><button type="button" data-desk="sky" aria-pressed="false">Clearer skies</button><button type="button" data-desk="changes" aria-pressed="false">What’s changed?</button></div>
+        <p id="deskIntro" class="desk-intro"></p>
+        <div class="desk-controls">
+          <label id="deskIntentLabel">What would you like to find?<select id="deskIntent"><option value="nature">Nature &amp; scenery</option><option value="fall">Fall colors</option><option value="winter">Winter scenery</option><option value="aurora">Northern skies</option></select></label>
+          <label>Search within<select id="deskRadius"><option value="75">75 straight-line miles</option><option value="150" selected>150 straight-line miles</option><option value="300">300 straight-line miles</option><option value="600">600 straight-line miles</option></select></label>
+          <label id="deskDateLabel">Trip date<input type="date" id="deskDate" /></label>
+          <label id="deskBudgetLabel" hidden>Total time available<select id="deskBudget"><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option><option value="360">6 hours</option><option value="480">8 hours</option></select></label>
+          <label id="deskStayLabel" hidden>Time at the destination<select id="deskStay"><option value="30">30 minutes</option><option value="45" selected>45 minutes</option><option value="60">1 hour</option><option value="90">90 minutes</option><option value="120">2 hours</option></select></label>
+          <label id="deskDepartLabel" hidden>Leave at<input type="time" id="deskDepart" required /></label>
+        </div>
+        <div class="desk-actions"><button type="button" id="deskRun" class="primary-link">Compare nearby places</button><button type="button" id="deskCancel" class="quiet" hidden>Cancel search</button><span id="deskStatus" role="status"></span></div>
+        <div id="deskResults" class="desk-results"></div><p id="deskNotes" class="fineprint"></p>
+      </section><div id="pageBrief" class="page-brief"></div>
       <div class="guide-heading"><div><p class="eyebrow" id="viewEyebrow">EXPLORE / THE GREAT LAKES</p><h2 id="viewTitle">A little farther. A little wilder.</h2></div><div class="button-row"><button id="compareWeather" class="quiet">Compare weather</button><button id="refreshData" class="quiet">Refresh data ↻</button></div></div>
       <details id="filterDrawer" class="filter-drawer"><summary>Find your next stop <span>Region, interests &amp; trip date</span></summary><div class="filters" aria-label="Find destinations"><label>Region<select id="regionFilter"><option value="all">All regions</option><option value="WI">Wisconsin</option><option value="MN">Minnesota</option><option value="UP">Upper Peninsula</option><option value="MI">Michigan · Lower Peninsula</option></select></label><label>Experience<select id="interestFilter"><option value="all">Anything outside</option><option value="fall">Fall colors</option><option value="aurora">Northern skies</option><option value="winter">Winter scenery</option><option value="waterfalls">Waterfalls</option><option value="shore">Lakeshores</option><option value="forest">Forests</option><option value="trails">Trails</option><option value="wildlife">Wildlife</option><option value="overlooks">Overlooks</option></select></label><label>Radius from your area<select id="radiusFilter"><option value="all">Any distance</option><option value="75">Within 75 miles</option><option value="150">Within 150 miles</option><option value="300">Within 300 miles</option></select></label><label>Trip date<input id="tripDate" type="date" /></label><label class="search-filter">Find a place<input id="placeSearch" type="search" placeholder="Waterfalls, Door County, forests…" /></label></div>
 
@@ -57,14 +71,16 @@
   <footer><div><strong>STORM<span>VECTOR</span></strong><p>Nature &amp; the North. Explore with the conditions in view.</p></div><details><summary>Sources &amp; coverage</summary><div id="photoCredits" class="source-links"></div><p>Destination weather: Open-Meteo. Official local alerts: National Weather Service. Aurora oval and Kp: NOAA Space Weather Prediction Center. Wisconsin foliage observations: Travel Wisconsin, with reporter and retrieval dates. Minnesota and Michigan foliage observations are not yet connected; no current color percentages are invented.</p><p>Destination details are a curated guide, not a live park-access service. Model snowfall is not snow depth, safe lake ice, or a guarantee of winter scenery. Alerts load when you select a place; this site is not a warning alarm.</p><div class="source-links"><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a><a href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">NWS</a><a href="https://www.spaceweather.gov/products/aurora-30-minute-forecast" target="_blank" rel="noopener noreferrer">NOAA</a><a href="https://www.travelwisconsin.com/fall-color-report" target="_blank" rel="noopener noreferrer">Travel Wisconsin</a><a href="https://www.dnr.state.mn.us/fall_colors/index.html" target="_blank" rel="noopener noreferrer">Minnesota DNR</a><a href="https://www.michigan.org/fallcolormap" target="_blank" rel="noopener noreferrer">Pure Michigan</a></div></details></footer>
   <noscript><p class="noscript">Enable JavaScript to use the nature guide and load destination conditions.</p></noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="src/destinations.js?v=north-4"></script>
-  <script src="src/nature.js?v=north-4"></script>
+  <script src="src/destinations.js?v=north-5"></script>
+  <script src="src/nature.js?v=north-5"></script>
   <script src="src/vendor/suncalc.js"></script>
-  <script src="src/planning.js?v=north-4"></script>
-  <script src="src/field-guide.js?v=north-4"></script>
-  <script src="src/experience.js?v=north-4"></script>
-  <script src="src/views.js?v=north-4"></script>
-  <script src="src/community.js?v=north-4"></script>
-  <script src="src/app.js?v=north-4"></script>
+  <script src="src/planning.js?v=north-5"></script>
+  <script src="src/field-guide.js?v=north-5"></script>
+  <script src="src/experience.js?v=north-5"></script>
+  <script src="src/views.js?v=north-5"></script>
+  <script src="src/community.js?v=north-5"></script>
+  <script src="src/trip-engine.js?v=north-5"></script>
+  <script src="src/trip-desk.js?v=north-5"></script>
+  <script src="src/app.js?v=north-5"></script>
 </body>
 </html>
