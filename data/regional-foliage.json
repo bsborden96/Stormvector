@@ -1,5 +1,5 @@
 {
-  "retrievedAt": "2026-10-17T01:58:36.903233+00:00",
+  "retrievedAt": "2026-10-17T14:13:44.338392+00:00",
   "source": "Minnesota DNR",
   "sourceUrl": "https://www.dnr.state.mn.us/fall_colors/index.html",
   "reports": [
@@ -21,7 +21,7 @@
       "peak": null,
       "reportedAt": "2026-10-14T12:00:00-05:00",
       "dateOnly": true,
-      "retrievedAt": "2026-10-17T01:58:36.903233+00:00",
+      "retrievedAt": "2026-10-17T14:13:44.338392+00:00",
       "source": "Minnesota DNR",
       "sourceUrl": "https://www.dnr.state.mn.us/fall_colors/index.html"
     },
@@ -43,7 +43,7 @@
       "peak": null,
       "reportedAt": "2026-10-14T12:00:00-05:00",
       "dateOnly": true,
-      "retrievedAt": "2026-10-17T01:58:36.903233+00:00",
+      "retrievedAt": "2026-10-17T14:13:44.338392+00:00",
       "source": "Minnesota DNR",
       "sourceUrl": "https://www.dnr.state.mn.us/fall_colors/index.html"
     },
@@ -65,7 +65,7 @@
       "peak": null,
       "reportedAt": "2026-10-14T12:00:00-05:00",
       "dateOnly": true,
-      "retrievedAt": "2026-10-17T01:58:36.903233+00:00",
+      "retrievedAt": "2026-10-17T14:13:44.338392+00:00",
       "source": "Minnesota DNR",
       "sourceUrl": "https://www.dnr.state.mn.us/fall_colors/index.html"
     },
@@ -87,7 +87,7 @@
       "peak": null,
       "reportedAt": "2026-10-12T12:00:00-05:00",
       "dateOnly": true,
-      "retrievedAt": "2026-10-17T01:58:36.903233+00:00",
+      "retrievedAt": "2026-10-17T14:13:44.338392+00:00",
       "source": "Minnesota DNR",
       "sourceUrl": "https://www.dnr.state.mn.us/fall_colors/index.html"
     }
