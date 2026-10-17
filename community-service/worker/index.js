@@ -21,7 +21,8 @@ export function validateMetadata(fields,now=Date.now()) {
   if(!clean(fields.location)||!clean(fields.takenWith))throw Error('Add a location name and the camera or phone used.');
   try {new Intl.DateTimeFormat('en-US',{timeZone:fields.timezone}).format(now);}catch{throw Error('Choose a valid time zone.');}
   if(fields.consent!=='true')throw Error('Confirm this is your photo and you agree to share it publicly.');
-  return {lat,lon,eventType:fields.eventType,location:clean(fields.location),takenWith:clean(fields.takenWith),takenAt:new Date(takenAt).toISOString(),timezone:fields.timezone,title:clean(fields.title,100),photographer:clean(fields.photographer,60),caption:clean(fields.caption,300)};
+  if(fields.region&&!['WI','MN','MI','UP'].includes(fields.region))throw Error('Choose Wisconsin, Minnesota, Michigan or the Upper Peninsula.');
+  return {lat,lon,region:fields.region||null,eventType:fields.eventType,location:clean(fields.location),takenWith:clean(fields.takenWith),takenAt:new Date(takenAt).toISOString(),timezone:fields.timezone,title:clean(fields.title,100),photographer:clean(fields.photographer,60),caption:clean(fields.caption,300)};
 }
 export function imageType(bytes) {
   if(bytes[0]===255&&bytes[1]===216&&bytes[2]===255)return 'image/jpeg';

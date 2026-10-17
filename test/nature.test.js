@@ -73,3 +73,9 @@ test('current model units and snow depth stay distinct from new snowfall; invali
   const f=Nature.parseForecast(data);assert.equal(f.hours.length,1);assert.equal(f.hours[0].cloud,20);assert.ok(Math.abs(f.hours[0].snowDepth-3.937)<.001);assert.equal(f.days[0].snow,1);assert.equal(f.current.temp,31);
   data.hourly_units.snow_depth='cm';assert.equal(Nature.parseForecast(data).hours[0].snowDepth,null);
 });
+
+test('Minnesota park observations match their destination and retain source range labels',()=>{
+  const snapshot=JSON.parse(fs.readFileSync('data/regional-foliage.json'));
+  const place=places.find(p=>p.id==='itasca');const r=Nature.nearestReport(place,snapshot);
+  assert.ok(r);assert.equal(r.percent,null);assert.equal(Nature.colorLabel(r),snapshot.reports.find(r=>r.destinationId==='itasca').percentLabel);assert.equal(r.source,'Minnesota DNR');
+});

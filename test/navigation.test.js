@@ -50,7 +50,25 @@ test('GPS keeps full coordinates, requests a fresh high-accuracy fix and recente
   success({coords:{latitude:43.634123456,longitude:-88.727654321,accuracy:18},timestamp:Date.now()});
   assert.equal(vm.runInContext('origin.lat',context),43.634123456);assert.equal(vm.runInContext('origin.lon',context),-88.727654321);
   assert.equal(centers.at(-1).zoom,10);assert.deepEqual(centers.at(-1).point,[43.634123456,-88.727654321]);
-  assert.match(elements.locationAccuracy.textContent,/±18 m/);assert.match(elements.originLabel.textContent,/GPS location/);
+  assert.match(elements.locationAccuracy.textContent,/±18 m/);assert.match(elements.originLabel.textContent,/Near 43.634/);assert.equal(elements.nearMe.hidden,true);assert.equal(elements.originForm.hidden,true);assert.equal(elements.changeLocation.hidden,false);
   vm.runInContext('useGps();originVersion++;',context);success({coords:{latitude:45,longitude:-90,accuracy:20},timestamp:Date.now()});
   assert.equal(vm.runInContext('origin.lat',context),43.634123456);
+});
+
+test('menu owns login and nearby discovery replaces the time-budget workflow',()=>{
+  const html=fs.readFileSync('index.html','utf8');
+  assert.match(html,/<nav id="mainNav"[\s\S]*?Log in \/ Profile[\s\S]*?<\/nav>/);
+  assert.doesNotMatch(html,/id="tripDesk"|deskBudget|I have two hours|class="community-account"/);
+  for(const r of ['WI','MN','MI','UP'])assert.ok(html.includes('data-region="'+r+'"'));
+});
+
+test('town lookup updates only the current GPS fix and preserves its exact coordinates',async()=>{
+ const elements={originLabel:new Element(),originForm:new Element(),changeLocation:new Element(),nearMe:new Element(),centerOnMe:new Element(),locationAccuracy:new Element(),auroraLocal:new Element()};
+ const context=vm.createContext({document:{getElementById:id=>elements[id],addEventListener(){}},Nature,Planning,Date,Intl,URLSearchParams,Map,Set,localStorage:{setItem(){}}});
+ vm.runInContext(fs.readFileSync('src/geolocation.js','utf8'),context);vm.runInContext(fs.readFileSync('src/app.js','utf8'),context);
+ vm.runInContext("origin={name:'coordinates',lat:43.634123456,lon:-88.727654321,source:'gps',accuracy:12};originVersion=1;fetchJson=async()=>({address:{town:'Waupun',state:'Wisconsin'}});",context);
+ await vm.runInContext('resolveTown(origin.lat,origin.lon,1)',context);
+ assert.equal(vm.runInContext('origin.name',context),'Waupun, Wisconsin');assert.equal(vm.runInContext('origin.lat',context),43.634123456);assert.match(elements.originLabel.textContent,/Near Waupun/);
+ vm.runInContext("originVersion=2;fetchJson=async()=>({address:{town:'Wrong town',state:'Michigan'}});",context);
+ await vm.runInContext('resolveTown(origin.lat,origin.lon,1)',context);assert.equal(vm.runInContext('origin.name',context),'Waupun, Wisconsin');
 });

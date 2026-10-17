@@ -21,3 +21,5 @@ The backend is deployed using Sites. Preserve the exact identity in `.openai/hos
 Save the one-time recovery code after signup or password reset. Recovery rotates the code and revokes earlier sessions. Transactional email is not configured: email ownership is unverified and email reset links are unavailable. The interface states this explicitly. Profiles never expose account email addresses or authentication records.
 
 Photos uploaded through `/account` are linked to the signed-in profile, with removal authorized by the server across devices. Earlier anonymous uploads retain their original removal receipts. Incoming messages are disabled until the member enables them. Inbox results include only that account's messages (latest 100); likes are idempotent per account and photo. Account and message storage shares the existing BUCKET binding under separate prefixes.
+
+Photo metadata now includes the selected region: WI, MN, MI or UP. Older uploads without region retain compatibility; the guide only infers their region when a curated location is within 25 miles.

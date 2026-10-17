@@ -7,18 +7,20 @@ const SeasonalViews = (() => {
   function element(tag,text,cls) {const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;}
   function stat(label,value,detail) {const s=element('div',null,'season-stat');s.append(element('small',label),element('strong',value));if(detail)s.append(element('span',detail));return s;}
   function choose(text,date,onDate) {const b=element('button',text,'quiet');b.type='button';b.addEventListener('click',()=>onDate(date));return b;}
-  function render(panel,{view,place,forecast,reports,kp,date,onDate,now=Date.now()}) {
+  function render(panel,{view,place,forecast,reports,region='all',kp,date,onDate,now=Date.now()}) {
     panel.replaceChildren();panel.hidden=!['aurora','winter','fall','weather'].includes(view);if(panel.hidden)return;
     const head=element('div',null,'mission-head');head.append(element('p',{aurora:'NIGHT SKY / THREE NIGHTS',winter:'WINTER / SEVEN-DAY SNOW GUIDANCE',fall:'FALL / THE COLOR DESK',weather:'WEATHER / YOUR WEEK AHEAD'}[view],'eyebrow'),element('h2',{aurora:'Follow the night.',winter:'Watch the snow line.',fall:'Find the color while it lasts.',weather:'Your forecast, at a glance.'}[view]));panel.append(head);
     if(view==='fall') {
-      if(!reports){panel.append(element('p','Loading dated Wisconsin foliage observations…'));return;}
-      const recent=reports.reports.filter(r=>N.reportStatus(r,reports.retrievedAt,now)==='recent');
-      const stats=element('div',null,'season-stats');stats.append(stat('Report locations',String(reports.reports.length),'Wisconsin coverage'),stat('Updated recently',String(recent.length),'Reporter and snapshot freshness checked'),stat('85–100% reported color',String(recent.filter(r=>r.percent>=85).length),'Reported color, not leaf retention'));panel.append(stats);
+      if(!reports){panel.append(element('p','Loading dated foliage observations…'));return;}
+      const regionReports=reports.reports.filter(r=>region==='all'||(r.region||r.state||'WI')===region);
+      if(['MI','UP'].includes(region)){panel.append(element('p','Explore Fall’s dated color estimate is displayed on the map. It covers Michigan and the Upper Peninsula; modeled colors are separate from field observations.'));return;}
+      const recent=regionReports.filter(r=>N.reportStatus(r,reports.retrievedAt,now)==='recent');
+      const stats=element('div',null,'season-stats');stats.append(stat('Report locations',String(regionReports.length),'Reported locations'),stat('Updated recently',String(recent.length),'Reporter and snapshot freshness checked'),stat('85–100% reported color',String(recent.filter(r=>r.percent>=85).length),'Reported color, not leaf retention'));panel.append(stats);
       const report=place&&N.nearestReport(place,reports,now),callout=element('div',null,'foliage-callout');
       callout.append(element('h3',place?place.name:'Choose a destination'));
-      if(report){callout.append(element('strong',`${fmt(report.percent,'%')} reported color near ${report.name}`),element('p',`Estimated peak: ${report.peak||'unavailable'} · ${report.status==='recent'?'Recent observation':'Older / unverified observation'}`));const bar=element('div',null,'color-track'),fill=element('span');fill.style.width=`${report.percent}%`;bar.append(fill);callout.append(bar);}
-      else callout.append(element('p','No current foliage feed is connected for this destination. Wisconsin report markers and the county table remain available below.'));
-      callout.append(element('p','Color observations describe the reporter’s area today. Your trip date selects destination weather, not a future color percentage.','fineprint'));panel.append(callout);return;
+      if(report){callout.append(element('strong',`${N.colorLabel(report)} reported color near ${report.name}`),element('p',`Estimated peak: ${report.peak||'unavailable'} · ${report.status==='recent'?'Recent observation':'Older / unverified observation'}`));const bar=element('div',null,'color-track'),fill=element('span');fill.style.width=typeof report.percent==='number'?`${report.percent}%`:'0%';bar.append(fill);callout.append(bar);}
+      else callout.append(element('p','No park-specific field observation is loaded here. Regional map layers remain available above.'));
+      callout.append(element('p','Color observations describe the reporter’s area today. Your forecast date selects destination weather, not a future color percentage.','fineprint'));panel.append(callout);return;
     }
     panel.append(element('p',place?`${place.name} · ${forecast?.timezone||'destination time'}`:'Select a place to see its seasonal forecast.','mission-location'));
     if(!forecast){panel.append(element('p',forecast===false?'Destination forecast unavailable. Try Refresh data.':'Loading destination conditions…','loading'));return;}
@@ -28,7 +30,7 @@ const SeasonalViews = (() => {
         const d=P.addDays(date,i),night=P.nightSummary(forecast,d,kp,now),card=element('article',null,'night-card');
         card.append(element('p',label(d),'eyebrow'),element('h3',i===0?'Your selected night':i===1?'The following night':'Two nights ahead'));
         const m=element('div',null,'night-metrics');m.append(stat('Sustained dark cloud window',(()=>{const window=P.clearWindow(P.skyHours(forecast,d,place,kp,now));return window.length?`${N.daylightLabel(window[0].timestamp,forecast.timezone)}–${N.daylightLabel(window[window.length-1].timestamp,forecast.timezone)}`:'None in guidance';})(),'At least two samples ≤25% clouds; full darkness'),stat('NOAA peak nighttime Kp',fmt(night.peakKp,'',1),night.peakKp==null?'Beyond or missing NOAA guidance':'Three-hour forecast / estimate'));
-        const plan=choose('Plan this night',d,onDate);plan.disabled=!forecast.days.some(day=>day.date===d);
+        const plan=choose('View this night',d,onDate);plan.disabled=!forecast.days.some(day=>day.date===d);
         card.append(m,element('p',night.best?night.best.cloud<=25?'A lower-cloud window. Geomagnetic activity and the northern horizon still matter.':night.best.cloud>=75?'Clouds may obstruct the sky during this window.':'Variable clouds. Check the hourly sky window.':'Forecast data is incomplete for this night.','night-note'),plan);nights.append(card);
       }
       panel.append(nights,element('p',`Cloud timing is from Open-Meteo, loaded ${new Date(forecast.retrievedAt).toLocaleString()}. Kp describes global activity; it is not a local visibility probability. NOAA guidance ends sooner than the seven-day weather forecast. Current OVATION activity remains a separate short-term map.`,'fineprint'));return;

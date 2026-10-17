@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node --check src/trip-engine.js && node --check src/trip-desk.js && node --check src/app.js && node --check src/nature.js && node --check src/destinations.js && node --check src/community.js && node --check src/planning.js && node --check src/views.js && node --check src/experience.js && node --check src/field-guide.js && node --test test/*.test.js && node --test community-service/test/*.test.js && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s test -p '*_test.py'"
+    "test": "node --check src/nearby.js && node --check src/geolocation.js && node --check src/app.js && node --check src/nature.js && node --check src/destinations.js && node --check src/community.js && node --check src/planning.js && node --check src/views.js && node --check src/experience.js && node --check src/field-guide.js && node --test test/*.test.js && node --test community-service/test/*.test.js && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s test -p '*_test.py'"
   },
   "dependencies": {},
   "devDependencies": {}

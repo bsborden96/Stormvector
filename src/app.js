@@ -8,6 +8,9 @@ let origin = {name:'Waupun, WI',lat:43.6333,lon:-88.7296,source:'default'};
 let selected = null;
 let selectedVersion = 0;
 let originVersion = 0;
+let locationEditing = false;
+let originForecast = null;
+let originForecastKey = null;
 let selectedForecast = null;
 let selectedAlerts = null;
 let saved = new Set();
@@ -47,6 +50,7 @@ function el(tag,text,cls) {
 }
 const fmt=(v,suffix='',digits=0)=>v==null?'Unavailable':`${v.toFixed(digits)}${suffix}`;
 const dayLabel=d=>new Date(`${d}T12:00:00Z`).toLocaleDateString([],{timeZone:'UTC',weekday:'short',month:'short',day:'numeric'});
+const reportTimeLabel=r=>r.dateOnly?new Date(r.reportedAt).toLocaleDateString():timeLabel(r.reportedAt);
 const timeLabel=t=>new Date(t).toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
 function button(text,handler,cls='quiet') {const b=el('button',text,cls);b.type='button';b.addEventListener('click',handler);return b;}
 function link(text,url) {const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
@@ -59,7 +63,7 @@ async function fetchJson(url) {
 }
 function forecastKey(p) {return `${p.lat},${p.lon}`;}
 async function getForecast(p) {
-  try{const f=await forecastCache.get(forecastKey(p),async()=>Nature.parseForecast(await fetchJson(Nature.forecastUrl(p))));forecastErrors.delete(forecastKey(p));if(typeof TripDesk!=='undefined')TripDesk.observe(p,f);return f;}
+  try{const f=await forecastCache.get(forecastKey(p),async()=>Nature.parseForecast(await fetchJson(Nature.forecastUrl(p))));forecastErrors.delete(forecastKey(p));if(typeof Nearby!=='undefined')Nearby.observe(p,f);return f;}
   catch(e){forecastErrors.set(forecastKey(p),Date.now());throw e;}
 }
 function selectedDate() {return $('tripDate').value;}
@@ -76,15 +80,18 @@ function init() {
   $('reportSearch').addEventListener('input',renderReports);
   $('originForm').addEventListener('submit',setOriginFromSearch);
   $('nearMe').addEventListener('click',useGps);
+  $('changeLocation').addEventListener('click',()=>{locationEditing=true;renderLocation();$('originSearch').focus();});
+  document.querySelectorAll('[data-region]').forEach(b=>b.addEventListener('click',()=>setRegion(b.dataset.region)));
+  $('regionFilter').addEventListener('change',()=>setRegion($('regionFilter').value));
   $('compareWeather').addEventListener('click',compareVisible);
   $('refreshData').addEventListener('click',refreshData);
   $('fitMap').addEventListener('click',fitMap);
   $('centerOnMe').addEventListener('click',centerOnOrigin);
-  $('showWisconsin').addEventListener('click',()=>{if(map)map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);});
-  ['showFallReports','showParkPins','showOldReports'].forEach(id=>$(id).addEventListener('change',()=>{mapRenderKey='';renderMap();}));
+  $('showRegion').addEventListener('click',fitRegion);
+  ['showFallReports','showParkPins','showOldReports','showRegionalEstimates'].forEach(id=>$(id).addEventListener('change',()=>{mapRenderKey='';renderMap();}));
   window.addEventListener('hashchange',route);
   setupExperience();
-  if(typeof TripDesk!=='undefined')TripDesk.init();
+  if(typeof Nearby!=='undefined')Nearby.init();
   initMap();
   route();
   loadReports();loadSpaceWeather();
@@ -115,16 +122,16 @@ function route() {
   $('sceneLabel').textContent={aurora:'DARK SKIES / CLOUD WINDOWS / NOAA GUIDANCE',fall:'WOODED TRAILS / FALL COLOR / CHANGING SEASONS',winter:'SNOWY FORESTS / COLD DAYS / WINTER QUIET',weather:'YOUR LOCATION / YOUR WEEK / YOUR WEATHER',photos:'SHARED MOMENTS / REAL PLACES / COMMUNITY PHOTOS'}[view]||'THE GREAT LAKES / FOUR SEASONS / ONE GUIDE';
   Experience.renderHero(view);
   arrangePage(view);
-  $('guide').hidden=view==='photos';$('communityPanel').hidden=view!=='photos';$('liveStrip').hidden=true;$('nearMe').hidden=view==='photos';
+  $('guide').hidden=view==='photos';$('communityPanel').hidden=view!=='photos';$('liveStrip').hidden=true;$('nearMe').hidden=view==='photos'||(origin.source!=='default'&&!locationEditing);
   $('filterDrawer').open=view==='weather';
   $('mapSwitch').hidden=view==='weather';
   $('locationBar').hidden=view==='photos';
   ['fallMapControls','fallMapKey','fallMapStatus'].forEach(id=>$(id).hidden=view!=='fall');
-  $('mapHeading').textContent=view==='fall'?'WISCONSIN FALL COLOR MAP':'EXPLORE THE REGION';
+  $('mapHeading').textContent=view==='fall'?`${regionNames[$('regionFilter').value]||'GREAT LAKES'} FALL COLORS`:'EXPLORE THE REGION';
   $('comparisonPanel').hidden=true;
   if(view==='saved')setMapDisplay('list');else if(document.body.dataset.display==='list')setMapDisplay('map');
-  $('heroAction').href=view==='photos'?'#photoForm':'#guide';$('heroAction').textContent=view==='photos'?'Share your photo ↓':view==='aurora'?'Plan a night under the sky ↗':view==='winter'?'See the snow forecast ↗':view==='fall'?'Follow the color ↗':'Explore the map ↗';
-  if(view==='photos'){if(typeof TripDesk!=='undefined')TripDesk.route(view);Community.activate();if(photoAnchor)requestAnimationFrame(()=>document.getElementById(photoAnchor==='communityGallery'?'communityMap':photoAnchor).scrollIntoView({behavior:'smooth'}));return;}
+  $('heroAction').href=view==='photos'?'#photoForm':'#guide';$('heroAction').textContent=view==='photos'?'Share your photo ↓':view==='aurora'?'See the sky near you ↗':view==='winter'?'See the snow forecast ↗':view==='fall'?'Follow the color ↗':'Explore the map ↗';
+  if(view==='photos'){if(typeof Nearby!=='undefined')Nearby.route(view);Community.activate();if(photoAnchor)requestAnimationFrame(()=>document.getElementById(photoAnchor==='communityGallery'?'communityMap':photoAnchor).scrollIntoView({behavior:'smooth'}));return;}
   // Seasonal tabs include every place; interests can still narrow the results explicitly.
   $('interestFilter').value='all';
   $('reportsPanel').hidden=view!=='fall';$('auroraPanel').hidden=view!=='aurora';
@@ -133,8 +140,8 @@ function route() {
   if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Your starting area. Use its forecast to plan an outing nearby.',access:'Weather at this point does not establish road, trail, or park conditions.'});
   else if(!selected||selected.id==='local'||!visible.some(p=>p.id===selected.id)){if(visible[0])selectDestination(visible[0]);else{selected=null;selectedVersion++;renderDestination();}}
   else selectDestination(selected);
-  if(typeof TripDesk!=='undefined')TripDesk.route(view);
-  if(map)requestAnimationFrame(()=>{map.invalidateSize();if(view==='fall')map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);else if(origin.source!=='default')centerOnOrigin();});
+  if(typeof Nearby!=='undefined')Nearby.route(view);
+  if(map)requestAnimationFrame(()=>{map.invalidateSize();if(view==='fall')fitRegion();else if(origin.source!=='default')centerOnOrigin();});
 }
 function filters() {return {region:$('regionFilter').value,interest:$('interestFilter').value,query:$('placeSearch').value,
   radius:$('radiusFilter').value==='all'?Infinity:Number($('radiusFilter').value),origin,saved:view==='saved'?saved:null};}
@@ -155,7 +162,7 @@ function renderResults() {
     const tags=el('div',null,'tags');p.tags.slice(0,3).forEach(t=>tags.append(el('span',({shore:'Lakeshore',fall:'Fall color',aurora:'Northern skies',forest:'Forest',winter:'Winter scenery',trails:'Trails',wildlife:'Wildlife',waterfalls:'Waterfalls',overlooks:'Overlooks'})[t]||t)));content.append(tags);
     if(guide)content.append(el('p',guide.stop,'card-stop'));
     const report=Nature.nearestReport(p,reportSnapshot);
-    if(report&&view==='fall')content.append(el('p',`${fmt(report.percent,'%')} reported color${report.status==='recent'?'':' · older / unverified report'}`,'color-note'));
+    if(report&&view==='fall')content.append(el('p',`${Nature.colorLabel(report)} reported color${report.status==='recent'?'':' · older / unverified report'}`,'color-note'));
     const forecast=forecastCache.peek(forecastKey(p)),day=forecast?.days.find(d=>d.date===selectedDate());
     content.append(el('p',day?`${Nature.weather(day.code)[0]} ${fmt(day.high,'°F')} · ${fmt(day.rainChance,'%')} precip.`:forecastErrors.has(forecastKey(p))?'Forecast unavailable · try Refresh data':'Loading destination forecast…','card-weather'));
     if(day)content.append(el('p',SeasonalViews.cardNote(view,p,forecast,reportSnapshot,kpRows,selectedDate()),'card-season-note'),el('small',`Loaded ${timeLabel(forecast.retrievedAt)}`,'fineprint'));
@@ -163,7 +170,8 @@ function renderResults() {
     const save=button(saved.has(p.id)?'★ Saved':'☆ Save',()=>toggleSave(p.id));save.setAttribute('aria-pressed',String(saved.has(p.id)));save.setAttribute('aria-label',`${saved.has(p.id)?'Unsave':'Save'} ${p.name}`);actions.append(save);content.append(actions);card.append(content);grid.append(card);
   });
   renderBrief();
-  if(typeof TripDesk!=='undefined')TripDesk.sync();
+  renderLocalAurora();
+  if(typeof Nearby!=='undefined')Nearby.sync();
   renderMap();
   ensureVisibleForecasts();
 }
@@ -185,8 +193,8 @@ function renderContext() {
   const panel=$('contextPanel');panel.replaceChildren();
   const copy={
     explore:['Explore the place. Understand the conditions.','Use interests, radius, and a date to make a shortlist. Destination cards open local weather and nature details here.'],
-    fall:['Reported color, not a guessed percentage.','Wisconsin observations appear on the map and in the report table below. Destination labels refer to nearby reports in the same county, not a tree-by-tree park survey. Minnesota and Michigan current foliage feeds are not connected yet.'],
-    aurora:['A place to look north is only part of the story.','The purple markers are northern-sky destinations, not verified dark-sky sites or confirmed night access. Combine NOAA guidance with each place’s nighttime cloud forecast. The short-term aurora oval does not predict an entire evening.'],
+    fall:['Reported color, not a guessed percentage.','Wisconsin reporter observations and Minnesota DNR park stages appear with their dates. Michigan and UP map colors are modeled estimates for the selected date, supplied by Explore Fall via Pure Michigan. Each type is labeled.'],
+    aurora:['A place to look north is only part of the story.','Markers include destinations across Wisconsin, Minnesota and both Michigan peninsulas; night access and sky darkness need checking. Combine NOAA guidance with each place’s nighttime cloud forecast. The short-term aurora oval does not predict an entire evening.'],
     winter:['Snow in the forecast is a starting point.','Use destination snow guidance and cold-weather alerts to plan. Fresh snow, frozen waterfalls, open trails, and safe ice are different conditions; weather alone cannot confirm them.'],
     weather:['Your area, in one view.','Set a city above for local weather. Then explore nearby destinations without leaving StormVector.'],
     saved:['A shortlist that travels with your browser.','Saved places stay on this device. Filters still apply, so you can narrow down your next outing.'],
@@ -206,7 +214,7 @@ async function selectDestination(place) {
 }
 function renderDestination() {
   const panel=$('destinationPanel');const focused=panel.contains?.(document.activeElement)?document.activeElement?.textContent:null;panel.replaceChildren();
-  SeasonalViews.render($('seasonDashboard'),{view,place:selected,forecast:selectedForecast,reports:reportSnapshot,kp:kpRows,date:selectedDate(),onDate:date=>{if(date<$('tripDate').min||date>$('tripDate').max)return;$('tripDate').value=date;renderDestination();renderResults();}});
+  SeasonalViews.render($('seasonDashboard'),{view,place:selected,forecast:selectedForecast,reports:reportSnapshot,region:$('regionFilter').value,kp:kpRows,date:selectedDate(),onDate:date=>{if(date<$('tripDate').min||date>$('tripDate').max)return;$('tripDate').value=date;renderDestination();renderResults();}});
   if(!selected){panel.append(el('h3','Choose your next stop'),el('p','Select a place from the map or destination list.'));return;}
   const p=selected,forecast=selectedForecast;
   panel.append(el('p',p.region==='LOCAL'?'YOUR AREA':regionNames[p.region],'eyebrow'),el('h2',p.name),el('p',p.summary,'destination-summary'));
@@ -221,9 +229,9 @@ function renderDestination() {
   const report=Nature.nearestReport(p,reportSnapshot);
   if(view==='fall'){
     const color=el('div',null,'detail-block');color.append(el('h3','Nearby fall color report'));
-    if(report){color.append(el('strong',`${fmt(report.percent,'%')} reported color`),el('p',`${report.name} · ${report.county} County · ${Math.round(report.distance)} mi from this map point`),
-      el('p',`Reporter updated ${timeLabel(report.reportedAt)}${report.status==='recent'?'':' · Older or unverified; check the report date.'}`,'fineprint'),el('p',report.peak?`Reporter’s estimated peak: ${report.peak}`:'Peak timing unavailable'));
-    }else color.append(el('p','Current foliage observations are not connected for this destination. No color percentage is estimated from weather.'));
+    if(report){color.append(el('strong',`${Nature.colorLabel(report)} reported color`),el('p',`${report.name} · ${report.county?report.county+' County':regionNames[report.region||report.state]} · ${Math.round(report.distance)} mi from this map point`),
+      el('p',`Reporter updated ${reportTimeLabel(report)}${report.status==='recent'?'':' · Older or unverified; check the report date.'}`,'fineprint'),el('p',report.peak?`Reporter’s estimated peak: ${report.peak}`:'Peak timing unavailable'));
+    }else color.append(el('p','No park-specific field observation is loaded here. For Michigan / UP, the dated map estimate shows the regional color outlook.'));
     panel.append(color);
   }
   const day=forecast&&forecast.days.find(d=>d.date===selectedDate());
@@ -278,24 +286,23 @@ async function compareVisible() {
   targets.forEach(p=>{const d=forecastCache.peek(forecastKey(p))?.days.find(d=>d.date===selectedDate()),row=el('tr'),name=el('th');name.scope='row';name.append(button(p.name,()=>{selectDestination(p);openSheet();}));row.append(name,...[d?`${fmt(d.high,'°')} / ${fmt(d.low,'°')}`:'Unavailable',fmt(d?.rainChance,'%'),fmt(d?.gust,' mph'),fmt(d?.snow,' in',1)].map(text=>el('td',text)));body.append(row);});table.append(body);wrap.append(table);panel.append(wrap);panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function loadReports() {
-  try{
-    let data;
-    try{data=await fetchJson(`https://raw.githubusercontent.com/bsborden96/Stormvector/main/data/fall-reports.json?t=${Math.floor(Date.now()/600000)}`);}
-    catch{data=await fetchJson('data/fall-reports.json');}
-    if(!Array.isArray(data.reports)||!data.retrievedAt)throw Error('Invalid report snapshot');reportSnapshot=data;
-    $('stripFoliage').textContent=`${data.reports.length} Wisconsin color reports`;
-  }catch{reportSnapshot=null;$('stripFoliage').textContent='Color reports unavailable';}
+  const wi=(async()=>{try{return await fetchJson(`https://raw.githubusercontent.com/bsborden96/Stormvector/main/data/fall-reports.json?t=${Math.floor(Date.now()/600000)}`);}catch{return fetchJson('data/fall-reports.json');}})();
+  const [wisconsin,minnesota]=await Promise.allSettled([wi,fetchJson('data/regional-foliage.json')]);
+  const snapshots=[wisconsin,minnesota].filter(r=>r.status==='fulfilled'&&Array.isArray(r.value.reports)&&r.value.retrievedAt).map(r=>r.value);
+  if(snapshots.length){reportSnapshot={retrievedAt:new Date().toISOString(),reports:snapshots.flatMap(s=>s.reports.map(r=>({...r,region:r.region||r.state||'WI',retrievedAt:r.retrievedAt||s.retrievedAt,source:r.source||s.source,sourceUrl:r.sourceUrl||s.sourceUrl}))),source:'Travel Wisconsin / Minnesota DNR'};}
+  else reportSnapshot=null;
+  $('stripFoliage').textContent=reportSnapshot?`${reportSnapshot.reports.length} regional color observations`:'Color reports unavailable';
   renderResults();renderReports();renderDestination();
 }
 function renderReports() {
   const list=$('reportRows');list.replaceChildren();
   if(!reportSnapshot){$('reportStatus').textContent='Foliage reports are unavailable. No sample percentages are shown.';return;}
-  $('reportStatus').textContent=`Travel Wisconsin snapshot retrieved ${timeLabel(reportSnapshot.retrievedAt)}. Reporter dates below are separate. Reports older than seven days, or snapshots older than 36 hours, are marked older. Future trip dates do not change current observations. Current Minnesota and Michigan foliage feeds are not connected.`;
+  $('reportStatus').textContent='Travel Wisconsin and Minnesota DNR observations. Minnesota ranges and past-peak stages are preserved as published. Michigan / UP map colors are estimates for the selected date, not field reports. Older observations remain dated.';
   const q=$('reportSearch').value.trim().toLowerCase();
-  const reports=reportSnapshot.reports.filter(r=>`${r.name} ${r.county}`.toLowerCase().includes(q));
-  reports.forEach(r=>{const status=Nature.reportStatus(r,reportSnapshot.retrievedAt),row=el('tr');row.append(el('th',`${r.name}\n${r.county} County`),el('td',`${fmt(r.percent,'%')}${r.locationUnverified?' · location unverified':''}`),el('td',r.peak||'Unavailable'),el('td',`${timeLabel(r.reportedAt)}${status==='recent'?'':' · Older / unverified'}`));row.children[0].scope='row';
+  const reports=reportSnapshot.reports.filter(r=>($('regionFilter').value==='all'||r.region===$('regionFilter').value)&&`${r.name} ${r.county||''}`.toLowerCase().includes(q));
+  reports.forEach(r=>{const status=Nature.reportStatus(r,reportSnapshot.retrievedAt),row=el('tr');row.append(el('th',`${r.name}\n${r.county?r.county+' County':regionNames[r.region]} · ${r.source||'Report'}`),el('td',`${Nature.colorLabel(r)}${r.locationUnverified?' · location unverified':''}`),el('td',r.peak||'Unavailable'),el('td',`${reportTimeLabel(r)}${status==='recent'?'':' · Older / unverified'}`));row.children[0].scope='row';
     const td=el('td');td.append(button('Locate',()=>{closeSheet(false);setMapDisplay('map');if(map)map.setView([r.lat,r.lon],10);$('mapLayout').scrollIntoView({behavior:'smooth',block:'start'});}));row.append(td);list.append(row);});
-  if(!reports.length){const row=el('tr'),cell=el('td','No reports match that town or county.');cell.colSpan=5;row.append(cell);list.append(row);}
+  if(!reports.length){const row=el('tr'),cell=el('td','No field reports match this selection. For Michigan and the UP, use the dated color-estimate layer on the map.');cell.colSpan=5;row.append(cell);list.append(row);}
 }
 async function loadSpaceWeather() {
   const version=++spaceVersion;
@@ -308,7 +315,7 @@ async function loadSpaceWeather() {
   kpRows=results[1].status==='fulfilled'?results[1].value:[];
   spaceFetchedAt=Date.now();
   $('stripAurora').textContent=aurora&&!aurora.stale?`Aurora model valid ${new Date(aurora.validAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:'Aurora feed unavailable / stale';
-  renderAuroraImage();
+  renderAuroraImage();renderLocalAurora();if(view==='aurora')loadOriginForecast();
   renderKp();renderMap();if(view==='aurora'){renderDestination();renderResults();}
 }
 function renderKp() {
@@ -328,7 +335,7 @@ function initMap() {
 function showMapFailure() {map=null;markers=null;overlay=null;$('natureMap').hidden=true;$('mapFallback').hidden=false;}
 function renderMap() {
   if(!map){renderFallMap();return;}
-  const key=JSON.stringify([view,visible.map(p=>p.id),selected?.id,origin.lat,origin.lon,origin.accuracy,reportSnapshot?.retrievedAt,aurora?.validAt,$('showFallReports').checked,$('showParkPins').checked,$('showOldReports').checked]);if(key===mapRenderKey)return;mapRenderKey=key;
+  const key=JSON.stringify([view,visible.map(p=>p.id),selected?.id,origin.lat,origin.lon,origin.accuracy,reportSnapshot?.retrievedAt,aurora?.validAt,$('showFallReports').checked,$('showParkPins').checked,$('showOldReports').checked,$('showRegionalEstimates').checked,selectedDate(),$('regionFilter').value]);if(key===mapRenderKey)return;mapRenderKey=key;
   markers.clearLayers();overlay.clearLayers();
   (view==='fall'&&!$('showParkPins').checked?[]:visible).forEach(p=>{const icon=L.divIcon({className:`nature-marker ${selected?.id===p.id?'is-selected':''}`,html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12]});const m=L.marker([p.lat,p.lon],{icon,title:p.name,alt:p.name,keyboard:true}).addTo(markers);
     m.bindTooltip(el('span',p.name));m.on('click',()=>{selectDestination(p);openSheet();});});
@@ -338,17 +345,18 @@ function renderMap() {
   if(view==='aurora'&&aurora&&!aurora.stale){aurora.points.filter(p=>p.strength>0).forEach(p=>L.rectangle([[p.lat-.5,p.lon-.5],[p.lat+.5,p.lon+.5]],{color:'#67efa2',weight:0,fillOpacity:Math.min(.55,.06+p.strength/180)}).addTo(overlay).bindTooltip(el('span',`NOAA overhead model: ${p.strength}% · not visibility probability`)));}
   $('mapLegend').textContent=view==='fall'?'Tap a color dot for its report, date and nearby weather':view==='aurora'?'● Places · green cells: NOAA overhead aurora model':'● Destinations · tap a marker to explore';
 }
-function fitMap() {if(view==='fall'){if(map)map.fitBounds([[42.45,-92.95],[47.15,-86.75]]);return;}if(map&&visible.length)map.fitBounds(L.latLngBounds(visible.map(p=>[p.lat,p.lon])).pad(.15),{maxZoom:10});}
+function fitMap() {if(view==='fall'){fitRegion();return;}if(map&&visible.length)map.fitBounds(L.latLngBounds(visible.map(p=>[p.lat,p.lon])).pad(.15),{maxZoom:10});}
 async function refreshData() {
-  forecastCache.clear();forecastErrors.clear();$('refreshData').disabled=true;
+  forecastCache.clear();forecastErrors.clear();originForecastKey=null;originForecast=null;if(view==='aurora')loadOriginForecast();$('refreshData').disabled=true;
   try{await Promise.allSettled([loadReports(),loadSpaceWeather(),selected?selectDestination(selected):Promise.resolve()]);}
   finally{$('refreshData').disabled=false;}
 }
 function changeOrigin(next) {
-  origin=next;writeStorage('origin',origin);driveRequest++;
+  origin=next;locationEditing=false;writeStorage('origin',origin);driveRequest++;
+  originForecast=null;originForecastKey=null;loadOriginForecast();
   if(driveRoute&&map)map.removeLayer(driveRoute);driveRoute=null;
   renderResults();centerOnOrigin();
-  $('originStatus').textContent=origin.source==='gps'?'GPS fix received. Nearby distances and map updated.':'Starting area updated. City results use a city-center point.';
+  $('originStatus').textContent=origin.source==='gps'?'Location set. Nearby places and forecasts updated.':'Location set. City results use a city-center point.';
   if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Forecast at your selected coordinates.',access:'Weather does not establish road or trail conditions.'});
   else if(visible.length){const closest=[...visible].sort((a,b)=>a.distance-b.distance)[0];selectDestination(closest);}
 }
@@ -356,9 +364,12 @@ function centerOnOrigin() {
   if(map){setMapDisplay('map');map.setView([origin.lat,origin.lon],10);}
 }
 function renderLocation() {
-  $('originLabel').textContent=origin.source==='gps'?'Starting at your GPS location':`${origin.source==='default'?'Default area':origin.source==='city'?'City center':'Saved area'} · ${origin.name}`;
-  const age=Number.isFinite(origin.locatedAt)?Math.max(0,Date.now()-origin.locatedAt):null;
-  $('locationAccuracy').textContent=origin.source==='gps'?`${age!=null&&age>15*60000?'Saved GPS fix':'GPS fix'}${Number.isFinite(origin.accuracy)?` · reported accuracy ±${Math.round(origin.accuracy)} m`:''}${origin.locatedAt?` · ${timeLabel(origin.locatedAt)}`:''}. ${origin.accuracy>1000?'Approximate location; enable precise location in your browser settings.':'Tap Use my location to refresh.'}`:'Use my location for a fresh GPS fix, or enter a city. City centers are approximate.';
+  const located=origin.source!=='default',compact=located&&!locationEditing;
+  $('originLabel').textContent=origin.source==='gps'?`Near ${origin.name}`:`${origin.source==='default'?'Choose your location · default:':'Near'} ${origin.name}`;
+  $('originForm').hidden=compact;$('changeLocation').hidden=!compact;
+  $('nearMe').hidden=view==='photos'||compact;
+  $('centerOnMe').textContent='Show my area on map';
+  $('locationAccuracy').textContent=origin.source==='gps'?`${origin.accuracy<=100?'Precise location':'Approximate device location'}${Number.isFinite(origin.accuracy)?` · ±${Math.round(origin.accuracy)} m`:''}${origin.accuracy>100?' · Enable Precise Location in your device’s location settings for a closer fix.':''}`:origin.source==='default'?'Use your location to see nearby nature and your local sky.':'City center · use GPS for your precise position.';
 }
 async function setOriginFromSearch(e) {
   e.preventDefault();const query=$('originSearch').value.trim();if(!query)return;
@@ -380,7 +391,8 @@ function useGps() {
     if(version!==originVersion)return;
     $('setOrigin').disabled=false;$('nearMe').disabled=false;
     const {latitude:lat,longitude:lon,accuracy}=pos.coords;
-    changeOrigin({name:'your location',lat,lon,accuracy:Number.isFinite(accuracy)?accuracy:null,locatedAt:pos.timestamp||Date.now(),source:'gps'});
+    changeOrigin({name:`${lat.toFixed(3)}, ${lon.toFixed(3)}`,lat,lon,accuracy:Number.isFinite(accuracy)?accuracy:null,locatedAt:pos.timestamp||Date.now(),source:'gps'});
+    resolveTown(lat,lon,version);
   },message=>{if(version===originVersion){$('originStatus').textContent=message;$('setOrigin').disabled=false;$('nearMe').disabled=false;}},message=>{if(version===originVersion)$('originStatus').textContent=message;});
 }
 document.addEventListener('DOMContentLoaded',init);
@@ -414,20 +426,7 @@ function closeSheet(restore=true) {
   if(restore&&sheetReturnFocus?.isConnected)sheetReturnFocus.focus({preventScroll:true});
   sheetReturnFocus=null;
 }
-function renderBrief() {
-  const panel=$('pageBrief');panel.replaceChildren();
-  if(view==='weather'||view==='saved'){panel.hidden=true;return;}panel.hidden=false;
-  const head=el('div',null,'brief-heading');head.append(el('p',{fall:'THE COLOR SHORTLIST',aurora:'PLAN YOUR NORTHERN NIGHT',winter:'WINTER / WHERE TO START'}[view]||'START SOMEWHERE GOOD','eyebrow'),el('h2',{fall:'Where to look for color.',aurora:'Find a horizon worth staying up for.',winter:'Follow the snow. Know the access.'}[view]||'Your next few possibilities.'));panel.append(head);
-  panel.append(el('p',{fall:'Recent reported color first, then distance. Percent color is not leaf retention or a guarantee of peak scenery.',aurora:'Places tagged for northern skies lead this shortlist. Night access and an open northern horizon still need checking.',winter:'Loaded forecasts with more selected-day snow lead the list. New snowfall and snow already on the ground are shown separately.'}[view]||'A few starting points near your area. Open a place for its field guide, weather and community photos.','brief-copy'));
-  const list=el('div',null,'featured-places');
-  visible.slice(0,3).forEach((p,i)=>{
-    const card=el('article',null,'featured-place'),guide=Experience.guide(p),report=Nature.nearestReport(p,reportSnapshot),f=forecastCache.peek(forecastKey(p)),d=f?.days.find(d=>d.date===selectedDate());
-    card.append(el('small',`0${i+1} / ${regionNames[p.region]}`),el('h3',p.name),el('p',guide?.stop||p.summary));
-    const note=view==='fall'?report?`${fmt(report.percent,'%')} reported · ${report.status==='recent'?'recent':'older report'}`:'No current foliage report':view==='winter'?`New snow ${fmt(d?.snow,' in',1)} · Model depth ${fmt(Experience.currentSnow(f)?.snowDepth,' in',1)}`:`${Math.round(p.distance)} miles straight-line from your area`;
-    card.append(el('p',note,'feature-condition'),button('Explore this place ↗',()=>{selectDestination(p);openSheet();},'text-button'));list.append(card);
-  });
-  if(!visible.length)list.append(el('p','No destinations match. Open the filters to widen your search.'));panel.append(list);
-}
+function renderBrief() {$('pageBrief').hidden=true;}
 async function estimateDrive(p,container) {
   const version=++driveRequest,from={...origin},key=`${from.lat},${from.lon}:${p.lat},${p.lon}`;
   const b=container.querySelector('button');b.disabled=true;b.textContent='Estimating…';
@@ -458,17 +457,29 @@ function renderAuroraImage() {
 function renderFallMap() {
   const key=$('fallMapKey');key.replaceChildren();if(view!=='fall')return;
   [['#65aa80','0–24%'],['#d4c45d','25–49%'],['#eaa454','50–74%'],['#e57555','75–100%'],['#7f8b97','Older']].forEach(([color,label])=>{const item=el('span',null,'fall-key-item'),dot=el('i');dot.style.backgroundColor=color;dot.setAttribute('aria-hidden','true');item.append(dot,el('span',label));key.append(item);});
-  if(!reportSnapshot){$('fallMapStatus').textContent='Color observations unavailable. No estimated color is filled in.';return;}
-  const recent=reportSnapshot.reports.filter(r=>Nature.reportStatus(r,reportSnapshot.retrievedAt)==='recent');
-  const reports=$('showOldReports').checked?reportSnapshot.reports:recent;
-  $('fallMapStatus').textContent=`${reports.length} report points${$('showOldReports').checked?' including older observations':''} · Travel Wisconsin snapshot ${timeLabel(reportSnapshot.retrievedAt)}. Percent is reported color, not leaf retention. Wisconsin only; unreported areas are not estimated.`;
-  if(!map||!overlay||!$('showFallReports').checked)return;
+  const snapshot=reportSnapshot||{reports:[],retrievedAt:null};
+  const region=$('regionFilter').value;
+  const regional=snapshot.reports.filter(r=>region==='all'||r.region===region);
+  const recent=regional.filter(r=>Nature.reportStatus(r,snapshot.retrievedAt)==='recent');
+  const reports=$('showOldReports').checked?regional:recent;
+  $('fallMapStatus').textContent=`${reports.length} observed report points · Wisconsin: Travel Wisconsin. Minnesota: MN DNR report ranges and published color map. Michigan / UP: Explore Fall modeled color for ${dayLabel(selectedDate())} when the estimate layer is on.`;
+  if(!map||!overlay)return;
+  if($('showRegionalEstimates').checked){
+    const layer=L.imageOverlay(`https://www.explorefall.com/maps/Michigan-maps/${selectedDate().replaceAll('-','')}.png`,[[23.04,-126.07],[51.98,-64.97]],{opacity:.45,attribution:'Modeled foliage: <a href="https://www.explorefall.com/dev/michigan.html">Explore Fall</a> / <a href="https://www.michigan.org/fallcolormap">Pure Michigan</a>'}).addTo(overlay);
+    layer.on('error',()=>{$('fallMapStatus').textContent+=' Color estimate unavailable for this date.';});
+    key.append(el('span','Estimate colors: green 0–20 · yellow 20–40 · orange 40–60 · red 60–100 · brown past peak','fineprint'));
+  }
+  if($('showFallReports').checked&&['all','MN'].includes(region)){
+    const mn=L.imageOverlay('https://maps.dnr.state.mn.us/cgi-bin/wms/fall_colors?VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG:4326&WIDTH=1750&HEIGHT=1500&bbox=-98.1,43.0,-89.1,49.6&LAYERS=dummy&TRANSPARENT=TRUE&FORMAT=image/png',[[43,-98.1],[49.6,-89.1]],{opacity:.6,attribution:'Fall color map: MN DNR'}).addTo(overlay);
+    mn.on('error',()=>{$('fallMapStatus').textContent+=' MN DNR layer unavailable; dated park observations remain below.';});
+  }
+  if(!$('showFallReports').checked)return;
   reports.forEach(r=>{
-    const status=Nature.reportStatus(r,reportSnapshot.retrievedAt),color=status!=='recent'?'#7f8b97':r.percent>=75?'#e57555':r.percent>=50?'#eaa454':r.percent>=25?'#d4c45d':'#65aa80';
+    const status=Nature.reportStatus(r,snapshot.retrievedAt),color=status!=='recent'?'#7f8b97':r.pastPeak?'#855749':(r.percent??r.percentLow)>=75?'#e57555':(r.percent??r.percentLow)>=50?'#eaa454':(r.percent??r.percentLow)>=25?'#d4c45d':'#65aa80';
     const marker=L.circleMarker([r.lat,r.lon],{radius:10,color:'#fff1d4',fillColor:color,fillOpacity:.95,weight:1.5}).addTo(overlay);
-    marker.bindTooltip(el('span',`${r.name} · ${fmt(r.percent,'%')} color${status==='recent'?'':' · older'}`));
-    const popup=el('div',null,'fall-report-popup');popup.append(el('p','FALL COLOR REPORT','eyebrow'),el('h3',r.name),el('strong',`${fmt(r.percent,'%')} reported color`),el('p',`${r.county} County`),el('p',`Updated ${timeLabel(r.reportedAt)}${status==='recent'?'':' · Older / unverified observation'}`),el('p',`Reporter’s estimated peak: ${r.peak||'Unavailable'}`),el('p','A report point describes the surrounding area, not an exact foliage boundary.','fineprint'));
-    popup.append(button('Report & weather here',()=>{selectDestination({id:`report:${r.id||r.name}`,reportOnly:true,name:r.name,lat:r.lat,lon:r.lon,region:'WI',county:r.county,tags:['fall'],summary:'Weather at this foliage report point. The color observation describes the reporter’s surrounding area.',source:reportSnapshot.sourceUrl,access:'This is a report location, not a verified public trailhead. Choose a destination for visit and access notes.'});closeSheet(false);openSheet();},'primary-link'));
+    marker.bindTooltip(el('span',`${r.name} · ${Nature.colorLabel(r)} color${status==='recent'?'':' · older'}`));
+    const popup=el('div',null,'fall-report-popup');popup.append(el('p','FALL COLOR REPORT','eyebrow'),el('h3',r.name),el('strong',`${Nature.colorLabel(r)} reported color`),el('p',r.county?`${r.county} County`:regionNames[r.region]),el('p',`Updated ${reportTimeLabel(r)}${status==='recent'?'':' · Older / unverified observation'}`),el('p',`Reporter’s estimated peak: ${r.peak||'Unavailable'}`),el('p',`${r.source||'Reporter'} · A report point describes the surrounding area, not an exact foliage boundary.`,'fineprint'));
+    popup.append(button('Report & weather here',()=>{selectDestination({id:`report:${r.id||r.name}`,reportOnly:true,name:r.name,lat:r.lat,lon:r.lon,region:r.region||'WI',county:r.county,tags:['fall'],summary:'Weather at this foliage report point. The color observation describes the reporter’s surrounding area.',source:r.sourceUrl,access:'This is a report location, not a verified public trailhead. Choose a destination for visit and access notes.'});closeSheet(false);openSheet();},'primary-link'));
     const nearby=Nature.filterPlaces(DESTINATIONS,{origin:r,radius:60}).slice(0,2);
     if(nearby.length){popup.append(el('p','Places nearby','eyebrow'));nearby.forEach(p=>popup.append(button(`${p.name} · ${Math.round(p.distance)} mi`,()=>{selectDestination(p);openSheet();},'quiet')));}
     marker.bindPopup(popup,{maxWidth:310});
@@ -491,13 +502,56 @@ async function requestDrive(from,to) {
 
 function arrangePage(nextView) {
   const orders={
-    explore:['tripDesk','pageBrief','guideHeading','filterDrawer','seasonDashboard','mapSwitch','mapLayout','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
-    fall:['guideHeading','filterDrawer','mapSwitch','mapLayout','seasonDashboard','reportsPanel','tripDesk','pageBrief','resultsHeading','destinationGrid','comparisonPanel','coverageNote','auroraPanel'],
-    aurora:['seasonDashboard','auroraPanel','pageBrief','guideHeading','filterDrawer','tripDesk','mapSwitch','mapLayout','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel'],
-    winter:['seasonDashboard','pageBrief','guideHeading','filterDrawer','mapSwitch','mapLayout','tripDesk','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
-    weather:['seasonDashboard','mapLayout','guideHeading','filterDrawer','tripDesk','pageBrief','mapSwitch','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
-    saved:['guideHeading','filterDrawer','resultsHeading','destinationGrid','mapLayout','pageBrief','seasonDashboard','mapSwitch','tripDesk','comparisonPanel','coverageNote','reportsPanel','auroraPanel']
+    explore:['nearbyPanel','pageBrief','guideHeading','filterDrawer','seasonDashboard','mapSwitch','mapLayout','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
+    fall:['guideHeading','filterDrawer','mapSwitch','mapLayout','seasonDashboard','reportsPanel','nearbyPanel','pageBrief','resultsHeading','destinationGrid','comparisonPanel','coverageNote','auroraPanel'],
+    aurora:['seasonDashboard','auroraPanel','pageBrief','guideHeading','filterDrawer','nearbyPanel','mapSwitch','mapLayout','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel'],
+    winter:['seasonDashboard','pageBrief','guideHeading','filterDrawer','mapSwitch','mapLayout','nearbyPanel','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
+    weather:['seasonDashboard','mapLayout','guideHeading','filterDrawer','nearbyPanel','pageBrief','mapSwitch','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
+    saved:['guideHeading','filterDrawer','resultsHeading','destinationGrid','mapLayout','pageBrief','seasonDashboard','mapSwitch','nearbyPanel','comparisonPanel','coverageNote','reportsPanel','auroraPanel']
   };
   if(orders[nextView])orders[nextView].forEach(id=>{const n=$(id);if(n)$('guide').append(n);});
-  $('auroraPanel').open=nextView==='aurora';
+  $('auroraPanel').open=false;
+  $('auroraLocal').hidden=nextView!=='aurora';
+  if(nextView==='aurora')$('guide').prepend?.($('auroraLocal'));
+  if(nextView==='aurora')loadOriginForecast();
+}
+
+const REGION_BOUNDS={all:[[41.6,-97.3],[49.4,-82.1]],WI:[[42.45,-92.95],[47.15,-86.75]],MN:[[43.45,-97.25],[49.4,-89.4]],MI:[[41.65,-87.1],[45.9,-82.1]],UP:[[45.05,-90.5],[48.35,-83.4]]};
+function fitRegion(){if(map)map.fitBounds(REGION_BOUNDS[$('regionFilter').value]||REGION_BOUNDS.all);}
+function setRegion(region){
+  if(!REGION_BOUNDS[region])return;
+  $('regionFilter').value=region;$('radiusFilter').value='all';$('showRegionalEstimates').checked=['MI','UP'].includes(region);
+  document.querySelectorAll('[data-region]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.region===region)));
+  if(typeof Community!=='undefined'&&Community.setRegion)Community.setRegion(region);
+  $('mapHeading').textContent=view==='fall'?`${regionNames[region]||'GREAT LAKES'} FALL COLORS`:'EXPLORE THE REGION';
+  mapRenderKey='';renderResults();renderReports();
+  if(!['photos','weather'].includes(view)&&visible.length&&!visible.some(p=>p.id===selected?.id))selectDestination(visible[0]);else renderDestination();
+  fitRegion();
+}
+async function resolveTown(lat,lon,version){
+  try{
+    const data=await fetchJson(`https://nominatim.openstreetmap.org/reverse?${new URLSearchParams({lat:lat.toFixed(3),lon:lon.toFixed(3),format:'jsonv2',zoom:'10',addressdetails:'1'})}`);
+    if(version!==originVersion||origin.source!=='gps'||origin.lat!==lat||origin.lon!==lon)return;
+    const name=Locator.townName(data);if(!name)return;
+    origin={...origin,name};writeStorage('origin',origin);renderLocation();
+    if(typeof Nearby!=='undefined')Nearby.sync();
+    renderLocalAurora();if(view==='weather')selectDestination({...origin,id:'local',region:'LOCAL',tags:[],summary:'Forecast at your precise device coordinates.',access:'Weather does not establish road or trail conditions.'});
+  }catch{/* Coordinates remain the source of truth when the town-name service is unavailable. */}
+}
+async function loadOriginForecast(){
+  const key=forecastKey(origin);if(originForecastKey===key&&(originForecast===null||(originForecast&&Date.now()-originForecast.retrievedAt<30*60000)))return;originForecastKey=key;
+  const from={...origin};
+  try{const f=await getForecast(from);if(forecastKey(origin)!==key)return;originForecast=f;renderLocalAurora();}
+  catch{if(forecastKey(origin)===key){originForecast=false;renderLocalAurora();}}
+}
+function renderLocalAurora(){
+  const panel=$('auroraLocal');panel.hidden=view!=='aurora';if(panel.hidden)return;
+  panel.replaceChildren();panel.append(el('p','NORTHERN LIGHTS / NEAR YOU','eyebrow'),el('h2',`The sky near ${origin.name}`));
+  const chance=Nature.auroraAt(origin,aurora),metrics=el('div',null,'local-sky-metrics');
+  const stat=(label,value)=>{const d=el('div');d.append(el('small',label),el('strong',value));return d;};
+  const current=originForecast?.hours?.filter(h=>Math.abs(h.timestamp-Date.now())<=3600000).sort((a,b)=>Math.abs(a.timestamp-Date.now())-Math.abs(b.timestamp-Date.now()))[0];
+  const sun=typeof SunCalc!=='undefined'?SunCalc.getPosition(new Date(),origin.lat,origin.lon).altitude*180/Math.PI:null;
+  metrics.append(stat('Aurora overhead chance',chance==null?'Unavailable':`${Math.round(chance)}%`),stat('Local clouds',current?.cloud==null?'Unavailable':`${Math.round(current.cloud)}%`),stat('Your sky now',sun==null?'Unavailable':sun<=-18?'Dark':sun<0?'Twilight':'Daylight'));panel.append(metrics);
+  panel.append(el('p',chance==null?'Waiting for a current NOAA forecast. No percentage is guessed.':`NOAA short-term estimate · valid ${timeLabel(aurora.validAt)} · approximately the next 30–90 minutes.`,'fineprint'));
+  const details=el('details');details.append(el('summary','What does this percentage mean?'),el('p','NOAA’s model estimates aurora directly overhead, before local clouds, light pollution and your horizon. It is not a measured personal chance or an all-night forecast. Aurora can sometimes be visible low on the northern horizon even when the overhead percentage is low.','fineprint'));panel.append(details);
 }

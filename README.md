@@ -4,8 +4,8 @@ A map-first nature guide for Wisconsin, Minnesota, Michigan's Upper Peninsula, a
 
 ## Seasonal information
 
-- **Fall colors:** The embedded [Travel Wisconsin report](https://www.travelwisconsin.com/fall-color-report) shows individual observations, reporter dates, reported percentages, and forecast peak weeks. The map plots Wisconsin reports and flags older data. Only reports in the same county are associated with a Wisconsin destination. Current Minnesota and Michigan foliage feeds are not connected; no current foliage percentages are estimated for those states.
-- **Northern lights:** The [NOAA SWPC OVATION grid](https://www.swpc.noaa.gov/products/aurora-30-minute-forecast), northern hemisphere image when available, and three-hour Kp forecast appear alongside destination-specific nighttime cloud forecasts. The grid value measures model overhead activity, not the probability of seeing aurora. It is short-term guidance; a date selection several days away cannot carry a current OVATION forecast into that day.
+- **Fall colors:** The embedded [Travel Wisconsin report](https://www.travelwisconsin.com/fall-color-report) shows individual observations, reporter dates, reported percentages, and forecast peak weeks. The map plots Wisconsin reports and flags older data. Only reports in the same county are associated with a Wisconsin destination. Minnesota adds DNR park ranges, past-peak stages and its official map. Michigan and the Upper Peninsula use the dated Explore Fall modeled color layer linked by Pure Michigan; estimates remain separate from field observations.
+- **Northern lights:** The [NOAA SWPC OVATION grid](https://www.swpc.noaa.gov/products/aurora-30-minute-forecast), northern hemisphere image when available, and three-hour Kp forecast appear alongside destination-specific nighttime cloud forecasts. The local percentage is NOAA’s short-term overhead estimate; personal visibility also depends on local clouds, darkness and the horizon. It is short-term guidance; a date selection several days away cannot carry a current OVATION forecast into that day.
 - **Winter:** [Open-Meteo](https://open-meteo.com/en/docs) daily snow forecast, high and low temperatures, wind gusts, and cold-weather guidance are displayed in place. Snowfall is not snow depth, frozen waterfall status, safe lake ice, groomed trails, or park access.
 - **Local weather:** Set a city or explicitly use GPS, then see the same local forecast and [NWS](https://www.weather.gov/documentation/services-web-api) active alerts without leaving the guide. City searches use OpenStreetMap Nominatim only on submission. Its public service has usage limits; provide your own geocoder or cached proxy if traffic increases.
 
@@ -21,7 +21,7 @@ Branding retains the StormVector vector logo and dark electric-blue identity wit
 
 ## Pages, phone layouts and field guides
 
-Explore opens the personal planning desk and regional map. Fall colors orders places by recent observed color, puts the map ahead of the collapsed full report table, and keeps color percentages distinct from peak timing and leaf retention. Northern Lights combines hourly clouds with calculated full darkness, moon position/illumination, and interval-specific NOAA Kp; a sustained cloud window requires at least two consecutive hourly samples with at most 25% cloud during astronomical darkness. This describes sky conditions, not aurora visibility. The NOAA native grid is rendered locally as a labeled regional graphic rather than depending on a separate image endpoint.
+Explore opens nearby destinations and the regional map. Fall colors orders places by recent observed color, puts the map ahead of the collapsed full report table, and keeps color percentages distinct from peak timing and leaf retention. Northern Lights combines hourly clouds with calculated full darkness, moon position/illumination, and interval-specific NOAA Kp; a sustained cloud window requires at least two consecutive hourly samples with at most 25% cloud during astronomical darkness. This describes sky conditions, not aurora visibility. The NOAA native grid is rendered locally as a labeled regional graphic rather than depending on a separate image endpoint.
 
 Winter distinguishes new snowfall from current **modeled** snow depth. Local Weather includes current model conditions, hourly guidance, one seven-day overview, daylight and NWS alerts. Missing fields stay unavailable. Promising outdoor windows use two or more consecutive daylight samples with 35–85°F temperatures, precipitation probability at most 25%, gusts below 25 mph, and no thunder/freezing-precipitation/snow weather code. These transparent thresholds do not establish safe trail conditions.
 
@@ -45,23 +45,19 @@ Uploads are hosted in R2 through the service under `community-service/`. The fro
 
 The visible starting-location bar distinguishes the default area, a searched city center, a saved area, and a GPS fix. GPS requests high accuracy with no cached-position allowance; the browser still controls actual precision. The guide displays the reported accuracy and fix time, marks older GPS fixes, and draws an accuracy circle. Changing the starting area recenters the map and invalidates pending driving estimates. Local Weather always uses the full selected coordinates; curated destinations remain separate places.
 
-Fall Colors leads with a Wisconsin map of dated observation points, a five-color percentage/age legend, optional destination pins and older reports, and tappable reports with nearby destinations and weather at the report point. The default view hides old reports. No unsurveyed county polygons, foliage boundaries, or future color percentages are inferred.
-
-## Personal planning desk
-
-Four tools reuse the full selected coordinates and existing forecasts.
-
-- **Worth the trip?** compares the six closest matching curated destinations by forecast completeness and the existing mild-daylight window rules. It explains weather trade-offs, dated nearby foliage evidence, sunset, optional checked one-way road estimates, and loaded photos captured within seven days and 15 miles. It does not assign a fabricated quality score or claim that access and alerts have already been checked.
-- **I have two hours** checks the six closest matches. It requests outbound and return OSRM routes separately, then adds the chosen visit allowance and a 15-minute buffer. Each itinerary states whether it fits both the total time and forecast daylight. No route means no confirmed fit; the visit allowance is not a trail-completion estimate. Departure times use the starting area's forecast timezone, including cross-zone trips.
-- **Clearer skies** compares up to 18 nearby places on the selected night. It chooses consecutive known-cloud samples in full astronomical darkness, compares the same timestamps with clouds at the starting area, and displays moon conditions and available overlapping Kp. Missing NOAA coverage stays unavailable, and travel time/verified night access are separate checks.
-- **What's changed?** compares current foliage observations with the previous published snapshot, the same-date snowfall forecast with this browser's previous-visit baseline, and newly submitted nearby community photos. Capture and submission dates remain separate. A first visit without a prior forecast baseline says so; it never invents snow changes. The public photo feed loads the latest 100 submissions and identifies truncation.
-
-The existing foliage refresh now retains up to 14 actual source retrievals in `data/fall-history.json`; initial history comes from real previously committed snapshots. Forecast baselines and visit timestamps stay in browser storage (at most 40 coordinate keys). Routes are deduplicated, queued at no more than one request start per second, and cached for 30 minutes. Canceled or superseded searches cannot append results to a new starting area or planner mode. All provider failures remain visible.
-
-Validation includes pure trip-decision tests and a DOM-only fixture run covering all four tools, seven routes, separate road directions, first-visit handling, and cancellation of a late route request. Physical-device and browser layout testing remain unavailable. No new build step or application package dependency was added.
+Fall Colors covers all four regions with dated observations, provider map layers, a five-color percentage/age legend, optional destination pins and older reports, and tappable reports with nearby destinations and weather at the report point. The default view hides old reports. No unsurveyed county polygons, foliage boundaries, or future color percentages are inferred.
 
 ### Community accounts and location fallback
 
 Community Photos links to the hosted `/account` center for email/password signup, profiles, private inbox, photo likes and account-owned uploads/removal. Recovery codes support password resets; email verification and emailed reset links are not configured. Anonymous photo uploads continue to use browser removal receipts. The email account service is implemented in `community-service/worker/auth.js` and does not require ChatGPT sign-in.
 
 Seasonal pages use distinct compositions and palettes: map-first cream foliage, immersive night-sky aurora, ice-blue snow forecasts, compact local weather and masonry community photos. `src/geolocation.js` shares fresh precise-location requests and a standard-device fallback, with actionable permission errors. Browser rendering and physical-device GPS must still be checked on real iPhone/Android devices.
+
+
+### Location-first guide (local-7)
+
+The main menu contains email login/profile access. The location form and GPS prompt collapse after a successful fix; Change location reopens them. Reverse-geocoding adds a town label without replacing precise forecast coordinates. Coarse fixes can refine through a high-accuracy watch; accuracy remains visible. Nearby places replace trip itineraries/time budgets.
+
+Wisconsin, Minnesota, Michigan Lower Peninsula and the Upper Peninsula are selectable on every page, including community photos. The Aurora page shows the user's current NOAA OVATION overhead percentage with local cloud cover and daylight, dated separately from nightly forecasts. This is not a calibrated personal visibility probability.
+
+Foliage: Wisconsin field reports, Minnesota DNR dated park ranges/past-peak stages plus the official map, and dated Explore Fall modeled colors (the provider used by Pure Michigan) for Michigan/UP. Reported ranges are preserved; no midpoint is invented. External map loading failures leave the destination list and dated observations usable.

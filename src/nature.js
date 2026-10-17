@@ -76,18 +76,19 @@ const Nature = (() => {
     return 'Check the hourly timing';
   }
   function reportStatus(report, retrievedAt, now=Date.now()) {
-    const reported=new Date(report?.reportedAt).getTime(),retrieved=new Date(retrievedAt).getTime();
+    const reported=new Date(report?.reportedAt).getTime(),retrieved=new Date(report?.retrievedAt||retrievedAt).getTime();
     if(!report||!Number.isFinite(reported)||!Number.isFinite(retrieved)||reported>now+3600000||retrieved>now+3600000)return 'unavailable';
     if(now-reported>7*86400000||now-retrieved>36*3600000)return 'older';
     return 'recent';
   }
   function nearestReport(place,snapshot,now=Date.now()) {
-    if(place.region!=='WI'||!snapshot?.reports)return null;
-    const reports=snapshot.reports.filter(r=>r.county===place.county&&!r.locationUnverified&&value(r.percent)!=null);
+    if(!snapshot?.reports)return null;
+    const reports=snapshot.reports.filter(r=>!r.locationUnverified&&((place.region==='WI'&&(r.state||'WI')==='WI'&&r.county===place.county&&value(r.percent)!=null)||(r.destinationId&&(r.destinationId===place.id||place.id==='report:'+r.id)&&r.state===place.region)));
     if(!reports.length)return null;
     const report=reports.sort((a,b)=>miles(place,a)-miles(place,b))[0];
     return {...report,status:reportStatus(report,snapshot.retrievedAt,now),distance:miles(place,report)};
   }
+  function colorLabel(report){return report?.percentLabel||(value(report?.percent)!=null?`${report.percent}%`:'Not reported');}
   function parseAurora(data,now=Date.now()) {
     const parse=t=>new Date(/Z$|[+-]\d\d:\d\d$/.test(t||'')?t:`${t}Z`).getTime();
     const validAt=parse(data['Forecast Time']),observedAt=parse(data['Observation Time']);
@@ -135,6 +136,6 @@ const Nature = (() => {
       pending.set(key,work);return work;
     },clear(){generation++;cache.clear();pending.clear();},peek(key){const old=cache.get(key);return old&&Date.now()-old.savedAt<ttl?old.data:null;}};
   }
-  return {value,miles,filterPlaces,forecastUrl,parseForecast,weather,outingNote,reportStatus,nearestReport,parseAurora,auroraAt,parseKp,nightHours,dateInZone,daylightLabel,makeCache};
+  return {value,miles,filterPlaces,forecastUrl,parseForecast,weather,outingNote,reportStatus,nearestReport,colorLabel,parseAurora,auroraAt,parseKp,nightHours,dateInZone,daylightLabel,makeCache};
 })();
 if(typeof module!=='undefined')module.exports=Nature;

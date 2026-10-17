@@ -3,7 +3,7 @@ const Community = (() => {
   const API='https://stormvector-community-borden.robustapple32.chatgpt.site';
   const TYPES={aurora:'Aurora',snow:'Snow',nature:'Nature',fall:'Fall colors'};
   let photos=[],cursor=null,activeGroup=null,galleryMap=null,pinMap=null,photoMarkers=null,pin=null,previewUrl=null,initialized=false,loadVersion=0;
-  let receipts={};
+  let receipts={},region='all';
   const $=id=>document.getElementById(id);
   function node(tag,text,cls){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;}
   function captureTimestamp(value,zone) {
@@ -42,7 +42,7 @@ const Community = (() => {
     $('photoSearch').addEventListener('input',()=>{activeGroup=null;renderGallery();});
     $('refreshPhotos').addEventListener('click',()=>loadPhotos());$('morePhotos').addEventListener('click',()=>loadPhotos(true));
     $('allPhotoLocations').addEventListener('click',()=>{activeGroup=null;renderGallery();fitPhotos();});
-    $('photoLocation').addEventListener('change',()=>{const p=DESTINATIONS.find(p=>p.id===$('photoLocation').value);if(p){$('photoLocationName').value=p.name;setPin(p.lat,p.lon,false);}else if($('photoLocation').value==='custom'){$('photoLocationName').value='';$('photoPinStatus').textContent='Tap the map to choose where this photo was taken.';}});
+    $('photoLocation').addEventListener('change',()=>{const p=DESTINATIONS.find(p=>p.id===$('photoLocation').value);if(p){$('photoLocationName').value=p.name;$('photoRegion').value=p.region;setPin(p.lat,p.lon,false);}else if($('photoLocation').value==='custom'){$('photoLocationName').value='';$('photoPinStatus').textContent='Tap the map to choose where this photo was taken.';}});
     $('photoUseLocation').addEventListener('click',useLocation);
     $('photoFile').addEventListener('change',()=>{if(previewUrl)URL.revokeObjectURL(previewUrl);const f=$('photoFile').files[0];$('photoPreview').hidden=!f;if(f){previewUrl=URL.createObjectURL(f);$('photoPreview').src=previewUrl;}});
     $('photoForm').addEventListener('submit',submit);
@@ -90,7 +90,7 @@ const Community = (() => {
   }
   function filtered() {
     const type=$('photoEventFilter').value,q=$('photoSearch').value.trim().toLowerCase(),age=$('photoAgeFilter').value;
-    return photos.filter(p=>(type==='all'||p.eventType===type)&&(!q||`${p.location} ${p.title} ${p.caption}`.toLowerCase().includes(q))&&(age==='all'||Date.parse(p.takenAt)>=Date.now()-Number(age)*86400000));
+    return photos.filter(p=>(region==='all'||photoRegion(p)===region)&&(type==='all'||p.eventType===type)&&(!q||`${p.location} ${p.title} ${p.caption}`.toLowerCase().includes(q))&&(age==='all'||Date.parse(p.takenAt)>=Date.now()-Number(age)*86400000));
   }
   function fitPhotos() {if(galleryMap&&photos.length)galleryMap.fitBounds(L.latLngBounds(photos.map(p=>[p.lat,p.lon])).pad(.15),{maxZoom:11});}
   function renderGallery(updateStatus=true) {
@@ -130,7 +130,7 @@ const Community = (() => {
       if(!$('photoLat').value||!$('photoLon').value)throw Error('Select a destination or place a map pin before sharing.');
       const takenAt=captureTimestamp($('photoTakenAt').value,$('photoTimezone').value);if(Date.parse(takenAt)>Date.now()+5*60000)throw Error('The time taken cannot be in the future.');
       const blob=await prepareImage($('photoFile').files[0]),body=new FormData();body.set('photo',blob,'photo.jpg');
-      const fields={lat:$('photoLat').value,lon:$('photoLon').value,location:$('photoLocationName').value,eventType:$('photoEvent').value,takenWith:$('photoCamera').value,takenAt,timezone:$('photoTimezone').value,title:$('photoTitle').value,photographer:$('photoPhotographer').value,caption:$('photoCaption').value,consent:String($('photoConsent').checked)};
+      const fields={region:$('photoRegion').value,lat:$('photoLat').value,lon:$('photoLon').value,location:$('photoLocationName').value,eventType:$('photoEvent').value,takenWith:$('photoCamera').value,takenAt,timezone:$('photoTimezone').value,title:$('photoTitle').value,photographer:$('photoPhotographer').value,caption:$('photoCaption').value,consent:String($('photoConsent').checked)};
       Object.entries(fields).forEach(([key,value])=>body.set(key,value));$('photoSubmitStatus').textContent='Sharing your photo and placing its map pin…';
       const data=await api('/api/photos',{method:'POST',body});receipts[data.photo.id]=data.deleteToken;const stored=saveReceipts();
       photos=[data.photo,...photos];feedCache=null;activeGroup=null;$('photoEventFilter').value='all';$('photoAgeFilter').value='all';$('photoSearch').value='';renderGallery();galleryMap?.setView([data.photo.lat,data.photo.lon],11);
@@ -150,8 +150,10 @@ const Community = (() => {
     }).finally(()=>{feedPending=null;});return feedPending;
   }
   function mediaUrl(photo){return photo?.imageUrl?.startsWith('/api/media/')?API+photo.imageUrl:null;}
+  function photoRegion(photo){if(['WI','MN','MI','UP'].includes(photo.region))return photo.region;const near=Nature.filterPlaces(DESTINATIONS,{origin:photo,radius:25})[0];return near?.region||null;}
+  function setRegion(value){region=value;if(initialized){activeGroup=null;renderGallery();}}
   function activate(){setup();maps();loadPhotos();}
   function photosFor(place){return photos.filter(p=>Nature.miles(place,p)<15);}
-  return {activate,captureTimestamp,groupPhotos,photosFor,getFeed,mediaUrl};
+  return {activate,captureTimestamp,groupPhotos,photosFor,getFeed,mediaUrl,setRegion};
 })();
 if(typeof module!=='undefined')module.exports=Community;

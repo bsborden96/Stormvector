@@ -8,7 +8,7 @@ const Experience = (() => {
     const result=[...places];
     if(view==='fall')return result.sort((a,b)=>{
       const ar=N.nearestReport(a,reports,now),br=N.nearestReport(b,reports,now);
-      const priority=r=>r?.status==='recent'?r.percent:-1;
+      const priority=r=>r?.status==='recent'?(r.percent??r.percentLow??-1):-1;
       return priority(br)-priority(ar)||a.distance-b.distance;
     });
     if(view==='aurora')return result.sort((a,b)=>Number(b.tags.includes('aurora'))-Number(a.tags.includes('aurora'))||a.distance-b.distance);
