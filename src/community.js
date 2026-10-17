@@ -69,9 +69,13 @@ const Community = (() => {
     $('photoPinStatus').textContent=custom?'Pin placed. Add a location name above; a general area is fine.':'Place selected. Drag the pin to refine the location.';
   }
   function useLocation() {
-    if(!navigator.geolocation){$('photoPinStatus').textContent='Your browser cannot provide a location. Choose a destination or use the map.';return;}
+    $('photoUseLocation').disabled=true;
     $('photoPinStatus').textContent='Requesting your current location…';
-    navigator.geolocation.getCurrentPosition(p=>{$('photoLocation').value='custom';$('photoLocationName').value='';setPin(p.coords.latitude,p.coords.longitude,true);},()=>{$('photoPinStatus').textContent='Location unavailable. Choose a destination or place a map pin.';},{timeout:10000,maximumAge:60000});
+    Locator.request(p=>{
+      $('photoUseLocation').disabled=false;$('photoLocation').value='custom';
+      $('photoLocationName').value='';setPin(p.coords.latitude,p.coords.longitude,true);
+      $('photoPinStatus').textContent+=' GPS accuracy ±'+Math.round(p.coords.accuracy||0)+' m.';
+    },message=>{$('photoUseLocation').disabled=false;$('photoPinStatus').textContent=message;},message=>{$('photoPinStatus').textContent=message;});
   }
   async function loadPhotos(append=false) {
     const version=++loadVersion;$('refreshPhotos').disabled=true;$('morePhotos').disabled=true;
@@ -101,6 +105,8 @@ const Community = (() => {
       const detail=node('div',null,'photo-card-detail');detail.append(node('p',TYPES[photo.eventType],'eyebrow'),node('h3',photo.title||photo.location),node('p',photo.location),node('p',`Taken with ${photo.takenWith}`,'fineprint'));
       const captured=new Date(photo.takenAt).toLocaleString([],{timeZone:photo.timezone,dateStyle:'medium',timeStyle:'short'});
       detail.append(node('p',`Taken ${captured} · ${photo.timezone}`,'fineprint'),node('p',`Submitted ${new Date(photo.submittedAt).toLocaleString()}`,'fineprint'));
+      const social=node('a','♡ Like / View member','quiet');social.href=API+'/account?photo='+encodeURIComponent(photo.id);detail.append(social);
+      if(photo.ownerId){const member=node('a','Member profile ↗','quiet');member.href=API+'/account?member='+encodeURIComponent(photo.ownerId);detail.append(member);}
       if(photo.photographer)detail.append(node('p',`Shared by ${photo.photographer}`,'fineprint'));if(photo.caption)detail.append(node('p',photo.caption));
       const locate=node('button','Locate on map ↗','quiet');locate.type='button';locate.addEventListener('click',()=>{activeGroup=groupPhotos([photo])[0].key;renderGallery();galleryMap?.setView([photo.lat,photo.lon],12);$('communityMap').scrollIntoView({behavior:'smooth'});});detail.append(locate);
       if(receipts[photo.id]){const remove=node('button','Remove my photo','quiet');remove.type='button';remove.addEventListener('click',async()=>{remove.disabled=true;try{await api('/api/photos',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:photo.id,deleteToken:receipts[photo.id]})});delete receipts[photo.id];saveReceipts();photos=photos.filter(p=>p.id!==photo.id);activeGroup=null;renderGallery();}catch(e){detail.append(node('p',e.message,'feed-error'));remove.disabled=false;}});detail.append(remove);}

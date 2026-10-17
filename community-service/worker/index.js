@@ -1,3 +1,5 @@
+import {social} from './social.js';
+import {memberId} from './auth.js';
 const ALLOWED_ORIGIN = 'https://bsborden96.github.io';
 const EVENTS = ['snow','aurora','nature','fall'];
 const MAX_IMAGE = 4 * 1024 * 1024;
@@ -35,7 +37,7 @@ function record(object) {
   }catch{return null;}
 }
 async function upload(request,env) {
-  if(request.headers.get('Origin')!==ALLOWED_ORIGIN)return json(request,{error:'Submit through the StormVector website.'},403);
+  if(![ALLOWED_ORIGIN,new URL(request.url).origin].includes(request.headers.get('Origin')))return json(request,{error:'Submit through the StormVector website.'},403);
   if(!request.headers.get('Content-Type')?.startsWith('multipart/form-data'))return json(request,{error:'Choose an image file.'},415);
   // Enforce a streaming limit, including when Content-Length is missing.
   const reader=request.body?.getReader();if(!reader)return json(request,{error:'Empty upload.'},400);
@@ -51,6 +53,8 @@ async function upload(request,env) {
   const limitKey='limits/'+await hash(ip+'|'+env.PROJECT_ID);
   const prior=await env.BUCKET.get(limitKey);const limit=prior?await prior.json():{hour,count:0};
   const count=limit.hour===hour?limit.count:0;if(count>=6)return json(request,{error:'You have shared six photos this hour. Please try again next hour.'},429);
+  const ownerId=await memberId(request,env);
+  if(ownerId){const profile=await env.BUCKET.get('profiles/'+ownerId);if(!profile)return json(request,{error:'Create your profile before sharing a member photo.'},400);meta.ownerId=ownerId;meta.photographer=(await profile.json()).name;}
   const submittedAt=new Date().toISOString(),id='photos/'+String(9999999999999-Date.now()).padStart(13,'0')+'-'+crypto.randomUUID()+'.'+({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[type]);
   const deleteToken=crypto.randomUUID()+crypto.randomUUID();
   await env.BUCKET.put(id,bytes,{httpMetadata:{contentType:type,cacheControl:'public, max-age=3600'},customMetadata:{record:JSON.stringify({...meta,submittedAt}),deleteHash:await hash(deleteToken)}});
@@ -62,6 +66,7 @@ export default {
     const url=new URL(request.url);
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers:headers(request)});
     try {
+      const communityResponse=await social(request,env,json);if(communityResponse)return communityResponse;
       if(url.pathname==='/api/health')return json(request,{status:env.BUCKET?'ready':'storage-unavailable',service:'StormVector community photos'},env.BUCKET?200:503);
       if(url.pathname==='/api/photos'&&request.method==='GET'){
         const cursor=url.searchParams.get('cursor')||undefined;
@@ -76,14 +81,15 @@ export default {
         return new Response(object.body,{headers:h});
       }
       if(url.pathname==='/api/photos'&&request.method==='DELETE'){
-        if(request.headers.get('Origin')!==ALLOWED_ORIGIN)return json(request,{error:'Use StormVector to remove your photo.'},403);
+        if(![ALLOWED_ORIGIN,new URL(request.url).origin].includes(request.headers.get('Origin')))return json(request,{error:'Use StormVector to remove your photo.'},403);
         if(Number(request.headers.get('Content-Length')||0)>1024)return json(request,{error:'Invalid removal request.'},400);
-        const {id,deleteToken}=await request.json();if(typeof id!=='string'||!/^photos\/\d{13}-[a-f0-9-]{36}\.(jpg|png|webp)$/.test(id)||typeof deleteToken!=='string'||deleteToken.length>200)return json(request,{error:'Invalid photo receipt.'},400);
+        const {id,deleteToken}=await request.json();if(typeof id!=='string'||!/^photos\/\d{13}-[a-f0-9-]{36}\.(jpg|png|webp)$/.test(id)||(deleteToken!=null&&(typeof deleteToken!=='string'||deleteToken.length>200)))return json(request,{error:'Invalid photo receipt.'},400);
         const object=await env.BUCKET.head(id);if(!object)return json(request,{error:'Photo not found.'},404);
-        if(await hash(deleteToken)!==object.customMetadata.deleteHash)return json(request,{error:'Use the browser that submitted this photo to remove it.'},403);
+        const me=await memberId(request,env);let owner=null;try{owner=JSON.parse(object.customMetadata.record).ownerId;}catch{}
+        if(!(me&&me===owner)&&!(typeof deleteToken==='string'&&await hash(deleteToken)===object.customMetadata.deleteHash))return json(request,{error:'Use the browser that submitted this photo to remove it.'},403);
         await env.BUCKET.delete(id);return json(request,{removed:true});
       }
-      if(url.pathname==='/')return new Response('StormVector community photo service. Visit https://bsborden96.github.io/Stormvector/',{headers:{'Content-Type':'text/plain'}});
+      if(url.pathname==='/')return Response.redirect(url.origin+'/account',302);
       return json(request,{error:'Not found.'},404);
     }catch(e){console.error('Community service request failed:',e?.name);return json(request,{error:'Photo storage is temporarily unavailable. Please try again.'},503);}
   }

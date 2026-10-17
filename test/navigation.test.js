@@ -23,7 +23,7 @@ test('switching tabs refreshes the same destination and shows distinct dashboard
   let activated=0;
   const doc={getElementById:id=>elements[id],createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener(){},body:{dataset:{}}};
   const context=vm.createContext({document:doc,Nature,Planning,DESTINATIONS:destinations,Community:{activate(){activated++;}},location:{hash:'#explore'},Date,Intl,URLSearchParams,AbortSignal,Promise,Set,Map,requestAnimationFrame:f=>f(),queueMicrotask(){},setInterval(){},localStorage:{getItem:()=>null,setItem(){}},window:{addEventListener(){}}});
-  vm.runInContext(fs.readFileSync('src/field-guide.js','utf8'),context);vm.runInContext(fs.readFileSync('src/experience.js','utf8'),context);vm.runInContext(fs.readFileSync('src/views.js','utf8'),context);vm.runInContext(fs.readFileSync('src/app.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('src/field-guide.js','utf8'),context);vm.runInContext(fs.readFileSync('src/experience.js','utf8'),context);vm.runInContext(fs.readFileSync('src/views.js','utf8'),context);vm.runInContext(fs.readFileSync('src/geolocation.js','utf8'),context);vm.runInContext(fs.readFileSync('src/app.js','utf8'),context);
   // Keep the network separate from this navigation regression test.
   vm.runInContext('ensureVisibleForecasts=()=>{};selectDestination=p=>{selected=p;renderDestination();renderResults();};selected=DESTINATIONS[0];selectedForecast=null;',context);
   for(const [view,title] of [['aurora','Follow the night.'],['winter','Watch the snow line.'],['fall','Find the color while it lasts.'],['weather','Your forecast, at a glance.']]){
@@ -44,7 +44,7 @@ test('GPS keeps full coordinates, requests a fresh high-accuracy fix and recente
   let success,options;const centers=[];
   const doc={getElementById:id=>elements[id],createElement:()=>new Element(),querySelectorAll:()=>[],addEventListener(){},body:{dataset:{}}};
   const context=vm.createContext({document:doc,Nature,Planning,DESTINATIONS:destinations,Community:{},location:{hash:'#explore'},navigator:{geolocation:{getCurrentPosition(ok,fail,opts){success=ok;options=opts;}}},Date,Intl,URLSearchParams,AbortSignal,Promise,Set,Map,requestAnimationFrame:f=>f(),queueMicrotask(){},localStorage:{getItem:()=>null,setItem(){}},window:{addEventListener(){}},testMap:{invalidateSize(){},setView:(point,zoom)=>centers.push({point:[...point],zoom})}});
-  for(const file of ['field-guide','experience','views','app'])vm.runInContext(fs.readFileSync(`src/${file}.js`,'utf8'),context);
+  for(const file of ['field-guide','experience','views','geolocation','app'])vm.runInContext(fs.readFileSync(`src/${file}.js`,'utf8'),context);
   vm.runInContext('ensureVisibleForecasts=()=>{};renderMap=()=>{};selectDestination=p=>{selected=p;};map=testMap;useGps();',context);
   assert.equal(options.enableHighAccuracy,true);assert.equal(options.maximumAge,0);
   success({coords:{latitude:43.634123456,longitude:-88.727654321,accuracy:18},timestamp:Date.now()});

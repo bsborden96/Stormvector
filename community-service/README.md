@@ -13,3 +13,11 @@ Endpoint: https://stormvector-community-borden.robustapple32.chatgpt.site
 Writes accept requests from the public StormVector origin, `https://bsborden96.github.io`. CORS is not authentication. Photos are public community contributions, not verified nature observations. The current service has no moderation dashboard or contributor accounts.
 
 The backend is deployed using Sites. Preserve the exact identity in `.openai/hosting.json`; R2 binding `BUCKET` is provisioned during publication. Run `npm test` for validation and the upload/list/media/removal flow. The supplied build and artifact validator create a deterministic Worker artifact without dependencies. Source in this folder matches the deployed service source; future edits must also be pushed and published through Sites.
+
+## Community accounts
+
+`/account` provides email/password sign-up and sign-in, public member profiles, opt-in private messages, photo likes, and signed-in photo ownership. No ChatGPT account is required. Passwords use salted PBKDF2; only hashed session tokens are stored. Sessions use HttpOnly, Secure, SameSite=Lax cookies and expire after 30 days. Account writes require a same-origin request. Request identity headers are not used for these accounts.
+
+Save the one-time recovery code after signup or password reset. Recovery rotates the code and revokes earlier sessions. Transactional email is not configured: email ownership is unverified and email reset links are unavailable. The interface states this explicitly. Profiles never expose account email addresses or authentication records.
+
+Photos uploaded through `/account` are linked to the signed-in profile, with removal authorized by the server across devices. Earlier anonymous uploads retain their original removal receipts. Incoming messages are disabled until the member enables them. Inbox results include only that account's messages (latest 100); likes are idempotent per account and photo. Account and message storage shares the existing BUCKET binding under separate prefixes.

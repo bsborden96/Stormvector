@@ -20,3 +20,80 @@ main{width:min(1320px,calc(100% - 48px));margin:auto}.intro{display:grid;grid-te
 .trip-desk{padding:1.5rem;margin:1.5rem 0 2rem;border:1px solid #48647d;border-radius:12px;background:linear-gradient(140deg,#172634,#101923);min-width:0;scroll-margin-top:95px}.desk-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.desk-heading h2{font-size:2.5rem;margin:.25rem 0 .9rem}.desk-origin{font-size:12px;color:var(--muted)}.desk-modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.45rem;margin:.8rem 0}.desk-modes button{min-height:48px;padding:.7rem .6rem;background:#152332;color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600}.desk-modes button[aria-pressed=true]{border-color:var(--accent);background:#29465b;color:var(--text)}.desk-intro{font-size:13px;max-width:900px;color:var(--muted)}.desk-controls{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.2rem 0}.desk-controls label{flex:1;min-width:150px}.desk-controls select,.desk-controls input{min-height:46px}.desk-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin:1rem 0}.desk-actions [role=status]{font-size:12px;color:var(--muted);flex-basis:100%}.desk-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem;min-width:0}.desk-card{background:#101b27;border:1px solid var(--border);padding:1.1rem;border-radius:8px;min-width:0}.desk-card h3{font-size:1.15rem;line-height:1.35}.desk-card p,.desk-card li{font-size:12px}.desk-card>.eyebrow{font-size:10px;color:var(--accent)}.desk-card>.fineprint{font-size:11px!important}.desk-big{font:2.2rem/1.1 var(--display);color:var(--accent);display:block;margin:.6rem 0}.desk-reasons{padding-left:1.1rem}.desk-reasons li{margin:.4rem 0;color:#c1d7cb}.desk-warning{padding:.6rem .7rem;background:#5b3d202e;border-left:2px solid #d6aa72;color:#e7cba5;font-size:12px}.desk-card-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}.desk-card-actions .quiet,.desk-card-actions .primary-link{font-size:11px;min-height:44px;padding:.6rem .7rem}.desk-card-actions .primary-link{flex-basis:100%}.desk-photo-row{display:flex;gap:.5rem}.desk-photo-row figure{margin:.7rem 0;flex:1;min-width:0}.desk-photo-row img{display:block;width:100%;height:95px;object-fit:cover;border-radius:5px}.desk-photo-row figcaption{font-size:10px;color:var(--muted);margin-top:.3rem}.desk-itinerary{padding-left:1.1rem;border-top:1px solid var(--border);padding-top:.7rem}.desk-itinerary li{padding:.25rem 0}.desk-verdict{font-weight:600;color:var(--accent)}.change-row{border-top:1px solid var(--border);padding:.9rem 0}.change-row>strong{font-size:13px}.change-row .quiet{font-size:11px}.desk-empty{grid-column:1/-1;padding:1rem;border:1px dashed var(--border);font-size:13px;color:var(--muted)}body[data-view=explore] .page-brief{display:none}.desk-results[data-mode=changes]{align-items:start}
 @media(max-width:1100px){.desk-results{grid-template-columns:repeat(2,minmax(0,1fr))}.desk-results[data-mode=changes]{grid-template-columns:1fr}}
 @media(max-width:760px){.trip-desk{padding:1rem;margin:1.3rem 0;border-radius:9px}.desk-heading{display:block}.desk-heading h2{font-size:2rem;margin-bottom:.5rem}.desk-origin{font-size:11px}.desk-modes{grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;margin:1rem 0}.desk-modes button{font-size:12px;min-height:48px;padding:.7rem .4rem}.desk-intro{font-size:12px}.desk-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}.desk-controls label{min-width:0}.desk-controls label:first-child{grid-column:1/-1}.desk-actions{gap:.5rem}.desk-actions>.primary-link{flex:1;font-size:12px}.desk-results{display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:.7rem;padding-bottom:.6rem}.desk-card{flex:0 0 92%;scroll-snap-align:start;padding:1rem;max-width:100%}.desk-card h3{font-size:1.2rem}.desk-card p,.desk-card li{font-size:12px}.desk-card-actions .quiet,.desk-card-actions .primary-link{font-size:12px}.desk-results[data-mode=changes]{display:grid;grid-template-columns:1fr;overflow:visible}.desk-results[data-mode=changes] .desk-card{max-width:100%}.desk-big{font-size:2rem}.desk-photo-row img{height:115px}}
+
+/* Each experience has its own composition, typography and surface palette. */
+body[data-view=fall]{color-scheme:light;--bg:#f4eddf;--surface:#fffaf0;--raised:#e9dcc6;--text:#382b20;--muted:#705d48;--border:#cfbda4;--accent:#984519;--blue:#9a4217;--purple:#984519}
+body[data-view=winter]{color-scheme:light;--bg:#e9f2f7;--surface:#fff;--raised:#dbeaf3;--text:#19374b;--muted:#4f697a;--border:#b9cedc;--accent:#17658d;--blue:#17658d;--purple:#17658d}
+body[data-view=aurora]{--bg:#070b16;--surface:#0e1628;--raised:#18243c;--border:#2d3c5f;--accent:#8ef3c6;background:radial-gradient(ellipse at 90% 5%,#23304e 0,transparent 40%),#070b16}
+body[data-view=photos]{--bg:#141718;--surface:#202526;--raised:#293233;--border:#465354;--accent:#c4e6ce}
+body:is([data-view=fall],[data-view=winter]) .topbar{background:#101d29;color:#f2f5f8;--text:#f2f5f8;--muted:#bbcbda;--accent:#f0c38e;--blue:#59bded;--border:#3b4e5e}
+body[data-view=fall] .intro{grid-template-columns:1.05fr 1fr;padding:2.4rem 0;gap:3rem}
+body[data-view=fall] .intro h1{font-family:Georgia,serif;font-weight:400;font-size:clamp(3rem,6vw,6rem);letter-spacing:-.065em;line-height:1.05}
+body[data-view=fall] .hero-photo{height:340px;border-radius:50% 50% 4px 4px;box-shadow:12px 12px 0 #d9c6a7}
+body[data-view=fall] .guide-heading h2,body[data-view=fall] .mission-head h2{font-family:Georgia,serif;letter-spacing:-.035em}
+body[data-view=fall] .map-layout{grid-template-columns:minmax(0,1.6fr) minmax(300px,.8fr)}
+body[data-view=fall] .season-dashboard{border:0;background:#e9dcc6;border-radius:0}
+body[data-view=fall] .place-card{border-radius:0;border:0;border-top:2px solid var(--accent)}
+body[data-view=fall] .reports-panel{background:var(--surface);padding:1rem;border:1px solid var(--border)}
+body[data-view=aurora] .intro{position:relative;min-height:520px;display:flex;align-items:center;padding:3rem;isolation:isolate;overflow:hidden;border:1px solid #3b4b6a;border-radius:16px;margin:1.5rem 0}
+body[data-view=aurora] .intro>div{position:relative;z-index:2;max-width:650px;text-shadow:0 2px 20px #000}
+body[data-view=aurora] .hero-photo{position:absolute;inset:0;height:100%;width:100%;margin:0;z-index:-1;border:0;border-radius:0}
+body[data-view=aurora] .hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#070b16ed,#070b1655)}
+body[data-view=aurora] .hero-photo figcaption{z-index:1;text-align:right}
+body[data-view=aurora] .intro h1{font-size:clamp(4rem,7vw,7rem)}
+body[data-view=aurora] .season-dashboard{padding:2rem;background:linear-gradient(125deg,#15243d,#101526);border-radius:16px}
+body[data-view=aurora] .mission-head{border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+body[data-view=aurora] .night-grid{gap:1rem}
+body[data-view=aurora] .night-card{background:#090f20;border-radius:12px;border-top:3px solid #8ef3c6}
+body[data-view=aurora] .aurora-panel{border:0;background:transparent;margin:1rem 0 3rem}
+body[data-view=aurora] .aurora-panel>summary{font-size:18px;color:#b7c9f4}
+body[data-view=aurora] .trip-desk{border-style:dashed;background:#101829}
+body[data-view=winter] .intro{grid-template-columns:1fr 1.25fr;gap:2rem;padding:2rem 0}
+body[data-view=winter] .intro h1{font:800 clamp(3rem,5.5vw,5.4rem)/1.02 var(--body);letter-spacing:-.07em}
+body[data-view=winter] .hero-photo{height:340px;border-radius:4px;clip-path:polygon(8% 0,100% 0,100% 100%,0 100%)}
+body[data-view=winter] .season-dashboard{border:0;box-shadow:0 12px 35px #1a537414;border-radius:3px;padding:2rem}
+body[data-view=winter] .snow-day{background:#e4f1f8;border:0;border-radius:0;border-bottom:3px solid #a4c5d9;color:var(--text)}
+body[data-view=winter] .snow-day[aria-pressed=true]{background:#c8e3f3;border-color:#17658d}
+body[data-view=winter] .page-brief{padding:1.5rem;background:#d5e5ef;border-radius:3px}
+body[data-view=winter] .featured-place{background:#f9fcff}
+body[data-view=winter] .place-card{border-radius:3px}
+body[data-view=weather] .intro{display:block;padding:1.5rem 0 .5rem}
+body[data-view=weather] .intro h1{font:700 clamp(2.2rem,4vw,3.6rem)/1.1 var(--body);letter-spacing:-.05em}
+body[data-view=weather] .hero-photo,body[data-view=weather] .intro>.eyebrow{display:none}
+body[data-view=weather] .season-dashboard{border-radius:0;border-left:4px solid var(--accent);border-top:0}
+body[data-view=photos] .intro{display:block;text-align:center;padding:2rem 0 1rem}
+body[data-view=photos] .intro h1{font-family:Georgia,serif;letter-spacing:-.05em;font-size:clamp(3rem,6vw,5.5rem);line-height:1.03}
+body[data-view=photos] .intro p{margin-left:auto;margin-right:auto;max-width:660px}
+body[data-view=photos] .intro-actions{justify-content:center}
+body[data-view=photos] .hero-photo{display:none}
+body[data-view=photos] .community-map{height:300px}
+body[data-view=photos] .photo-grid{display:block;columns:3;column-gap:1rem}
+body[data-view=photos] .photo-card{break-inside:avoid;margin-bottom:1rem;border:0;border-radius:2px}
+body[data-view=photos] .photo-card img{height:auto;max-height:600px;object-fit:contain}
+body[data-view=saved] .intro{display:block;max-width:760px}
+body[data-view=saved] .hero-photo{display:none}
+body:is([data-view=fall],[data-view=winter]) .primary-link{background:var(--accent);color:#fff;border-color:var(--accent)}
+body:is([data-view=fall],[data-view=winter]) .trip-desk,body:is([data-view=fall],[data-view=winter]) .desk-card,body:is([data-view=fall],[data-view=winter]) .desk-modes button,body:is([data-view=fall],[data-view=winter]) .hour-cell,body:is([data-view=fall],[data-view=winter]) .forecast-day{background:var(--surface);color:var(--text)}
+body:is([data-view=fall],[data-view=winter]) .desk-reasons li{color:var(--muted)}
+body:is([data-view=fall],[data-view=winter]) .desk-modes button[aria-pressed=true],body:is([data-view=fall],[data-view=winter]) .forecast-day[aria-pressed=true]{background:var(--raised)}
+body:is([data-view=fall],[data-view=winter]) input,body:is([data-view=fall],[data-view=winter]) select{background:var(--surface);color:var(--text)}
+.community-account{display:flex;align-items:center;justify-content:space-between;gap:1.5rem;border:1px solid var(--border);padding:1.5rem;margin:1rem 0 2rem;background:var(--surface)}
+.community-account p{font-size:13px;color:var(--muted)}.community-account .primary-link{flex:none}
+@media(max-width:760px){
+  body[data-view=fall] .intro,body[data-view=winter] .intro{display:block;padding:1.5rem 0}
+  body[data-view=fall] .intro h1{font-size:clamp(3rem,12vw,4.5rem)}
+  body[data-view=fall] .hero-photo{height:230px;width:calc(100% - 12px);margin-bottom:1rem}
+  body[data-view=fall] .map-layout{display:block}
+  body[data-view=aurora] .intro{min-height:450px;padding:1.4rem;margin:.8rem 0;border-radius:8px}
+  body[data-view=aurora] .intro h1{font-size:4.1rem}
+  body[data-view=aurora] .intro>div{width:100%}
+  body[data-view=aurora] .hero-photo{margin:0;height:100%}
+  body[data-view=aurora] .hero-photo figcaption{font-size:9px}
+  body[data-view=aurora] .season-dashboard,body[data-view=winter] .season-dashboard{padding:1rem}
+  body[data-view=winter] .intro h1{font-size:clamp(2.8rem,12vw,4.5rem)}
+  body[data-view=winter] .hero-photo{height:200px;clip-path:none}
+  body[data-view=winter] .page-brief{padding:1rem}
+  body[data-view=photos] .intro h1{font-size:3.4rem}
+  body[data-view=photos] .photo-grid{columns:1}
+  .community-account{display:block;padding:1rem}.community-account .primary-link{width:100%;margin-top:.5rem}
+}

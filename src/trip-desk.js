@@ -38,7 +38,7 @@ const TripDesk = (() => {
   function route(nextView){
     if(!state.ready)return;
     const changed=state.view!==nextView;state.view=nextView;const desk=$('tripDesk');desk.hidden=['photos','saved'].includes(nextView);if(desk.hidden){invalidate();return;}
-    if(nextView==='fall'||nextView==='weather')$('mapLayout').after(desk);else if(nextView==='winter')$('seasonDashboard').after(desk);else $('pageBrief').before(desk);
+    if(nextView==='fall'||nextView==='weather')$('mapLayout').after(desk);else if(nextView==='winter')$('seasonDashboard').after(desk);else if(nextView==='aurora')$('filterDrawer').after(desk);else $('pageBrief').before(desk);
     if(changed){$('deskIntent').value={fall:'fall',winter:'winter',aurora:'aurora'}[nextView]||'nature';setMode(nextView==='aurora'?'sky':'worth',false);}
     sync();
   }

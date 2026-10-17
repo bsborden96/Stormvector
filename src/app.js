@@ -114,6 +114,7 @@ function route() {
   $('heroCopy').textContent=t[4];
   $('sceneLabel').textContent={aurora:'DARK SKIES / CLOUD WINDOWS / NOAA GUIDANCE',fall:'WOODED TRAILS / FALL COLOR / CHANGING SEASONS',winter:'SNOWY FORESTS / COLD DAYS / WINTER QUIET',weather:'YOUR LOCATION / YOUR WEEK / YOUR WEATHER',photos:'SHARED MOMENTS / REAL PLACES / COMMUNITY PHOTOS'}[view]||'THE GREAT LAKES / FOUR SEASONS / ONE GUIDE';
   Experience.renderHero(view);
+  arrangePage(view);
   $('guide').hidden=view==='photos';$('communityPanel').hidden=view!=='photos';$('liveStrip').hidden=true;$('nearMe').hidden=view==='photos';
   $('filterDrawer').open=view==='weather';
   $('mapSwitch').hidden=view==='weather';
@@ -373,14 +374,14 @@ async function setOriginFromSearch(e) {
   finally{if(version===originVersion)$('setOrigin').disabled=false;}
 }
 function useGps() {
-  if(!navigator.geolocation){$('originStatus').textContent='Location is unavailable in this browser. Enter a city instead.';return;}
-  const version=++originVersion;$('originStatus').textContent='Getting a fresh GPS fix…';$('nearMe').disabled=true;
-  navigator.geolocation.getCurrentPosition(pos=>{
-    if(version!==originVersion)return;$('setOrigin').disabled=false;$('nearMe').disabled=false;
+  const version=++originVersion;
+  $('originStatus').textContent='Requesting your location…';$('nearMe').disabled=true;
+  Locator.request(pos=>{
+    if(version!==originVersion)return;
+    $('setOrigin').disabled=false;$('nearMe').disabled=false;
     const {latitude:lat,longitude:lon,accuracy}=pos.coords;
-    if(!Number.isFinite(lat)||!Number.isFinite(lon)){ $('originStatus').textContent='The browser returned an invalid location. Try again or enter a city.';return; }
     changeOrigin({name:'your location',lat,lon,accuracy:Number.isFinite(accuracy)?accuracy:null,locatedAt:pos.timestamp||Date.now(),source:'gps'});
-  },error=>{if(version===originVersion){$('originStatus').textContent=error.code===1?'Location permission is off. Allow location for this site, or enter a city.':error.code===3?'GPS timed out. Try again outdoors or enter a city.':'GPS unavailable. Try again or enter a city.';$('setOrigin').disabled=false;$('nearMe').disabled=false;}},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+  },message=>{if(version===originVersion){$('originStatus').textContent=message;$('setOrigin').disabled=false;$('nearMe').disabled=false;}},message=>{if(version===originVersion)$('originStatus').textContent=message;});
 }
 document.addEventListener('DOMContentLoaded',init);
 
@@ -486,4 +487,17 @@ async function requestDrive(from,to) {
     const result={...r,checkedAt:Date.now()};driveCache.set(key,result);return result;
   });
   routeQueue=work.catch(()=>{});drivePending.set(key,work);work.finally(()=>{if(drivePending.get(key)===work)drivePending.delete(key);}).catch(()=>{});return work;
+}
+
+function arrangePage(nextView) {
+  const orders={
+    explore:['tripDesk','pageBrief','guideHeading','filterDrawer','seasonDashboard','mapSwitch','mapLayout','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
+    fall:['guideHeading','filterDrawer','mapSwitch','mapLayout','seasonDashboard','reportsPanel','tripDesk','pageBrief','resultsHeading','destinationGrid','comparisonPanel','coverageNote','auroraPanel'],
+    aurora:['seasonDashboard','auroraPanel','pageBrief','guideHeading','filterDrawer','tripDesk','mapSwitch','mapLayout','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel'],
+    winter:['seasonDashboard','pageBrief','guideHeading','filterDrawer','mapSwitch','mapLayout','tripDesk','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
+    weather:['seasonDashboard','mapLayout','guideHeading','filterDrawer','tripDesk','pageBrief','mapSwitch','resultsHeading','destinationGrid','comparisonPanel','coverageNote','reportsPanel','auroraPanel'],
+    saved:['guideHeading','filterDrawer','resultsHeading','destinationGrid','mapLayout','pageBrief','seasonDashboard','mapSwitch','tripDesk','comparisonPanel','coverageNote','reportsPanel','auroraPanel']
+  };
+  if(orders[nextView])orders[nextView].forEach(id=>{const n=$(id);if(n)$('guide').append(n);});
+  $('auroraPanel').open=nextView==='aurora';
 }

@@ -59,3 +59,9 @@ Four tools reuse the full selected coordinates and existing forecasts.
 The existing foliage refresh now retains up to 14 actual source retrievals in `data/fall-history.json`; initial history comes from real previously committed snapshots. Forecast baselines and visit timestamps stay in browser storage (at most 40 coordinate keys). Routes are deduplicated, queued at no more than one request start per second, and cached for 30 minutes. Canceled or superseded searches cannot append results to a new starting area or planner mode. All provider failures remain visible.
 
 Validation includes pure trip-decision tests and a DOM-only fixture run covering all four tools, seven routes, separate road directions, first-visit handling, and cancellation of a late route request. Physical-device and browser layout testing remain unavailable. No new build step or application package dependency was added.
+
+### Community accounts and location fallback
+
+Community Photos links to the hosted `/account` center for email/password signup, profiles, private inbox, photo likes and account-owned uploads/removal. Recovery codes support password resets; email verification and emailed reset links are not configured. Anonymous photo uploads continue to use browser removal receipts. The email account service is implemented in `community-service/worker/auth.js` and does not require ChatGPT sign-in.
+
+Seasonal pages use distinct compositions and palettes: map-first cream foliage, immersive night-sky aurora, ice-blue snow forecasts, compact local weather and masonry community photos. `src/geolocation.js` shares fresh precise-location requests and a standard-device fallback, with actionable permission errors. Browser rendering and physical-device GPS must still be checked on real iPhone/Android devices.
