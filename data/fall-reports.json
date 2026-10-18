@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-17T14:13:44.096358+00:00",
+  "retrievedAt": "2026-10-18T14:36:52.420508+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -817,7 +817,7 @@
       "percent": 100.0,
       "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-17T08:18:00-05:00"
+      "reportedAt": "2026-10-18T09:19:00-05:00"
     },
     {
       "id": "e18d6fff-f8c8-4caf-af35-2c0214dc85dd",
@@ -886,10 +886,10 @@
       "state": "WI",
       "lat": 43.333034,
       "lon": -90.391475,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-16T14:26:00-05:00"
+      "reportedAt": "2026-10-18T09:10:00-05:00"
     },
     {
       "id": "ff19609e-8313-4e62-a028-1d25a51b124f",
