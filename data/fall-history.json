@@ -3198,6 +3198,776 @@
           "reportedAt": "2026-10-14T11:13:00-05:00"
         }
       ]
+    },
+    {
+      "retrievedAt": "2026-10-19T17:29:49.247266+00:00",
+      "reports": [
+        {
+          "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
+          "name": "Algoma",
+          "county": "Kewaunee",
+          "lat": 44.596816,
+          "lon": -87.443459,
+          "percent": 75.0,
+          "reportedAt": "2026-10-15T13:08:00-05:00"
+        },
+        {
+          "id": "6872e831-deaa-4680-98ab-d8b18c751ceb",
+          "name": "Appleton (Fox Cities, Greater Appleton)",
+          "county": "Outagamie",
+          "lat": 44.259815,
+          "lon": -88.470579,
+          "percent": 80.0,
+          "reportedAt": "2026-10-18T11:35:00-05:00"
+        },
+        {
+          "id": "3c4f545c-3e11-4400-9c96-28511b7b9172",
+          "name": "Ashland",
+          "county": "Ashland",
+          "lat": 46.590216,
+          "lon": -90.891864,
+          "percent": 100.0,
+          "reportedAt": "2026-10-14T09:35:00-05:00"
+        },
+        {
+          "id": "f883f6cb-cb09-497a-969f-35cb67b78fcb",
+          "name": "Baraboo Area",
+          "county": "Sauk",
+          "lat": 43.472644,
+          "lon": -89.773726,
+          "percent": 80.0,
+          "reportedAt": "2026-10-19T09:05:00-05:00"
+        },
+        {
+          "id": "afa419a1-55f0-42be-9b02-58eea9d0456c",
+          "name": "Bayfield",
+          "county": "Bayfield",
+          "lat": 46.81276,
+          "lon": -90.837109,
+          "percent": 100.0,
+          "reportedAt": "2026-10-16T13:27:00-05:00"
+        },
+        {
+          "id": "fc5a3b92-9462-4d34-b147-5c70810ef300",
+          "name": "Beloit",
+          "county": "Rock",
+          "lat": 42.502256,
+          "lon": -89.04255,
+          "percent": 65.0,
+          "reportedAt": "2026-10-14T11:37:00-05:00"
+        },
+        {
+          "id": "6aa9dace-d421-4bb4-9f3a-06a1c07039b7",
+          "name": "Black River Falls",
+          "county": "Jackson",
+          "lat": 44.286983,
+          "lon": -90.846874,
+          "percent": 65.0,
+          "reportedAt": "2026-10-16T14:28:00-05:00"
+        },
+        {
+          "id": "40476d38-959a-4553-b9ad-cff2853e00c1",
+          "name": "Blue Hills - Weyerhaeuser & Bruce Area",
+          "county": "Rusk",
+          "lat": 45.440584,
+          "lon": -91.351486,
+          "percent": 95.0,
+          "reportedAt": "2026-10-14T10:21:00-05:00"
+        },
+        {
+          "id": "e436eeb0-9896-44fa-bd8a-79084e47b56a",
+          "name": "Blue Mounds",
+          "county": "Dane",
+          "lat": 43.015717,
+          "lon": -89.818549,
+          "percent": 25.0,
+          "reportedAt": "2026-10-15T12:20:00-05:00"
+        },
+        {
+          "id": "afc687fa-44a3-4733-819a-ee50a49d8aee",
+          "name": "Burnett County",
+          "county": "Burnett",
+          "lat": 46.058685,
+          "lon": -92.27889,
+          "percent": 85.0,
+          "reportedAt": "2026-10-19T10:51:00-05:00"
+        },
+        {
+          "id": "13ebab8a-b8b7-4e42-bc6b-fdd3c331d1d6",
+          "name": "Calumet County",
+          "county": "Calumet",
+          "lat": 44.029219,
+          "lon": -88.171597,
+          "percent": 90.0,
+          "reportedAt": "2026-10-19T08:57:00-05:00"
+        },
+        {
+          "id": "9c136055-eb00-4793-98ab-93dd7d585c1b",
+          "name": "Cassville",
+          "county": "Grant",
+          "lat": 42.714355,
+          "lon": -90.991205,
+          "percent": 50.0,
+          "reportedAt": "2026-10-16T14:25:00-05:00"
+        },
+        {
+          "id": "3960f13d-1f8b-4f65-9c09-7de2304d3fbf",
+          "name": "Chippewa County ",
+          "county": "Chippewa",
+          "lat": 44.934868,
+          "lon": -91.393703,
+          "percent": 100.0,
+          "reportedAt": "2026-10-16T08:34:00-05:00"
+        },
+        {
+          "id": "1040ed30-ee7b-4e96-b799-a3dff153bb2b",
+          "name": "Clark County",
+          "county": "Clark",
+          "lat": 44.731104,
+          "lon": -90.501158,
+          "percent": 100.0,
+          "reportedAt": "2026-10-19T12:01:00-05:00"
+        },
+        {
+          "id": "967d2849-5cfb-4f55-a4e9-fb5320cea9b3",
+          "name": "Delafield",
+          "county": "Waukesha",
+          "lat": 43.060796,
+          "lon": -88.406791,
+          "percent": 60.0,
+          "reportedAt": "2026-10-13T13:03:00-05:00"
+        },
+        {
+          "id": "f3b903d9-a70d-48d9-af28-d3d1c749fbd3",
+          "name": "Dodge County",
+          "county": "Dodge",
+          "lat": 43.406639,
+          "lon": -88.70589,
+          "percent": 50.0,
+          "reportedAt": "2026-10-13T16:25:00-05:00"
+        },
+        {
+          "id": "d220d049-5deb-462c-a5ec-39aaee61bf19",
+          "name": "Dodgeville",
+          "county": "Iowa",
+          "lat": 42.963044,
+          "lon": -90.130653,
+          "percent": 50.0,
+          "reportedAt": "2026-10-16T14:22:00-05:00"
+        },
+        {
+          "id": "f83c0806-b002-4e85-b207-79b54e82efb0",
+          "name": "Door County",
+          "county": "Door",
+          "lat": 44.842762,
+          "lon": -87.376943,
+          "percent": 100.0,
+          "reportedAt": "2026-10-16T13:42:00-05:00"
+        },
+        {
+          "id": "e405866d-4030-4af2-8607-dbe224c988bf",
+          "name": "Eau Claire",
+          "county": "Eau Claire",
+          "lat": 44.810627,
+          "lon": -91.504454,
+          "percent": 100.0,
+          "reportedAt": "2026-10-19T09:12:00-05:00"
+        },
+        {
+          "id": "a132679c-609b-4aa3-ba61-d84db4165574",
+          "name": "Elkhart Lake",
+          "county": "Sheboygan",
+          "lat": 43.832671,
+          "lon": -88.020901,
+          "percent": 70.0,
+          "reportedAt": "2026-10-19T09:36:00-05:00"
+        },
+        {
+          "id": "2762cce2-6b61-4889-8b2c-94c15fd23a63",
+          "name": "Fond du Lac",
+          "county": "Fond Du Lac",
+          "lat": 43.770455,
+          "lon": -88.483024,
+          "percent": 75.0,
+          "reportedAt": "2026-10-19T09:40:00-05:00"
+        },
+        {
+          "id": "bbc30794-9eef-4a27-bdaf-e395f4c53330",
+          "name": "Fort Atkinson",
+          "county": "Jefferson",
+          "lat": 42.926618,
+          "lon": -88.84132,
+          "percent": 70.0,
+          "reportedAt": "2026-10-14T09:55:00-05:00"
+        },
+        {
+          "id": "267e5e41-f80b-47c3-afda-58ecfd41cc96",
+          "name": "Fountain City",
+          "county": "Buffalo",
+          "lat": 44.131326,
+          "lon": -91.717602,
+          "percent": 40.0,
+          "reportedAt": "2026-10-16T11:29:00-05:00"
+        },
+        {
+          "id": "b6c8833e-9182-44c4-a583-2e561e3261bb",
+          "name": "Gays Mills",
+          "county": "Crawford",
+          "lat": 43.326907,
+          "lon": -90.795132,
+          "percent": 45.0,
+          "reportedAt": "2026-10-15T11:36:00-05:00"
+        },
+        {
+          "id": "c6c1dd59-3f7d-4a63-9c07-ccac8128874f",
+          "name": "Green Bay",
+          "county": "Brown",
+          "lat": 44.505961,
+          "lon": -88.078727,
+          "percent": 55.0,
+          "reportedAt": "2026-10-14T11:12:00-05:00"
+        },
+        {
+          "id": "84ad6ee8-e566-4e0f-baa8-cce33941d073",
+          "name": "Green County",
+          "county": "Green",
+          "lat": 42.601617,
+          "lon": -89.64236,
+          "percent": 65.0,
+          "reportedAt": "2026-10-16T10:31:00-05:00"
+        },
+        {
+          "id": "42e8110f-09a0-421f-a158-ca93e3c184b1",
+          "name": "Green Lake",
+          "county": "Green Lake",
+          "lat": 43.848519,
+          "lon": -88.963211,
+          "percent": 80.0,
+          "reportedAt": "2026-10-14T08:51:00-05:00"
+        },
+        {
+          "id": "c2089b95-4b7a-4161-ae67-fe83a42dfaac",
+          "name": "Hawkins",
+          "county": "Rusk",
+          "lat": 45.542046,
+          "lon": -90.722963,
+          "percent": 100.0,
+          "reportedAt": "2026-10-14T10:22:00-05:00"
+        },
+        {
+          "id": "6f626ae1-328e-472f-b90f-894e26cde8d5",
+          "name": "Hudson",
+          "county": "St. Croix",
+          "lat": 44.972712,
+          "lon": -92.756933,
+          "percent": 50.0,
+          "reportedAt": "2026-10-14T11:27:00-05:00"
+        },
+        {
+          "id": "f15bdedc-b401-4246-95b6-6a37b07b0765",
+          "name": "Hurley",
+          "county": "Iron",
+          "lat": 46.436188,
+          "lon": -90.202198,
+          "percent": 100.0,
+          "reportedAt": "2026-10-07T12:35:00-05:00"
+        },
+        {
+          "id": "da30ec84-9600-48d2-8c18-a1e7203545be",
+          "name": "Iron River",
+          "county": "Bayfield",
+          "lat": 46.564219,
+          "lon": -91.419884,
+          "percent": 100.0,
+          "reportedAt": "2026-10-15T12:20:00-05:00"
+        },
+        {
+          "id": "d1f1a7fc-3c07-4fbe-b7f3-7ff8be9a2b2f",
+          "name": "Janesville",
+          "county": "Rock",
+          "lat": 42.682943,
+          "lon": -89.023981,
+          "percent": 50.0,
+          "reportedAt": "2026-10-13T14:39:00-05:00"
+        },
+        {
+          "id": "d0d805b6-5dd1-4767-b599-c14d23a3d417",
+          "name": "Jefferson",
+          "county": "Jefferson",
+          "lat": 43.002638,
+          "lon": -88.810588,
+          "percent": 65.0,
+          "reportedAt": "2026-10-19T12:04:00-05:00"
+        },
+        {
+          "id": "ae1330c4-05b9-41a5-b6ac-60aeef728bb1",
+          "name": "Johnson Creek",
+          "county": "Jefferson",
+          "lat": 43.078339,
+          "lon": -88.775419,
+          "percent": 70.0,
+          "reportedAt": "2026-10-19T08:19:00-05:00"
+        },
+        {
+          "id": "1401fcf3-3078-49db-b84e-04a266b4f7be",
+          "name": "Juneau County",
+          "county": "Juneau",
+          "lat": 43.917318,
+          "lon": -90.272288,
+          "percent": 50.0,
+          "reportedAt": "2026-10-12T13:07:00-05:00"
+        },
+        {
+          "id": "4e2261a3-0366-459d-b649-9f640fcbbd4b",
+          "name": "Kewaunee County",
+          "county": "Kewaunee",
+          "lat": 44.457315,
+          "lon": -87.52458,
+          "percent": 75.0,
+          "reportedAt": "2026-10-14T14:03:00-05:00"
+        },
+        {
+          "id": "6c8d6143-a887-4e47-bec4-4ea21bb772f9",
+          "name": "Kickapoo Valley Reserve",
+          "county": "Vernon",
+          "lat": 43.594675,
+          "lon": -90.630954,
+          "percent": 70.0,
+          "reportedAt": "2026-10-16T14:21:00-05:00"
+        },
+        {
+          "id": "7449298a-20b2-4b19-992f-81d6f4c92efe",
+          "name": "La Crosse",
+          "county": "La Crosse",
+          "lat": 43.796631,
+          "lon": -91.239233,
+          "percent": 40.0,
+          "reportedAt": "2026-10-12T08:42:00-05:00"
+        },
+        {
+          "id": "be79fd56-b67a-4d3a-a150-f2463cd0451f",
+          "name": "La Pointe, Madeline Island",
+          "county": "Ashland",
+          "lat": 46.778942,
+          "lon": -90.78688,
+          "percent": 100.0,
+          "reportedAt": "2026-10-16T13:27:00-05:00"
+        },
+        {
+          "id": "a9a685cf-8879-474a-a24e-443e09c7a744",
+          "name": "Ladysmith",
+          "county": "Rusk",
+          "lat": 45.47967,
+          "lon": -91.111216,
+          "percent": 95.0,
+          "reportedAt": "2026-10-14T10:22:00-05:00"
+        },
+        {
+          "id": "1fa2bb31-26e8-489f-81a5-62521f41523f",
+          "name": "Lafayette County",
+          "county": "Lafayette",
+          "lat": 42.687947,
+          "lon": -90.110804,
+          "percent": 55.0,
+          "reportedAt": "2026-10-15T14:23:00-05:00"
+        },
+        {
+          "id": "74f72208-a9b2-4c6a-8d4a-f677a73ffd8d",
+          "name": "Lake Geneva",
+          "county": "Walworth",
+          "lat": 42.589705,
+          "lon": -88.437732,
+          "percent": 60.0,
+          "reportedAt": "2026-10-14T18:23:00-05:00"
+        },
+        {
+          "id": "dea79527-44ca-4f73-a029-9ed2eb1b537d",
+          "name": "Madison",
+          "county": "Dane",
+          "lat": 43.075356,
+          "lon": -89.388271,
+          "percent": 60.0,
+          "reportedAt": "2026-10-16T17:02:00-05:00"
+        },
+        {
+          "id": "822cc940-f2ce-4e55-ad9c-9e7941af684c",
+          "name": "Manitowish Waters",
+          "county": "Vilas",
+          "lat": 46.123081,
+          "lon": -89.877928,
+          "percent": 100.0,
+          "reportedAt": "2026-10-09T13:01:00-05:00"
+        },
+        {
+          "id": "f8329b4a-ef26-450a-94d7-3c5b95b856a6",
+          "name": "Manitowoc",
+          "county": "Manitowoc",
+          "lat": 44.088792,
+          "lon": -87.66856,
+          "percent": 90.0,
+          "reportedAt": "2026-10-16T12:12:00-05:00"
+        },
+        {
+          "id": "34ad3eec-6f44-4733-8c4a-524fdc8f387f",
+          "name": "Marinette County - South",
+          "county": "Marinette",
+          "lat": 45.098073,
+          "lon": -87.779815,
+          "percent": 100.0,
+          "reportedAt": "2026-10-14T12:18:00-05:00"
+        },
+        {
+          "id": "7150b4ad-77bf-4df5-8bd3-cdfd0992307a",
+          "name": "Marquette County",
+          "county": "Marquette",
+          "lat": 43.793587,
+          "lon": -89.330276,
+          "percent": 30.0,
+          "reportedAt": "2026-10-09T14:25:00-05:00"
+        },
+        {
+          "id": "1a7eca19-f68f-4782-b07b-0e2ebcea4d04",
+          "name": "Marshfield",
+          "county": "Wood",
+          "lat": 44.661233,
+          "lon": -90.178011,
+          "percent": 50.0,
+          "reportedAt": "2026-10-05T11:36:00-05:00"
+        },
+        {
+          "id": "890b94dc-ea49-4edd-9fbf-1029c723ac70",
+          "name": "Medford",
+          "county": "Taylor",
+          "lat": 45.133943,
+          "lon": -90.345659,
+          "percent": 100.0,
+          "reportedAt": "2026-10-13T13:57:00-05:00"
+        },
+        {
+          "id": "84386dae-6d6c-492f-8eed-890a2a3fa5b0",
+          "name": "Middleton",
+          "county": "Dane",
+          "lat": 43.09499,
+          "lon": -89.511237,
+          "percent": 60.0,
+          "reportedAt": "2026-10-16T08:54:00-05:00"
+        },
+        {
+          "id": "d1c64122-7e51-4dfa-87a7-de2bb7717571",
+          "name": "Milwaukee",
+          "county": "Milwaukee",
+          "lat": 43.030929,
+          "lon": -88.040957,
+          "percent": 50.0,
+          "reportedAt": "2026-10-16T15:30:00-05:00"
+        },
+        {
+          "id": "b9fab100-a79c-4ad2-8ac8-b5a0c0dfeda7",
+          "name": "Mineral Point",
+          "county": "Iowa",
+          "lat": 42.858078,
+          "lon": -90.180861,
+          "percent": 50.0,
+          "reportedAt": "2026-10-13T09:14:00-05:00"
+        },
+        {
+          "id": "eb08b3b0-4c07-45d9-a172-f53fed09a764",
+          "name": "Minocqua",
+          "county": "Oneida",
+          "lat": 45.86043,
+          "lon": -89.708531,
+          "percent": 100.0,
+          "reportedAt": "2026-10-13T11:14:00-05:00"
+        },
+        {
+          "id": "fb7bed42-4ded-444f-9c88-c6feb14f8724",
+          "name": "Mont du Lac",
+          "county": "Douglas",
+          "lat": 46.651613,
+          "lon": -92.284352,
+          "percent": 80.0,
+          "reportedAt": "2026-10-14T11:13:00-05:00"
+        },
+        {
+          "id": "ab445a86-bd22-482b-bd5e-c3bec352a664",
+          "name": "Mukwonago",
+          "county": "Waukesha",
+          "lat": 42.862307,
+          "lon": -88.390369,
+          "percent": 45.0,
+          "reportedAt": "2026-10-16T16:46:00-05:00"
+        },
+        {
+          "id": "f37962ba-0037-416d-8936-0c0fa16f8640",
+          "name": "New Richmond",
+          "county": "St. Croix",
+          "lat": 45.126766,
+          "lon": -92.543255,
+          "percent": 60.0,
+          "reportedAt": "2026-10-14T11:42:00-05:00"
+        },
+        {
+          "id": "72b3f1ee-28f0-40a6-8722-7db9a4e07628",
+          "name": "Oak Creek",
+          "county": "Milwaukee",
+          "lat": 42.89841,
+          "lon": -87.917783,
+          "percent": 20.0,
+          "reportedAt": "2026-10-06T14:07:00-05:00"
+        },
+        {
+          "id": "ad5e7ae4-b980-4db8-b3c2-c7d1d823df2b",
+          "name": "Oconomowoc",
+          "county": "Waukesha",
+          "lat": 43.110827,
+          "lon": -88.496952,
+          "percent": 65.0,
+          "reportedAt": "2026-10-14T13:27:00-05:00"
+        },
+        {
+          "id": "873e7b49-6cd6-4eb5-939b-43b55ff15c8f",
+          "name": "Oconto County",
+          "county": "Oconto",
+          "lat": 44.886615,
+          "lon": -87.870651,
+          "percent": 100.0,
+          "reportedAt": "2026-10-13T14:03:00-05:00"
+        },
+        {
+          "id": "59c37f95-8e3b-4f7c-850c-919f8c814d0c",
+          "name": "Oshkosh",
+          "county": "Winnebago",
+          "lat": 44.014771,
+          "lon": -88.540005,
+          "percent": 75.0,
+          "reportedAt": "2026-10-14T11:25:00-05:00"
+        },
+        {
+          "id": "d169a7dc-8da3-4e6f-bea3-f2e3347d2077",
+          "name": "Ozaukee County",
+          "county": "Ozaukee",
+          "lat": 43.385458,
+          "lon": -87.872525,
+          "percent": 55.0,
+          "reportedAt": "2026-10-16T10:26:00-05:00"
+        },
+        {
+          "id": "768efe79-e093-4fc9-901f-c3d16bb1237d",
+          "name": "Pepin County",
+          "county": "Pepin",
+          "lat": 44.621797,
+          "lon": -91.970085,
+          "percent": 60.0,
+          "reportedAt": "2026-10-15T15:12:00-05:00"
+        },
+        {
+          "id": "69e3101d-96b2-4283-aa54-e3e11ae81f9a",
+          "name": "Pierce County",
+          "county": "Pierce",
+          "lat": 44.860096,
+          "lon": -92.622965,
+          "percent": 75.0,
+          "reportedAt": "2026-10-14T15:57:00-05:00"
+        },
+        {
+          "id": "2810c76d-9d2c-4a71-b5dc-f0b96be27906",
+          "name": "Platteville",
+          "county": "Grant",
+          "lat": 42.72351,
+          "lon": -90.485411,
+          "percent": 50.0,
+          "reportedAt": "2026-10-15T14:15:00-05:00"
+        },
+        {
+          "id": "f2abc13c-6547-49a9-9e1f-bc953b9dde4a",
+          "name": "Pleasant Prairie",
+          "county": "Kenosha",
+          "lat": 42.529339,
+          "lon": -87.929082,
+          "percent": 75.0,
+          "reportedAt": "2026-10-09T14:59:00-05:00"
+        },
+        {
+          "id": "0016df19-945a-4e25-9648-e973521d086b",
+          "name": "Plymouth",
+          "county": "Sheboygan",
+          "lat": 43.751249,
+          "lon": -87.977423,
+          "percent": 50.0,
+          "reportedAt": "2026-10-15T10:45:00-05:00"
+        },
+        {
+          "id": "e18d6fff-f8c8-4caf-af35-2c0214dc85dd",
+          "name": "Port Washington",
+          "county": "Ozaukee",
+          "lat": 43.387799,
+          "lon": -87.869768,
+          "percent": 35.0,
+          "reportedAt": "2026-10-13T14:41:00-05:00"
+        },
+        {
+          "id": "b9402cf4-c500-4bd9-9a13-b0e84522f7ea",
+          "name": "Portage",
+          "county": "Columbia",
+          "lat": 43.539639,
+          "lon": -89.459751,
+          "percent": 80.0,
+          "reportedAt": "2026-10-16T13:43:00-05:00"
+        },
+        {
+          "id": "460500a0-86a1-4e33-8c89-40d33d7a05c1",
+          "name": "Pringle Nature Center at Bristol Woods County Park",
+          "county": "Kenosha",
+          "lat": 42.53265,
+          "lon": -88.006905,
+          "percent": 85.0,
+          "reportedAt": "2026-10-16T15:33:00-05:00"
+        },
+        {
+          "id": "c68a0bfa-507b-4a44-af57-6ef28143572a",
+          "name": "Racine County",
+          "county": "Racine",
+          "lat": 42.722733,
+          "lon": -87.795522,
+          "percent": 40.0,
+          "reportedAt": "2026-10-14T15:31:00-05:00"
+        },
+        {
+          "id": "01748694-962c-492f-9932-46eb41a5de28",
+          "name": "Retzer Nature Center",
+          "county": "Waukesha",
+          "lat": 43.013225,
+          "lon": -88.259481,
+          "percent": 40.0,
+          "reportedAt": "2026-10-13T15:09:00-05:00"
+        },
+        {
+          "id": "cebb40de-db7e-46e8-8edf-c648bb1b6deb",
+          "name": "Richland County",
+          "county": "Richland",
+          "lat": 43.333034,
+          "lon": -90.391475,
+          "percent": 95.0,
+          "reportedAt": "2026-10-18T09:10:00-05:00"
+        },
+        {
+          "id": "ff19609e-8313-4e62-a028-1d25a51b124f",
+          "name": "Rome",
+          "county": "Adams",
+          "lat": 44.22112,
+          "lon": -89.807466,
+          "percent": 35.0,
+          "reportedAt": "2026-10-09T15:42:00-05:00"
+        },
+        {
+          "id": "98128756-dbb0-407e-bb47-901a3b68ff05",
+          "name": "Sauk Prairie Area",
+          "county": "Sauk",
+          "lat": 43.271131,
+          "lon": -89.722775,
+          "percent": 30.0,
+          "reportedAt": "2026-10-09T15:05:00-05:00"
+        },
+        {
+          "id": "949be7d7-4cc7-42fd-aa77-fe8c07f04070",
+          "name": "Stevens Point Area",
+          "county": "Portage",
+          "lat": 44.523187,
+          "lon": -89.583151,
+          "percent": 75.0,
+          "reportedAt": "2026-10-16T16:53:00-05:00"
+        },
+        {
+          "id": "f74ea92b-abb5-41b1-882a-f907e1ae802f",
+          "name": "Superior",
+          "county": "Douglas",
+          "lat": 46.722904,
+          "lon": -92.068374,
+          "percent": 80.0,
+          "reportedAt": "2026-10-18T13:48:00-05:00"
+        },
+        {
+          "id": "df223ea5-e823-48ec-abcd-caf13208354d",
+          "name": "Tomah",
+          "county": "Monroe",
+          "lat": 43.990856,
+          "lon": -90.505195,
+          "percent": 60.0,
+          "reportedAt": "2026-10-14T11:17:00-05:00"
+        },
+        {
+          "id": "e28322f2-0cd8-468f-9458-3492cd474b2a",
+          "name": "Trempealeau County",
+          "county": "Trempealeau",
+          "lat": 44.003756,
+          "lon": -91.439725,
+          "percent": 55.0,
+          "reportedAt": "2026-10-16T14:27:00-05:00"
+        },
+        {
+          "id": "1dcebd57-220b-4b0f-a986-fa84dadb2282",
+          "name": "Vernon County",
+          "county": "Vernon",
+          "lat": 43.552965,
+          "lon": -90.897473,
+          "percent": 70.0,
+          "reportedAt": "2026-10-12T10:41:00-05:00"
+        },
+        {
+          "id": "ff01278b-81b3-4101-9fa2-5b58a58d7b0f",
+          "name": "Washington County",
+          "county": "Washington",
+          "lat": 43.290515,
+          "lon": -88.280735,
+          "percent": 65.0,
+          "reportedAt": "2026-10-15T12:14:00-05:00"
+        },
+        {
+          "id": "80f5cd82-71b3-4035-91d2-b584662470e2",
+          "name": "Waupaca",
+          "county": "Waupaca",
+          "lat": 44.354191,
+          "lon": -89.087231,
+          "percent": 75.0,
+          "reportedAt": "2026-10-14T11:54:00-05:00"
+        },
+        {
+          "id": "726d0a41-4d77-49dd-be9b-9129952800da",
+          "name": "Wausau",
+          "county": "Marathon",
+          "lat": 44.93255,
+          "lon": -89.672227,
+          "percent": 100.0,
+          "reportedAt": "2026-10-16T17:15:00-05:00"
+        },
+        {
+          "id": "8d5fbc44-d89f-4cbd-a192-b66a3a9fc011",
+          "name": "West Bend",
+          "county": "Washington",
+          "lat": 43.405613,
+          "lon": -88.180373,
+          "percent": 70.0,
+          "reportedAt": "2026-10-12T08:43:00-05:00"
+        },
+        {
+          "id": "d71e6376-730c-4d69-8290-a1c345f73a25",
+          "name": "Wild Rose",
+          "county": "Waushara",
+          "lat": 44.172073,
+          "lon": -89.155656,
+          "percent": 75.0,
+          "reportedAt": "2026-10-16T14:23:00-05:00"
+        },
+        {
+          "id": "d21d3dc2-d43b-49af-9bf2-f988de3de5f5",
+          "name": "Wisconsin Rapids Area",
+          "county": "Wood",
+          "lat": 44.392006,
+          "lon": -89.823156,
+          "percent": 75.0,
+          "reportedAt": "2026-10-19T11:14:00-05:00"
+        }
+      ]
     }
   ]
 }
