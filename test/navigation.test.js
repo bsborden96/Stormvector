@@ -28,13 +28,15 @@ test('switching tabs refreshes the same destination and shows distinct dashboard
   vm.runInContext('ensureVisibleForecasts=()=>{};selectDestination=p=>{selected=p;renderDestination();renderResults();};selected=DESTINATIONS[0];selectedForecast=null;',context);
   for(const [view,title] of [['aurora','Follow the night.'],['winter','Watch the snow line.'],['fall','Find the color while it lasts.'],['weather','Your forecast, at a glance.']]){
     context.location.hash='#'+view;vm.runInContext('route()',context);
+    assert.equal(elements.filterDrawer.hidden,view==='weather');assert.equal(elements.taskLaunch.hidden,true);assert.equal(elements.activePlaceLabel.hidden,['fall','weather'].includes(view));assert.equal(elements.sortLabel.hidden,view==='weather');
+    if(view==='aurora')assert.ok(elements.activePlace.children.every(option=>destinations.find(p=>p.id===option.value).tags.includes('aurora')));
     assert.equal(doc.body.dataset.view,view);assert.match(elements.seasonDashboard.textContent,new RegExp(title.replaceAll('.','\\.')));
     assert.equal(elements.auroraPanel.hidden,view!=='aurora');assert.equal(elements.reportsPanel.hidden,view!=='fall');assert.equal(elements.guide.hidden,false);
     if(view==='aurora')assert.match(elements.destinationPanel.textContent,/Your northern-sky window/);
     if(view==='fall')assert.match(elements.destinationPanel.textContent,/Nearby fall color report/);
   }
   context.location.hash='#photos';vm.runInContext('route()',context);assert.equal(activated,1);assert.equal(elements.guide.hidden,true);assert.equal(elements.communityPanel.hidden,false);assert.equal(elements.liveStrip.hidden,true);
-  context.location.hash='#explore';vm.runInContext('route()',context);assert.equal(elements.communityPanel.hidden,true);assert.equal(elements.guide.hidden,false);assert.equal(elements.seasonDashboard.hidden,true);
+  context.location.hash='#explore';vm.runInContext('route()',context);assert.equal(elements.communityPanel.hidden,true);assert.equal(elements.guide.hidden,false);assert.equal(elements.seasonDashboard.hidden,true);assert.equal(elements.taskLaunch.hidden,false);assert.equal(doc.body.dataset.display,'list');
   context.location.hash='#photoForm';vm.runInContext('route()',context);assert.equal(elements.communityPanel.hidden,false);assert.equal(doc.body.dataset.view,'photos');
 });
 

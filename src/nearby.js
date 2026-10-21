@@ -3,7 +3,7 @@ const Nearby=(()=>{
   const $=id=>document.getElementById(id);
   function init(){}
   function observe(){}
-  function route(next){$('nearbyPanel').hidden=['photos','saved','weather'].includes(next);sync();}
+  function route(next){$('nearbyPanel').hidden=true;sync();}
   function sync(){
     const panel=$('nearbyPlaces');if(!panel)return;
     $('nearbyTitle').textContent=`Near ${origin.name}`;
