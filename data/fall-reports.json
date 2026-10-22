@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-21T15:58:13.653144+00:00",
+  "retrievedAt": "2026-10-22T15:53:47.634233+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -70,10 +70,10 @@
       "state": "WI",
       "lat": 42.502256,
       "lon": -89.04255,
-      "percent": 65.0,
-      "condition": "65% Color",
+      "percent": 85.0,
+      "condition": "85% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-14T11:37:00-05:00"
+      "reportedAt": "2026-10-22T10:50:00-05:00"
     },
     {
       "id": "6aa9dace-d421-4bb4-9f3a-06a1c07039b7",
@@ -118,10 +118,10 @@
       "state": "WI",
       "lat": 44.029219,
       "lon": -88.171597,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-19T08:57:00-05:00"
+      "reportedAt": "2026-10-21T11:51:00-05:00"
     },
     {
       "id": "9c136055-eb00-4793-98ab-93dd7d585c1b",
@@ -144,8 +144,8 @@
       "lon": -91.393703,
       "percent": 100.0,
       "condition": "100% Color",
-      "peak": "1st Week of October",
-      "reportedAt": "2026-10-16T08:34:00-05:00"
+      "peak": "Fading Peak",
+      "reportedAt": "2026-10-21T14:34:00-05:00"
     },
     {
       "id": "1040ed30-ee7b-4e96-b799-a3dff153bb2b",
@@ -298,10 +298,10 @@
       "state": "WI",
       "lat": 42.601617,
       "lon": -89.64236,
-      "percent": 65.0,
-      "condition": "65% Color",
+      "percent": 80.0,
+      "condition": "80% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-16T10:31:00-05:00"
+      "reportedAt": "2026-10-21T12:42:00-05:00"
     },
     {
       "id": "42e8110f-09a0-421f-a158-ca93e3c184b1",
@@ -334,10 +334,10 @@
       "state": "WI",
       "lat": 42.682943,
       "lon": -89.023981,
-      "percent": 50.0,
-      "condition": "50% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-13T14:39:00-05:00"
+      "reportedAt": "2026-10-21T11:17:00-05:00"
     },
     {
       "id": "d0d805b6-5dd1-4767-b599-c14d23a3d417",
@@ -358,10 +358,10 @@
       "state": "WI",
       "lat": 43.078339,
       "lon": -88.775419,
-      "percent": 70.0,
-      "condition": "70% Color",
+      "percent": 85.0,
+      "condition": "85% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-20T12:59:00-05:00"
+      "reportedAt": "2026-10-21T13:12:00-05:00"
     },
     {
       "id": "1401fcf3-3078-49db-b84e-04a266b4f7be",
@@ -382,10 +382,10 @@
       "state": "WI",
       "lat": 44.457315,
       "lon": -87.52458,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-14T14:03:00-05:00"
+      "reportedAt": "2026-10-21T15:53:00-05:00"
     },
     {
       "id": "6c8d6143-a887-4e47-bec4-4ea21bb772f9",
@@ -454,10 +454,10 @@
       "state": "WI",
       "lat": 43.075356,
       "lon": -89.388271,
-      "percent": 60.0,
-      "condition": "60% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "1st Week of November",
-      "reportedAt": "2026-10-16T17:02:00-05:00"
+      "reportedAt": "2026-10-21T11:05:00-05:00"
     },
     {
       "id": "822cc940-f2ce-4e55-ad9c-9e7941af684c",
@@ -481,7 +481,7 @@
       "percent": 100.0,
       "condition": "100% Color",
       "peak": "2nd Week of October",
-      "reportedAt": "2026-10-20T14:59:00-05:00"
+      "reportedAt": "2026-10-22T10:18:00-05:00"
     },
     {
       "id": "7150b4ad-77bf-4df5-8bd3-cdfd0992307a",
@@ -514,10 +514,10 @@
       "state": "WI",
       "lat": 43.09499,
       "lon": -89.511237,
-      "percent": 60.0,
-      "condition": "60% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-16T08:54:00-05:00"
+      "reportedAt": "2026-10-21T11:50:00-05:00"
     },
     {
       "id": "d1c64122-7e51-4dfa-87a7-de2bb7717571",
@@ -598,10 +598,10 @@
       "state": "WI",
       "lat": 42.89841,
       "lon": -87.917783,
-      "percent": 20.0,
-      "condition": "20% Color",
+      "percent": 50.0,
+      "condition": "50% Color",
       "peak": "1st Week of November",
-      "reportedAt": "2026-10-06T14:07:00-05:00"
+      "reportedAt": "2026-10-21T12:11:00-05:00"
     },
     {
       "id": "ad5e7ae4-b980-4db8-b3c2-c7d1d823df2b",
@@ -646,10 +646,10 @@
       "state": "WI",
       "lat": 43.385458,
       "lon": -87.872525,
-      "percent": 55.0,
-      "condition": "55% Color",
+      "percent": 60.0,
+      "condition": "60% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-16T10:26:00-05:00"
+      "reportedAt": "2026-10-22T07:36:00-05:00"
     },
     {
       "id": "768efe79-e093-4fc9-901f-c3d16bb1237d",
@@ -781,7 +781,7 @@
       "percent": 95.0,
       "condition": "95% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-18T09:10:00-05:00"
+      "reportedAt": "2026-10-21T13:29:00-05:00"
     },
     {
       "id": "ff19609e-8313-4e62-a028-1d25a51b124f",
@@ -826,10 +826,10 @@
       "state": "WI",
       "lat": 46.722904,
       "lon": -92.068374,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-18T13:48:00-05:00"
+      "reportedAt": "2026-10-22T10:51:00-05:00"
     },
     {
       "id": "df223ea5-e823-48ec-abcd-caf13208354d",
@@ -862,10 +862,10 @@
       "state": "WI",
       "lat": 43.290515,
       "lon": -88.280735,
-      "percent": 65.0,
-      "condition": "65% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-15T12:14:00-05:00"
+      "reportedAt": "2026-10-22T10:07:00-05:00"
     },
     {
       "id": "80f5cd82-71b3-4035-91d2-b584662470e2",
@@ -910,10 +910,10 @@
       "state": "WI",
       "lat": 44.392006,
       "lon": -89.823156,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "2nd Week of October",
-      "reportedAt": "2026-10-19T11:14:00-05:00"
+      "reportedAt": "2026-10-21T11:47:00-05:00"
     }
   ],
   "coverage": {
