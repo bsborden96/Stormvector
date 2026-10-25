@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-24T14:35:17.467559+00:00",
+  "retrievedAt": "2026-10-25T14:57:46.004661+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -22,10 +22,10 @@
       "state": "WI",
       "lat": 44.259815,
       "lon": -88.470579,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-18T11:35:00-05:00"
+      "reportedAt": "2026-10-24T10:26:00-05:00"
     },
     {
       "id": "3c4f545c-3e11-4400-9c96-28511b7b9172",
@@ -106,10 +106,10 @@
       "state": "WI",
       "lat": 46.058685,
       "lon": -92.27889,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-19T10:51:00-05:00"
+      "reportedAt": "2026-10-24T09:56:00-05:00"
     },
     {
       "id": "13ebab8a-b8b7-4e42-bc6b-fdd3c331d1d6",
@@ -238,10 +238,10 @@
       "state": "WI",
       "lat": 44.131326,
       "lon": -91.717602,
-      "percent": 40.0,
-      "condition": "40% Color",
+      "percent": 75.0,
+      "condition": "75% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-16T11:29:00-05:00"
+      "reportedAt": "2026-10-24T14:01:00-05:00"
     },
     {
       "id": "b6c8833e-9182-44c4-a583-2e561e3261bb",
