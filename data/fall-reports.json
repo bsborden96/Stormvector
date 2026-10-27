@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-26T17:24:35.858552+00:00",
+  "retrievedAt": "2026-10-27T16:42:16.772194+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -22,10 +22,10 @@
       "state": "WI",
       "lat": 44.259815,
       "lon": -88.470579,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-24T10:26:00-05:00"
+      "reportedAt": "2026-10-27T10:14:00-05:00"
     },
     {
       "id": "3c4f545c-3e11-4400-9c96-28511b7b9172",
@@ -40,28 +40,16 @@
       "reportedAt": "2026-10-14T09:35:00-05:00"
     },
     {
-      "id": "afa419a1-55f0-42be-9b02-58eea9d0456c",
-      "name": "Bayfield",
-      "county": "Bayfield",
-      "state": "WI",
-      "lat": 46.81276,
-      "lon": -90.837109,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-19T12:45:00-05:00"
-    },
-    {
       "id": "fc5a3b92-9462-4d34-b147-5c70810ef300",
       "name": "Beloit",
       "county": "Rock",
       "state": "WI",
       "lat": 42.502256,
       "lon": -89.04255,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-22T10:50:00-05:00"
+      "reportedAt": "2026-10-26T12:24:00-05:00"
     },
     {
       "id": "6aa9dace-d421-4bb4-9f3a-06a1c07039b7",
@@ -166,10 +154,10 @@
       "state": "WI",
       "lat": 43.406639,
       "lon": -88.70589,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T08:57:00-05:00"
+      "reportedAt": "2026-10-26T14:48:00-05:00"
     },
     {
       "id": "d220d049-5deb-462c-a5ec-39aaee61bf19",
@@ -205,7 +193,7 @@
       "percent": 90.0,
       "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-21T08:54:00-05:00"
+      "reportedAt": "2026-10-27T09:46:00-05:00"
     },
     {
       "id": "bbc30794-9eef-4a27-bdaf-e395f4c53330",
@@ -298,10 +286,10 @@
       "state": "WI",
       "lat": 42.682943,
       "lon": -89.023981,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-21T11:17:00-05:00"
+      "reportedAt": "2026-10-27T08:45:00-05:00"
     },
     {
       "id": "d0d805b6-5dd1-4767-b599-c14d23a3d417",
@@ -364,18 +352,6 @@
       "reportedAt": "2026-10-26T06:53:00-05:00"
     },
     {
-      "id": "be79fd56-b67a-4d3a-a150-f2463cd0451f",
-      "name": "La Pointe, Madeline Island",
-      "county": "Ashland",
-      "state": "WI",
-      "lat": 46.778942,
-      "lon": -90.78688,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-19T12:45:00-05:00"
-    },
-    {
       "id": "1fa2bb31-26e8-489f-81a5-62521f41523f",
       "name": "Lafayette County",
       "county": "Lafayette",
@@ -394,10 +370,10 @@
       "state": "WI",
       "lat": 42.589705,
       "lon": -88.437732,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 85.0,
+      "condition": "85% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-23T09:57:00-05:00"
+      "reportedAt": "2026-10-26T13:07:00-05:00"
     },
     {
       "id": "dea79527-44ca-4f73-a029-9ed2eb1b537d",
@@ -712,18 +688,6 @@
       "reportedAt": "2026-10-26T09:56:00-05:00"
     },
     {
-      "id": "f74ea92b-abb5-41b1-882a-f907e1ae802f",
-      "name": "Superior",
-      "county": "Douglas",
-      "state": "WI",
-      "lat": 46.722904,
-      "lon": -92.068374,
-      "percent": 95.0,
-      "condition": "95% Color",
-      "peak": "4th Week of October",
-      "reportedAt": "2026-10-22T10:51:00-05:00"
-    },
-    {
       "id": "df223ea5-e823-48ec-abcd-caf13208354d",
       "name": "Tomah",
       "county": "Monroe",
@@ -754,10 +718,10 @@
       "state": "WI",
       "lat": 43.290515,
       "lon": -88.280735,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-22T10:07:00-05:00"
+      "reportedAt": "2026-10-26T13:31:00-05:00"
     },
     {
       "id": "80f5cd82-71b3-4035-91d2-b584662470e2",
