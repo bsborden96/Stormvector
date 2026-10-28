@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-27T16:42:16.772194+00:00",
+  "retrievedAt": "2026-10-28T17:11:09.427456+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -46,10 +46,10 @@
       "state": "WI",
       "lat": 42.502256,
       "lon": -89.04255,
-      "percent": 95.0,
-      "condition": "95% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-26T12:24:00-05:00"
+      "reportedAt": "2026-10-28T11:32:00-05:00"
     },
     {
       "id": "6aa9dace-d421-4bb4-9f3a-06a1c07039b7",
@@ -124,18 +124,6 @@
       "reportedAt": "2026-10-21T14:34:00-05:00"
     },
     {
-      "id": "1040ed30-ee7b-4e96-b799-a3dff153bb2b",
-      "name": "Clark County",
-      "county": "Clark",
-      "state": "WI",
-      "lat": 44.731104,
-      "lon": -90.501158,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-19T12:01:00-05:00"
-    },
-    {
       "id": "967d2849-5cfb-4f55-a4e9-fb5320cea9b3",
       "name": "Delafield",
       "county": "Waukesha",
@@ -193,7 +181,7 @@
       "percent": 90.0,
       "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-27T09:46:00-05:00"
+      "reportedAt": "2026-10-27T13:24:00-05:00"
     },
     {
       "id": "bbc30794-9eef-4a27-bdaf-e395f4c53330",
@@ -253,7 +241,7 @@
       "percent": 80.0,
       "condition": "80% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-21T12:42:00-05:00"
+      "reportedAt": "2026-10-27T13:22:00-05:00"
     },
     {
       "id": "42e8110f-09a0-421f-a158-ca93e3c184b1",
@@ -298,10 +286,10 @@
       "state": "WI",
       "lat": 43.002638,
       "lon": -88.810588,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-22T11:31:00-05:00"
+      "reportedAt": "2026-10-27T12:12:00-05:00"
     },
     {
       "id": "ae1330c4-05b9-41a5-b6ac-60aeef728bb1",
@@ -370,10 +358,10 @@
       "state": "WI",
       "lat": 42.589705,
       "lon": -88.437732,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-26T13:07:00-05:00"
+      "reportedAt": "2026-10-27T13:23:00-05:00"
     },
     {
       "id": "dea79527-44ca-4f73-a029-9ed2eb1b537d",
@@ -382,10 +370,10 @@
       "state": "WI",
       "lat": 43.075356,
       "lon": -89.388271,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 85.0,
+      "condition": "85% Color",
       "peak": "1st Week of November",
-      "reportedAt": "2026-10-21T11:05:00-05:00"
+      "reportedAt": "2026-10-28T09:15:00-05:00"
     },
     {
       "id": "822cc940-f2ce-4e55-ad9c-9e7941af684c",
@@ -430,10 +418,10 @@
       "state": "WI",
       "lat": 43.09499,
       "lon": -89.511237,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 85.0,
+      "condition": "85% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-21T11:50:00-05:00"
+      "reportedAt": "2026-10-28T09:55:00-05:00"
     },
     {
       "id": "d1c64122-7e51-4dfa-87a7-de2bb7717571",
@@ -610,10 +598,10 @@
       "state": "WI",
       "lat": 42.53265,
       "lon": -88.006905,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T09:19:00-05:00"
+      "reportedAt": "2026-10-28T10:07:00-05:00"
     },
     {
       "id": "c68a0bfa-507b-4a44-af57-6ef28143572a",
@@ -634,10 +622,10 @@
       "state": "WI",
       "lat": 43.013225,
       "lon": -88.259481,
-      "percent": 70.0,
-      "condition": "70% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-20T12:22:00-05:00"
+      "percent": 80.0,
+      "condition": "80% Color",
+      "peak": "4th Week of October",
+      "reportedAt": "2026-10-27T14:54:00-05:00"
     },
     {
       "id": "cebb40de-db7e-46e8-8edf-c648bb1b6deb",
@@ -722,18 +710,6 @@
       "condition": "100% Color",
       "peak": "3rd Week of October",
       "reportedAt": "2026-10-26T13:31:00-05:00"
-    },
-    {
-      "id": "80f5cd82-71b3-4035-91d2-b584662470e2",
-      "name": "Waupaca",
-      "county": "Waupaca",
-      "state": "WI",
-      "lat": 44.354191,
-      "lon": -89.087231,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "4th Week of October",
-      "reportedAt": "2026-10-20T11:57:00-05:00"
     },
     {
       "id": "8d5fbc44-d89f-4cbd-a192-b66a3a9fc011",
