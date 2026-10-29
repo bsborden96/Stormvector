@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-28T17:11:09.427456+00:00",
+  "retrievedAt": "2026-10-29T17:26:55.460787+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -28,18 +28,6 @@
       "reportedAt": "2026-10-27T10:14:00-05:00"
     },
     {
-      "id": "3c4f545c-3e11-4400-9c96-28511b7b9172",
-      "name": "Ashland",
-      "county": "Ashland",
-      "state": "WI",
-      "lat": 46.590216,
-      "lon": -90.891864,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "2nd Week of October",
-      "reportedAt": "2026-10-14T09:35:00-05:00"
-    },
-    {
       "id": "fc5a3b92-9462-4d34-b147-5c70810ef300",
       "name": "Beloit",
       "county": "Rock",
@@ -50,18 +38,6 @@
       "condition": "100% Color",
       "peak": "4th Week of October",
       "reportedAt": "2026-10-28T11:32:00-05:00"
-    },
-    {
-      "id": "6aa9dace-d421-4bb4-9f3a-06a1c07039b7",
-      "name": "Black River Falls",
-      "county": "Jackson",
-      "state": "WI",
-      "lat": 44.286983,
-      "lon": -90.846874,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T09:41:00-05:00"
     },
     {
       "id": "e436eeb0-9896-44fa-bd8a-79084e47b56a",
@@ -184,28 +160,16 @@
       "reportedAt": "2026-10-27T13:24:00-05:00"
     },
     {
-      "id": "bbc30794-9eef-4a27-bdaf-e395f4c53330",
-      "name": "Fort Atkinson",
-      "county": "Jefferson",
-      "state": "WI",
-      "lat": 42.926618,
-      "lon": -88.84132,
-      "percent": 95.0,
-      "condition": "95% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T10:31:00-05:00"
-    },
-    {
       "id": "267e5e41-f80b-47c3-afda-58ecfd41cc96",
       "name": "Fountain City",
       "county": "Buffalo",
       "state": "WI",
       "lat": 44.131326,
       "lon": -91.717602,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-24T14:01:00-05:00"
+      "reportedAt": "2026-10-29T11:33:00-05:00"
     },
     {
       "id": "b6c8833e-9182-44c4-a583-2e561e3261bb",
@@ -226,10 +190,10 @@
       "state": "WI",
       "lat": 44.505961,
       "lon": -88.078727,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-23T15:34:00-05:00"
+      "reportedAt": "2026-10-28T14:04:00-05:00"
     },
     {
       "id": "84ad6ee8-e566-4e0f-baa8-cce33941d073",
@@ -238,10 +202,10 @@
       "state": "WI",
       "lat": 42.601617,
       "lon": -89.64236,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-27T13:22:00-05:00"
+      "reportedAt": "2026-10-28T14:52:00-05:00"
     },
     {
       "id": "42e8110f-09a0-421f-a158-ca93e3c184b1",
@@ -250,10 +214,10 @@
       "state": "WI",
       "lat": 43.848519,
       "lon": -88.963211,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-21T08:47:00-05:00"
+      "reportedAt": "2026-10-28T15:59:00-05:00"
     },
     {
       "id": "6f626ae1-328e-472f-b90f-894e26cde8d5",
@@ -316,18 +280,6 @@
       "reportedAt": "2026-10-21T09:36:00-05:00"
     },
     {
-      "id": "4e2261a3-0366-459d-b649-9f640fcbbd4b",
-      "name": "Kewaunee County",
-      "county": "Kewaunee",
-      "state": "WI",
-      "lat": 44.457315,
-      "lon": -87.52458,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T15:53:00-05:00"
-    },
-    {
       "id": "6c8d6143-a887-4e47-bec4-4ea21bb772f9",
       "name": "Kickapoo Valley Reserve",
       "county": "Vernon",
@@ -346,10 +298,10 @@
       "state": "WI",
       "lat": 42.687947,
       "lon": -90.110804,
-      "percent": 70.0,
-      "condition": "70% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-21T09:50:00-05:00"
+      "reportedAt": "2026-10-29T09:41:00-05:00"
     },
     {
       "id": "74f72208-a9b2-4c6a-8d4a-f677a73ffd8d",
@@ -454,10 +406,10 @@
       "state": "WI",
       "lat": 42.862307,
       "lon": -88.390369,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-23T14:05:00-05:00"
+      "reportedAt": "2026-10-29T12:07:00-05:00"
     },
     {
       "id": "f37962ba-0037-416d-8936-0c0fa16f8640",
@@ -502,10 +454,10 @@
       "state": "WI",
       "lat": 44.014771,
       "lon": -88.540005,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-21T08:16:00-05:00"
+      "reportedAt": "2026-10-28T13:57:00-05:00"
     },
     {
       "id": "d169a7dc-8da3-4e6f-bea3-f2e3347d2077",
@@ -538,10 +490,10 @@
       "state": "WI",
       "lat": 42.72351,
       "lon": -90.485411,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-26T09:00:00-05:00"
+      "reportedAt": "2026-10-29T09:35:00-05:00"
     },
     {
       "id": "f2abc13c-6547-49a9-9e1f-bc953b9dde4a",
@@ -550,10 +502,10 @@
       "state": "WI",
       "lat": 42.529339,
       "lon": -87.929082,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 85.0,
+      "condition": "85% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-21T10:44:00-05:00"
+      "reportedAt": "2026-10-28T14:17:00-05:00"
     },
     {
       "id": "0016df19-945a-4e25-9648-e973521d086b",
@@ -574,10 +526,10 @@
       "state": "WI",
       "lat": 43.387799,
       "lon": -87.869768,
-      "percent": 65.0,
-      "condition": "65% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-23T11:19:00-05:00"
+      "percent": 75.0,
+      "condition": "75% Color",
+      "peak": "4th Week of October",
+      "reportedAt": "2026-10-28T14:32:00-05:00"
     },
     {
       "id": "b9402cf4-c500-4bd9-9a13-b0e84522f7ea",
@@ -676,18 +628,6 @@
       "reportedAt": "2026-10-26T09:56:00-05:00"
     },
     {
-      "id": "df223ea5-e823-48ec-abcd-caf13208354d",
-      "name": "Tomah",
-      "county": "Monroe",
-      "state": "WI",
-      "lat": 43.990856,
-      "lon": -90.505195,
-      "percent": 90.0,
-      "condition": "90% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T10:46:00-05:00"
-    },
-    {
       "id": "e28322f2-0cd8-468f-9458-3492cd474b2a",
       "name": "Trempealeau County",
       "county": "Trempealeau",
@@ -709,7 +649,7 @@
       "percent": 100.0,
       "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-26T13:31:00-05:00"
+      "reportedAt": "2026-10-29T09:46:00-05:00"
     },
     {
       "id": "8d5fbc44-d89f-4cbd-a192-b66a3a9fc011",
@@ -742,10 +682,10 @@
       "state": "WI",
       "lat": 44.392006,
       "lon": -89.823156,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "2nd Week of October",
-      "reportedAt": "2026-10-21T11:47:00-05:00"
+      "reportedAt": "2026-10-29T11:16:00-05:00"
     }
   ],
   "coverage": {
