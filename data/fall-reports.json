@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-29T17:26:55.460787+00:00",
+  "retrievedAt": "2026-10-30T17:01:41.378364+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -62,18 +62,6 @@
       "condition": "90% Color",
       "peak": "4th Week of October",
       "reportedAt": "2026-10-24T09:56:00-05:00"
-    },
-    {
-      "id": "13ebab8a-b8b7-4e42-bc6b-fdd3c331d1d6",
-      "name": "Calumet County",
-      "county": "Calumet",
-      "state": "WI",
-      "lat": 44.029219,
-      "lon": -88.171597,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T11:51:00-05:00"
     },
     {
       "id": "9c136055-eb00-4793-98ab-93dd7d585c1b",
@@ -256,18 +244,6 @@
       "reportedAt": "2026-10-27T12:12:00-05:00"
     },
     {
-      "id": "ae1330c4-05b9-41a5-b6ac-60aeef728bb1",
-      "name": "Johnson Creek",
-      "county": "Jefferson",
-      "state": "WI",
-      "lat": 43.078339,
-      "lon": -88.775419,
-      "percent": 85.0,
-      "condition": "85% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T13:12:00-05:00"
-    },
-    {
       "id": "1401fcf3-3078-49db-b84e-04a266b4f7be",
       "name": "Juneau County",
       "county": "Juneau",
@@ -442,10 +418,10 @@
       "state": "WI",
       "lat": 43.110827,
       "lon": -88.496952,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "5th Week of October",
-      "reportedAt": "2026-10-22T14:00:00-05:00"
+      "reportedAt": "2026-10-30T09:56:00-05:00"
     },
     {
       "id": "59c37f95-8e3b-4f7c-850c-919f8c814d0c",
@@ -586,10 +562,10 @@
       "state": "WI",
       "lat": 43.333034,
       "lon": -90.391475,
-      "percent": 95.0,
-      "condition": "95% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-21T13:29:00-05:00"
+      "percent": 100.0,
+      "condition": "100% Color",
+      "peak": "5th Week of October",
+      "reportedAt": "2026-10-29T12:35:00-05:00"
     },
     {
       "id": "ff19609e-8313-4e62-a028-1d25a51b124f",
