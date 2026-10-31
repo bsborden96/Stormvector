@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-10-30T17:01:41.378364+00:00",
+  "retrievedAt": "2026-10-31T16:07:45.959125+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -58,10 +58,10 @@
       "state": "WI",
       "lat": 46.058685,
       "lon": -92.27889,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-24T09:56:00-05:00"
+      "reportedAt": "2026-10-31T08:41:00-05:00"
     },
     {
       "id": "9c136055-eb00-4793-98ab-93dd7d585c1b",
@@ -298,10 +298,10 @@
       "state": "WI",
       "lat": 43.075356,
       "lon": -89.388271,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 95.0,
+      "condition": "95% Color",
       "peak": "1st Week of November",
-      "reportedAt": "2026-10-28T09:15:00-05:00"
+      "reportedAt": "2026-10-30T16:48:00-05:00"
     },
     {
       "id": "822cc940-f2ce-4e55-ad9c-9e7941af684c",
@@ -346,10 +346,10 @@
       "state": "WI",
       "lat": 43.09499,
       "lon": -89.511237,
-      "percent": 85.0,
-      "condition": "85% Color",
+      "percent": 90.0,
+      "condition": "90% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-28T09:55:00-05:00"
+      "reportedAt": "2026-10-30T14:06:00-05:00"
     },
     {
       "id": "d1c64122-7e51-4dfa-87a7-de2bb7717571",
@@ -358,10 +358,10 @@
       "state": "WI",
       "lat": 43.030929,
       "lon": -88.040957,
-      "percent": 75.0,
-      "condition": "75% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "3rd Week of October",
-      "reportedAt": "2026-10-26T10:43:00-05:00"
+      "reportedAt": "2026-10-30T13:27:00-05:00"
     },
     {
       "id": "b9fab100-a79c-4ad2-8ac8-b5a0c0dfeda7",
@@ -490,10 +490,10 @@
       "state": "WI",
       "lat": 43.751249,
       "lon": -87.977423,
-      "percent": 80.0,
-      "condition": "80% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-23T10:10:00-05:00"
+      "reportedAt": "2026-10-30T14:59:00-05:00"
     },
     {
       "id": "e18d6fff-f8c8-4caf-af35-2c0214dc85dd",
