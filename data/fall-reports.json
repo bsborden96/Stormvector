@@ -1,7 +1,7 @@
 {
   "source": "Travel Wisconsin",
   "sourceUrl": "https://www.travelwisconsin.com/fall-color-report",
-  "retrievedAt": "2026-11-01T17:08:13.719207+00:00",
+  "retrievedAt": "2026-11-02T20:47:39.092169+00:00",
   "reports": [
     {
       "id": "c3000fa4-d0ab-46b7-8b45-e70dad842fae",
@@ -112,28 +112,16 @@
       "reportedAt": "2026-10-21T09:53:00-05:00"
     },
     {
-      "id": "a132679c-609b-4aa3-ba61-d84db4165574",
-      "name": "Elkhart Lake",
-      "county": "Sheboygan",
-      "state": "WI",
-      "lat": 43.832671,
-      "lon": -88.020901,
-      "percent": 100.0,
-      "condition": "100% Color",
-      "peak": "4th Week of October",
-      "reportedAt": "2026-10-26T09:16:00-05:00"
-    },
-    {
       "id": "2762cce2-6b61-4889-8b2c-94c15fd23a63",
       "name": "Fond du Lac",
       "county": "Fond Du Lac",
       "state": "WI",
       "lat": 43.770455,
       "lon": -88.483024,
-      "percent": 90.0,
-      "condition": "90% Color",
-      "peak": "4th Week of October",
-      "reportedAt": "2026-10-27T13:24:00-05:00"
+      "percent": 95.0,
+      "condition": "95% Color",
+      "peak": "1st Week of November",
+      "reportedAt": "2026-11-02T13:27:00-06:00"
     },
     {
       "id": "267e5e41-f80b-47c3-afda-58ecfd41cc96",
@@ -226,10 +214,10 @@
       "state": "WI",
       "lat": 43.002638,
       "lon": -88.810588,
-      "percent": 90.0,
-      "condition": "90% Color",
+      "percent": 100.0,
+      "condition": "100% Color",
       "peak": "4th Week of October",
-      "reportedAt": "2026-10-27T12:12:00-05:00"
+      "reportedAt": "2026-11-02T09:11:00-06:00"
     },
     {
       "id": "1401fcf3-3078-49db-b84e-04a266b4f7be",
@@ -578,18 +566,6 @@
       "condition": "50% Color",
       "peak": "3rd Week of October",
       "reportedAt": "2026-10-21T10:27:00-05:00"
-    },
-    {
-      "id": "949be7d7-4cc7-42fd-aa77-fe8c07f04070",
-      "name": "Stevens Point Area",
-      "county": "Portage",
-      "state": "WI",
-      "lat": 44.523187,
-      "lon": -89.583151,
-      "percent": 90.0,
-      "condition": "90% Color",
-      "peak": "3rd Week of October",
-      "reportedAt": "2026-10-26T09:56:00-05:00"
     },
     {
       "id": "e28322f2-0cd8-468f-9458-3492cd474b2a",
